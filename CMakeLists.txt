@@ -35,6 +35,27 @@ add_library(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}   ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+###########################################################
+# Tests
+
+if(CATKIN_ENABLE_TESTING)
+
+find_package(rostest REQUIRED)
+
+catkin_add_gtest(hri_unittest test/hri_unittest.cpp)
+target_include_directories(hri_unittest PRIVATE ${rostest_INCLUDE_DIRS})
+target_link_libraries(hri_unittest ${PROJECT_NAME})
+
+if(TARGET tests)
+    add_dependencies(tests hri_unittest)
+endif()
+
+endif() # CATKIN_ENABLE_TESTING
+
+
+###########################################################
+# Install
+
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
