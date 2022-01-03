@@ -26,66 +26,29 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include "hri/face.h"
+#include "hri_msgs/RegionOfInterestStamped.h"
 
-#ifndef HRI_HRI_H
-#define HRI_HRI_H
+using namespace std;
+using namespace hri;
 
-#include <ros/ros.h>
-#include <hri_msgs/IdsList.h>
-
-#include <functional>
-#include <map>
-
-#include "base.h"
-#include "face.h"
-#include "person.h"
-#include "ros/subscriber.h"
-
-
-namespace hri
+Face::~Face()
 {
-typedef std::optional<std::string> id;
+  ROS_DEBUG_STREAM("Deleting face " << id_);
+  roi_subscriber_.shutdown();
+}
 
-class Body
+void Face::init()
 {
-};
+  ns = "/humans/faces/" + id_;
+  ROS_DEBUG_STREAM("New face detected: " << ns);
 
-class Voice
+  roi_subscriber_ = node_.subscribe<hri_msgs::RegionOfInterestStamped>(
+      ns + "/roi", 1, bind(&Face::onRoI, this, _1));
+}
+
+
+void Face::onRoI(hri_msgs::RegionOfInterestStampedConstPtr roi)
 {
-};
-
-class HRIListener
-{
-public:
-  enum class FeatureType
-  {
-    face,
-    body,
-    voice
-  };
-
-  HRIListener();
-
-  ~HRIListener();
-
-  /** \brief Provided callback is called every time a new person is detected.
-   */
-  void subscribe(std::function<void(const Person&)>& callback);
-
-private:
-  ros::NodeHandle node_;
-
-  void init();
-
-  void onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPtr tracked);
-
-  std::map<FeatureType, ros::Subscriber> feature_subscribers_;
-
-  std::map<ID, Face> faces;
-};
-
-}  // namespace hri
-
-
-
-#endif  // HRI_HRI_H
+  roi_ = *roi;
+}

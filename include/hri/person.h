@@ -1,12 +1,3 @@
-// Copyright 2021 PAL Robotics S.L.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//
-//    * Redistributions of source code must retain the above copyright
-//      notice, this list of conditions and the following disclaimer.
-//
-//    * Redistributions in binary form must reproduce the above copyright
 //      notice, this list of conditions and the following disclaimer in the
 //      documentation and/or other materials provided with the distribution.
 //
@@ -27,65 +18,39 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 
-#ifndef HRI_HRI_H
-#define HRI_HRI_H
+#ifndef HRI_PERSON_H
+#define HRI_PERSON_H
 
-#include <ros/ros.h>
-#include <hri_msgs/IdsList.h>
-
-#include <functional>
-#include <map>
+#include <geometry_msgs/TransformStamped.h>
 
 #include "base.h"
-#include "face.h"
-#include "person.h"
-#include "ros/subscriber.h"
-
 
 namespace hri
 {
-typedef std::optional<std::string> id;
-
-class Body
-{
-};
-
-class Voice
-{
-};
-
-class HRIListener
+class Person : FeatureTracker
 {
 public:
-  enum class FeatureType
+  ID getFace() const
   {
-    face,
-    body,
-    voice
-  };
+    return face_id;
+  }
+  ID getBody() const
+  {
+    return body_id;
+  }
+  ID getVoice() const
+  {
+    return voice_id;
+  }
 
-  HRIListener();
+  geometry_msgs::TransformStamped getTransform() const;
 
-  ~HRIListener();
-
-  /** \brief Provided callback is called every time a new person is detected.
-   */
-  void subscribe(std::function<void(const Person&)>& callback);
-
-private:
-  ros::NodeHandle node_;
-
-  void init();
-
-  void onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPtr tracked);
-
-  std::map<FeatureType, ros::Subscriber> feature_subscribers_;
-
-  std::map<ID, Face> faces;
+protected:
+  ID face_id;
+  ID body_id;
+  ID voice_id;
 };
 
 }  // namespace hri
 
-
-
-#endif  // HRI_HRI_H
+#endif
