@@ -35,6 +35,7 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 
 #include "base.h"
 #include "face.h"
@@ -72,6 +73,7 @@ public:
    */
   void subscribe(std::function<void(const Person&)>& callback);
 
+
 private:
   ros::NodeHandle node_;
 
@@ -81,7 +83,7 @@ private:
 
   std::map<FeatureType, ros::Subscriber> feature_subscribers_;
 
-  std::map<ID, Face> faces;
+  std::map<ID, std::shared_ptr<Face>> faces;
 };
 
 }  // namespace hri

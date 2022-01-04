@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <functional>
 #include <iterator>
+#include <memory>
 #include <tuple>
 #include <utility>
 #include "hri_msgs/IdsList.h"
@@ -101,11 +102,9 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
 
     for (auto id : to_add)
     {
-      // calling map.emplace like that avoids calling the (deleted) copy
-      // constructor of FeatureTracker
-      faces.emplace(piecewise_construct, forward_as_tuple(id), forward_as_tuple(id, node_));
-
-      faces.at(id).init();
+      auto face = make_shared<Face>(id, node_);
+      face->init();
+      faces.insert({ id, face });
     }
   }
 }
