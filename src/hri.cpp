@@ -48,6 +48,11 @@ HRIListener::~HRIListener()
   ROS_DEBUG("Closing the HRI Listener");
 
   faces.clear();
+
+  for (auto& sub : feature_subscribers_)
+  {
+    sub.second.shutdown();
+  }
 }
 
 void HRIListener::init()
