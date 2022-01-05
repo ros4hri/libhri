@@ -29,24 +29,86 @@
 #include <gtest/gtest.h>
 #include <hri/hri.h>
 #include <ros/ros.h>
+#include <thread>
+#include <chrono>
+#include "hri_msgs/IdsList.h"
 
+using namespace ros;
 using namespace hri;
 
-TEST(hri, ListHumans)
+// waiting time for the libhri callback to process their inputs
+#define WAIT std::this_thread::sleep_for(std::chrono::milliseconds(5))
+
+TEST(hri, FaceDetection)
 {
-  EXPECT_TRUE(true);
+  NodeHandle nh;
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  Publisher pub;
+
+  {
+    HRIListener hri_listener;
+
+    pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
+
+    EXPECT_EQ(pub.getNumSubscribers(), 1U);
+
+
+    auto ids = hri_msgs::IdsList();
+
+    ROS_INFO("[A]");
+    ids.ids = { "A" };
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getFaces().size(), 1U);
+
+    ROS_INFO("[A]");
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getFaces().size(), 1U);
+
+    ROS_INFO("[A,B]");
+    ids.ids = { "A", "B" };
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getFaces().size(), 2U);
+
+    ROS_INFO("[A,B]");
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getFaces().size(), 2U);
+
+    ROS_INFO("[B]");
+    ids.ids = { "B" };
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getFaces().size(), 1U);
+
+    ROS_INFO("[]");
+    ids.ids = {};
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getFaces().size(), 0U);
+  }
+
+  EXPECT_EQ(pub.getNumSubscribers(), 0);
+  spinner.stop();
 }
 
-TEST(hri, ListHumans2)
-{
-  EXPECT_TRUE(false);
-}
+// TEST(hri, ListHumans2)
+//{
+//  EXPECT_TRUE(false);
+//}
 
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);
   ros::Time::init();  // needed for ros::Time::now()
   ros::init(argc, argv, "hri_unittest");
+  ros::NodeHandle nh;
+  ROS_INFO("Starting HRI tests");
   return RUN_ALL_TESTS();
 }
 

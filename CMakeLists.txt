@@ -49,13 +49,9 @@ if(CATKIN_ENABLE_TESTING)
 
 find_package(rostest REQUIRED)
 
-catkin_add_gtest(hri_unittest test/hri_unittest.cpp)
-target_include_directories(hri_unittest PRIVATE ${rostest_INCLUDE_DIRS})
-target_link_libraries(hri_unittest ${PROJECT_NAME})
-
-if(TARGET tests)
-    add_dependencies(tests hri_unittest)
-endif()
+add_rostest_gtest(test_hri test/test_hri.test test/test_hri.cpp)
+target_include_directories(test_hri PRIVATE ${rostest_INCLUDE_DIRS})
+target_link_libraries(test_hri ${PROJECT_NAME})
 
 endif() # CATKIN_ENABLE_TESTING
 
