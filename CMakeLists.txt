@@ -13,13 +13,13 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+include_directories(
+    SYSTEM
+    ${catkin_INCLUDE_DIRS}
+)
 
 include_directories(
     include
-    ${catkin_INCLUDE_DIRS}
-    #${Boost_INCLUDE_DIR}
 )
 
 catkin_package(
@@ -34,7 +34,7 @@ add_library(${PROJECT_NAME}
 )
 
 
-target_link_libraries(${PROJECT_NAME}   ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #add_executable(${PROJECT_NAME}_demo
