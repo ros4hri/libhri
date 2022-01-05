@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.0 (2022-01-05)
+------------------
 * add basic support for bodies; only the RoIs for now
 * Contributors: Séverin Lemaignan
 
