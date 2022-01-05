@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.0 (2022-01-05)
+------------------
 * use boost::optional for faces' features like RoI
 * doc: setup rosdoc. Run `rosdoc_lite .` to generate
 * test: expand the test suite
