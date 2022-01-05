@@ -50,7 +50,7 @@ public:
 
 
 
-  ID getId() const
+  ID id() const
   {
     return id_;
   }

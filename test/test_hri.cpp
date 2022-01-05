@@ -62,7 +62,10 @@ TEST(libhri, GetFaces)
     ids.ids = { "A" };
     pub.publish(ids);
     WAIT;
-    EXPECT_EQ(hri_listener.getFaces().size(), 1U);
+    auto faces = hri_listener.getFaces();
+    EXPECT_EQ(faces.size(), 1U);
+    ASSERT_TRUE(faces.find("A") != faces.end());
+    EXPECT_TRUE(faces["A"].lock()->id() == "A");
 
     ROS_INFO("[A]");
     pub.publish(ids);
@@ -73,7 +76,10 @@ TEST(libhri, GetFaces)
     ids.ids = { "A", "B" };
     pub.publish(ids);
     WAIT;
-    EXPECT_EQ(hri_listener.getFaces().size(), 2U);
+    faces = hri_listener.getFaces();
+    EXPECT_EQ(faces.size(), 2U);
+    EXPECT_TRUE(faces.find("A") != faces.end());
+    EXPECT_TRUE(faces.find("B") != faces.end());
 
     ROS_INFO("[A,B]");
     pub.publish(ids);
@@ -84,7 +90,10 @@ TEST(libhri, GetFaces)
     ids.ids = { "B" };
     pub.publish(ids);
     WAIT;
-    EXPECT_EQ(hri_listener.getFaces().size(), 1U);
+    faces = hri_listener.getFaces();
+    EXPECT_EQ(faces.size(), 1U);
+    EXPECT_TRUE(faces.find("A") == faces.end());
+    EXPECT_TRUE(faces.find("B") != faces.end());
 
     ROS_INFO("[]");
     ids.ids = {};
