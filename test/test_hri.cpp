@@ -31,8 +31,11 @@
 #include <ros/ros.h>
 #include <thread>
 #include <chrono>
+#include <memory>
 #include "hri_msgs/IdsList.h"
+#include "hri_msgs/RegionOfInterestStamped.h"
 
+using namespace std;
 using namespace ros;
 using namespace hri;
 
@@ -93,29 +96,98 @@ TEST(libhri, GetFaces)
     faces = hri_listener.getFaces();
     EXPECT_EQ(faces.size(), 1U);
     EXPECT_TRUE(faces.find("A") == faces.end());
-    EXPECT_TRUE(faces.find("B") != faces.end());
+    ASSERT_TRUE(faces.find("B") != faces.end());
+
+    weak_ptr<Face> face_b = faces["B"];
+    EXPECT_FALSE(face_b.expired());  // face B exists!
 
     ROS_INFO("[]");
     ids.ids = {};
     pub.publish(ids);
     WAIT;
     EXPECT_EQ(hri_listener.getFaces().size(), 0U);
+
+    EXPECT_TRUE(face_b.expired());  // face B does not exist anymore!
   }
 
   EXPECT_EQ(pub.getNumSubscribers(), 0);
   spinner.stop();
 }
 
-// TEST(hri, ListHumans2)
-//{
-//  EXPECT_TRUE(false);
-//}
+TEST(libhri, GetFacesRoi)
+{
+  NodeHandle nh;
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  HRIListener hri_listener;
+
+  auto pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
+
+  auto pub_r1 = nh.advertise<hri_msgs::RegionOfInterestStamped>(
+      "/humans/faces/A/roi", 1, true);  // /roi topic is latched
+  auto pub_r2 = nh.advertise<hri_msgs::RegionOfInterestStamped>(
+      "/humans/faces/B/roi", 1, true);  // /roi topic is latched
+
+  auto ids = hri_msgs::IdsList();
+
+  ids.ids = { "A" };
+  pub.publish(ids);
+  WAIT;
+  EXPECT_EQ(pub_r1.getNumSubscribers(), 1U)
+      << "Face A should have subscribed to /humans/faces/A/roi";
+
+
+  ids.ids = { "B" };
+  pub.publish(ids);
+  WAIT;
+  EXPECT_EQ(pub_r1.getNumSubscribers(), 0U)
+      << "Face A is deleted. No one should be subscribed to /humans/faces/A/roi anymore";
+  EXPECT_EQ(pub_r2.getNumSubscribers(), 1U)
+      << "Face B should have subscribed to /humans/faces/B/roi";
+
+
+  auto faces = hri_listener.getFaces();
+  auto face = faces["B"].lock();
+
+  EXPECT_FALSE(face->getRoI());
+
+  auto roi = hri_msgs::RegionOfInterestStamped();
+
+  roi.roi.width = 10;
+  pub_r2.publish(roi);
+  WAIT;
+  EXPECT_TRUE(face->getRoI());
+  EXPECT_EQ(face->getRoI()->roi.width, 10);
+
+  roi.roi.width = 20;
+  pub_r2.publish(roi);
+  WAIT;
+  EXPECT_EQ(face->getRoI()->roi.width, 20);
+
+  // RoI of face A published *before* face A is published in /faces/tracked,
+  // but should still get its RoI, as /roi is latched.
+  pub_r1.publish(roi);
+  ids.ids = { "B", "A" };
+  pub.publish(ids);
+  WAIT;
+
+  faces = hri_listener.getFaces();
+  auto face_a = faces["A"].lock();
+  auto face_b = faces["B"].lock();
+  EXPECT_EQ(face_a->getRoI()->roi.width, 20);
+  EXPECT_EQ(face_b->getRoI()->roi.width, 20);
+
+
+  spinner.stop();
+}
 
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);
   ros::Time::init();  // needed for ros::Time::now()
-  ros::init(argc, argv, "hri_unittest");
+  ros::init(argc, argv, "test_hri");
   ros::NodeHandle nh;
   ROS_INFO("Starting HRI tests");
   return RUN_ALL_TESTS();
