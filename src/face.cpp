@@ -38,6 +38,18 @@ Face::~Face()
   roi_subscriber_.shutdown();
 }
 
+boost::optional<hri_msgs::RegionOfInterestStamped> Face::getRoI() const
+{
+  if (roi_)
+  {
+    return *roi_;
+  }
+  else
+  {
+    return boost::none;
+  }
+}
+
 void Face::init()
 {
   ns = "/humans/faces/" + id_;
@@ -50,5 +62,5 @@ void Face::init()
 
 void Face::onRoI(hri_msgs::RegionOfInterestStampedConstPtr roi)
 {
-  roi_ = *roi;
+  roi_ = roi;
 }

@@ -33,6 +33,7 @@
 #include <hri_msgs/PointOfInterest2D.h>
 #include <hri_msgs/RegionOfInterestStamped.h>
 #include <memory>
+#include <boost/optional.hpp>
 
 #include "base.h"
 #include "ros/subscriber.h"
@@ -52,10 +53,35 @@ public:
 
   virtual ~Face();
 
-  hri_msgs::RegionOfInterestStamped getRoI() const
-  {
-    return roi_;
-  }
+  /** \brief If available, returns the 2D region of interest (RoI) of the face.
+   *
+   * Use example:
+   *
+   * ```cpp
+   * HRIListener hri_listener;
+   *
+   * auto faces = hri_listener.getFaces();
+   *
+   * for (auto const& face : faces)
+   * {
+   *   auto roi = face.second.lock()->getRoI();
+   *   if (roi) {
+   *     cout << "Size of face_" << face.first << ": ";
+   *     cout << roi->roi.width << "x" << roi->roi.height << endl;
+   *   }
+   *   else {
+   *     cerr << "Face " << face.first << " has no published RoI.";
+   *   }
+   * }
+   * ```
+   *
+   * The coordinates are provided in the original camera's image coordinate
+   * space.
+   *
+   * The header's timestamp is the same as a the timestamp of the original
+   * image from which the face has been detected.
+   */
+  boost::optional<hri_msgs::RegionOfInterestStamped> getRoI() const;
 
   /** \brief the list of the 66 facial landmarks (2D points, expressed in normalised coordinates).
    *
@@ -65,7 +91,7 @@ public:
    * Constants defined in hri_msgs/FacialLandmarks.h can be used to access
    * specific points on the face.
    */
-  std::array<hri_msgs::PointOfInterest2D, 66> getFacialLandmarks() const
+  boost::optional<std::array<hri_msgs::PointOfInterest2D, 66>> getFacialLandmarks() const
   {
     return facial_landmarks_;
   }
@@ -82,7 +108,7 @@ public:
    * Constants defined in hri_msgs/FacialActionUnits.h can be used to access
    * specific action units by name.
    */
-  std::array<IntensityConfidence, 99> getFacialActionUnits() const
+  boost::optional<std::array<IntensityConfidence, 99>> getFacialActionUnits() const
   {
     return facial_action_units_;
   }
@@ -96,7 +122,7 @@ private:
 
   ros::Subscriber roi_subscriber_;
   void onRoI(hri_msgs::RegionOfInterestStampedConstPtr roi);
-  hri_msgs::RegionOfInterestStamped roi_;
+  hri_msgs::RegionOfInterestStampedConstPtr roi_;
 
   std::array<hri_msgs::PointOfInterest2D, 66> facial_landmarks_;
   std::array<IntensityConfidence, 99> facial_action_units_;

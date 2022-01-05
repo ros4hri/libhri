@@ -13,8 +13,11 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
+find_package(Boost REQUIRED) # for boost::optional
+
 include_directories(
     SYSTEM
+    ${Boost_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
 )
 
@@ -32,7 +35,6 @@ add_library(${PROJECT_NAME}
   src/hri.cpp
   src/face.cpp
 )
-
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
