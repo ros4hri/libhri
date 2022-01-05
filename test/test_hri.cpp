@@ -58,6 +58,7 @@ TEST(libhri, GetFaces)
 
     EXPECT_EQ(pub.getNumSubscribers(), 1U);
 
+    EXPECT_EQ(hri_listener.getFaces().size(), 0);
 
     auto ids = hri_msgs::IdsList();
 
@@ -178,7 +179,6 @@ TEST(libhri, GetFacesRoi)
   auto face_b = faces["B"].lock();
   EXPECT_EQ(face_a->getRoI()->roi.width, 20);
   EXPECT_EQ(face_b->getRoI()->roi.width, 20);
-
 
   spinner.stop();
 }
