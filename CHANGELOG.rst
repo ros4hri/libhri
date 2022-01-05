@@ -2,6 +2,11 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add basic support for bodies; only the RoIs for now
+* Contributors: Séverin Lemaignan
+
 0.1.0 (2022-01-05)
 ------------------
 * use boost::optional for faces' features like RoI
