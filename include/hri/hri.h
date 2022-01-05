@@ -55,6 +55,27 @@ class Voice
 {
 };
 
+/** \brief Main entry point to libhri. This is most likely what you want to use.
+ * Use example:
+ *
+ * ```cpp
+ * ros::init(argc, argv, "test_libhri");
+ * ros::NodeHandle nh;
+ *
+ * HRIListener hri_listener;
+ *
+ * while (ros::ok()) {
+ *
+ *   auto faces = hri_listener.getFaces();
+ *
+ *   for (auto const& face : faces)
+ *   {
+ *     cout << "Face " << face.first << " seen!";
+ *   }
+ * }
+ * ```
+ */
+
 class HRIListener
 {
 public:
