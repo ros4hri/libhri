@@ -39,7 +39,7 @@ using namespace hri;
 // waiting time for the libhri callback to process their inputs
 #define WAIT std::this_thread::sleep_for(std::chrono::milliseconds(5))
 
-TEST(hri, FaceDetection)
+TEST(libhri, GetFaces)
 {
   NodeHandle nh;
 
