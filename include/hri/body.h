@@ -27,94 +27,68 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 
-#ifndef HRI_HRI_H
-#define HRI_HRI_H
+#ifndef HRI_BODY_H
+#define HRI_BODY_H
 
-#include <ros/ros.h>
-#include <hri_msgs/IdsList.h>
-
-#include <functional>
-#include <map>
+#include <hri_msgs/RegionOfInterestStamped.h>
 #include <memory>
+#include <boost/optional.hpp>
 
 #include "base.h"
-#include "face.h"
-#include "body.h"
-#include "person.h"
 #include "ros/subscriber.h"
-
 
 namespace hri
 {
-class Voice;
-
-/** \brief Main entry point to libhri. This is most likely what you want to use.
- * Use example:
- *
- * ```cpp
- * ros::init(argc, argv, "test_libhri");
- * ros::NodeHandle nh;
- *
- * HRIListener hri_listener;
- *
- * while (ros::ok()) {
- *
- *   auto faces = hri_listener.getFaces();
- *
- *   for (auto const& face : faces)
- *   {
- *     cout << "Face " << face.first << " seen!";
- *   }
- * }
- * ```
- */
-
-class HRIListener
+class Body : public FeatureTracker
 {
 public:
-  enum class FeatureType
-  {
-    face,
-    body,
-    voice
-  };
+  using FeatureTracker::FeatureTracker;  // inherits FeatureTracker's ctor
 
-  HRIListener();
+  virtual ~Body();
 
-  ~HRIListener();
-
-  /** \brief Provided callback is called every time a new person is detected.
-   */
-  void subscribe(std::function<void(const Person&)>& callback);
-
-  /** \brief Returns the list of currently detected faces, mapped to their IDs
+  /** \brief If available, returns the 2D region of interest (RoI) of the body.
    *
-   * Faces are returned as std::weak_ptr as they may disappear at any point.
-   */
-  std::map<ID, std::weak_ptr<Face>> getFaces();
-
-  /** \brief Returns the list of currently detected bodies, mapped to their IDs
+   * Use example:
    *
-   * Bodies are returned as std::weak_ptr as they may disappear at any point.
+   * ```cpp
+   * HRIListener hri_listener;
+   *
+   * auto bodies = hri_listener.getBodies();
+   *
+   * for (auto const& body : bodies)
+   * {
+   *   auto roi = body.second.lock()->getRoI();
+   *   if (roi) {
+   *     cout << "Size of body_" << body.first << ": ";
+   *     cout << roi->roi.width << "x" << roi->roi.height << endl;
+   *   }
+   *   else {
+   *     cerr << "Body " << body.first << " has no published RoI.";
+   *   }
+   * }
+   * ```
+   *
+   * The coordinates are provided in the original camera's image coordinate
+   * space.
+   *
+   * The header's timestamp is the same as a the timestamp of the original
+   * image from which the body has been detected.
    */
-  std::map<ID, std::weak_ptr<Body>> getBodies();
+  boost::optional<hri_msgs::RegionOfInterestStamped> getRoI() const;
 
+  void init() override;
 
 private:
-  ros::NodeHandle node_;
+  size_t nb_roi;
 
-  void init();
+  std::string ns;
 
-  void onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPtr tracked);
-
-  std::map<FeatureType, ros::Subscriber> feature_subscribers_;
-
-  std::map<ID, std::shared_ptr<Face>> faces;
-  std::map<ID, std::shared_ptr<Body>> bodies;
+  ros::Subscriber roi_subscriber_;
+  void onRoI(hri_msgs::RegionOfInterestStampedConstPtr roi);
+  hri_msgs::RegionOfInterestStampedConstPtr roi_;
 };
 
+typedef std::shared_ptr<Body> BodyPtr;
+
 }  // namespace hri
-
-
-
-#endif  // HRI_HRI_H
+#endif

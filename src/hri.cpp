@@ -56,7 +56,6 @@ HRIListener::~HRIListener()
 }
 
 
-
 map<ID, weak_ptr<Face>> HRIListener::getFaces()
 {
   map<ID, weak_ptr<Face>> result;
@@ -69,62 +68,121 @@ map<ID, weak_ptr<Face>> HRIListener::getFaces()
   return result;
 }
 
+map<ID, weak_ptr<Body>> HRIListener::getBodies()
+{
+  map<ID, weak_ptr<Body>> result;
+
+  for (auto const& f : bodies)
+  {
+    result[f.first] = f.second;
+  }
+
+  return result;
+}
+
 void HRIListener::init()
 {
   ROS_DEBUG("Initialising the HRI Listener");
+
   feature_subscribers_[FeatureType::face] = node_.subscribe<hri_msgs::IdsList>(
       "/humans/faces/tracked", 1,
       bind(&HRIListener::onTrackedFeature, this, FeatureType::face, _1));
+
+  feature_subscribers_[FeatureType::body] = node_.subscribe<hri_msgs::IdsList>(
+      "/humans/bodies/tracked", 1,
+      bind(&HRIListener::onTrackedFeature, this, FeatureType::body, _1));
 }
 
 void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPtr tracked)
 {
-  if (feature == FeatureType::face)
+  // update the current list of tracked feature (face, body...) with
+  // what has just been received on the respective /tracked topic.
+
+  set<ID> new_ids;
+  for (auto const& id : tracked->ids)
   {
-    // update the current list of tracked feature (face, body...) with
-    // what has just been received on the respective /tracked topic.
-    set<ID> current_ids;
-    for (auto const& kv : faces)
-    {
-      current_ids.insert(kv.first);
-    }
+    new_ids.insert(ID(id));
+  }
 
-    set<ID> new_ids;
-    for (auto const& id : tracked->ids)
-    {
-      new_ids.insert(ID(id));
-    }
+  set<ID> to_remove;
+  set<ID> to_add;
 
-    set<ID> to_remove;
-    set<ID> to_add;
+  set<ID> current_ids;
 
-    for (auto id : new_ids)
-    {
-      if (current_ids.find(id) == current_ids.end())
+  switch (feature)
+  {
+    case FeatureType::face:
+      for (auto const& kv : faces)
       {
-        to_add.insert(id);
+        current_ids.insert(kv.first);
       }
-    }
-
-    for (auto id : current_ids)
-    {
-      if (new_ids.find(id) == new_ids.end())
+      break;
+    case FeatureType::body:
+      for (auto const& kv : bodies)
       {
-        to_remove.insert(id);
+        current_ids.insert(kv.first);
       }
-    }
+      break;
+    case FeatureType::voice:
+      break;
+  }
 
-    for (auto id : to_remove)
-    {
-      faces.erase(id);
-    }
 
-    for (auto id : to_add)
+
+  for (auto id : new_ids)
+  {
+    if (current_ids.find(id) == current_ids.end())
     {
-      auto face = make_shared<Face>(id, node_);
-      face->init();
-      faces.insert({ id, face });
+      to_add.insert(id);
     }
+  }
+
+  for (auto id : current_ids)
+  {
+    if (new_ids.find(id) == new_ids.end())
+    {
+      to_remove.insert(id);
+    }
+  }
+
+  switch (feature)
+  {
+    case FeatureType::face:
+      for (auto id : to_remove)
+      {
+        faces.erase(id);
+      }
+      break;
+    case FeatureType::body:
+      for (auto id : to_remove)
+      {
+        bodies.erase(id);
+      }
+      break;
+    case FeatureType::voice:
+      break;
+  }
+
+  switch (feature)
+  {
+    case FeatureType::face:
+      for (auto id : to_add)
+      {
+        auto face = make_shared<Face>(id, node_);
+        face->init();
+        faces.insert({ id, face });
+      }
+      break;
+    case FeatureType::body:
+      for (auto id : to_add)
+      {
+        auto body = make_shared<Body>(id, node_);
+        body->init();
+        bodies.insert({ id, body });
+      }
+      break;
+    case FeatureType::voice:
+      break;
   }
 }
 

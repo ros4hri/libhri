@@ -183,6 +183,78 @@ TEST(libhri, GetFacesRoi)
   spinner.stop();
 }
 
+TEST(libhri, GetBodies)
+{
+  NodeHandle nh;
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  Publisher pub;
+
+  {
+    HRIListener hri_listener;
+
+    pub = nh.advertise<hri_msgs::IdsList>("/humans/bodies/tracked", 1);
+
+    EXPECT_EQ(pub.getNumSubscribers(), 1U);
+
+
+    auto ids = hri_msgs::IdsList();
+
+    ROS_INFO("[A]");
+    ids.ids = { "A" };
+    pub.publish(ids);
+    WAIT;
+    auto bodies = hri_listener.getBodies();
+    EXPECT_EQ(bodies.size(), 1U);
+    ASSERT_TRUE(bodies.find("A") != bodies.end());
+    EXPECT_TRUE(bodies["A"].lock()->id() == "A");
+
+    ROS_INFO("[A]");
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getBodies().size(), 1U);
+
+    ROS_INFO("[A,B]");
+    ids.ids = { "A", "B" };
+    pub.publish(ids);
+    WAIT;
+    bodies = hri_listener.getBodies();
+    EXPECT_EQ(bodies.size(), 2U);
+    EXPECT_TRUE(bodies.find("A") != bodies.end());
+    EXPECT_TRUE(bodies.find("B") != bodies.end());
+
+    ROS_INFO("[A,B]");
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getBodies().size(), 2U);
+
+    ROS_INFO("[B]");
+    ids.ids = { "B" };
+    pub.publish(ids);
+    WAIT;
+    bodies = hri_listener.getBodies();
+    EXPECT_EQ(bodies.size(), 1U);
+    EXPECT_TRUE(bodies.find("A") == bodies.end());
+    ASSERT_TRUE(bodies.find("B") != bodies.end());
+
+    weak_ptr<Body> body_b = bodies["B"];
+    EXPECT_FALSE(body_b.expired());  // body B exists!
+
+    ROS_INFO("[]");
+    ids.ids = {};
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getBodies().size(), 0U);
+
+    EXPECT_TRUE(body_b.expired());  // body B does not exist anymore!
+  }
+
+  EXPECT_EQ(pub.getNumSubscribers(), 0);
+  spinner.stop();
+}
+
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);

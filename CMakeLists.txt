@@ -34,6 +34,7 @@ catkin_package(
 add_library(${PROJECT_NAME}
   src/hri.cpp
   src/face.cpp
+  src/body.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
