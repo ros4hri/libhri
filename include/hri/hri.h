@@ -73,6 +73,11 @@ public:
    */
   void subscribe(std::function<void(const Person&)>& callback);
 
+  /** \brief Returns the list of currently detected faces, mapped to their IDs
+   *
+   * Faces are returned as std::weak_ptr as they may disappear at any point.
+   */
+  std::map<ID, std::weak_ptr<Face>> getFaces();
 
 private:
   ros::NodeHandle node_;

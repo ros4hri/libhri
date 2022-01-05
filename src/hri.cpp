@@ -55,6 +55,20 @@ HRIListener::~HRIListener()
   }
 }
 
+
+
+map<ID, weak_ptr<Face>> HRIListener::getFaces()
+{
+  map<ID, weak_ptr<Face>> result;
+
+  for (auto const& f : faces)
+  {
+    result[f.first] = f.second;
+  }
+
+  return result;
+}
+
 void HRIListener::init()
 {
   ROS_DEBUG("Initialising the HRI Listener");
