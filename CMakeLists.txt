@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(hri)
 
-## Compile as C++17 because of std::optional, even though ROS noetic official only supports c++14
-add_compile_options(-std=c++17)
+## ROS noetic officially supports c++14
+add_compile_options(-std=c++14)
 
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs

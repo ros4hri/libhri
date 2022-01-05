@@ -45,7 +45,7 @@
 
 namespace hri
 {
-typedef std::optional<std::string> id;
+typedef std::string id;
 
 class Body
 {
