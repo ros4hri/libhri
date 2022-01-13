@@ -1,3 +1,12 @@
+// Copyright 2021 PAL Robotics S.L.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+//    * Redistributions of source code must retain the above copyright
+//      notice, this list of conditions and the following disclaimer.
+//
+//    * Redistributions in binary form must reproduce the above copyright
 //      notice, this list of conditions and the following disclaimer in the
 //      documentation and/or other materials provided with the distribution.
 //
@@ -17,46 +26,19 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include "hri/person.h"
 
-#ifndef HRI_PERSON_H
-#define HRI_PERSON_H
+using namespace std;
+using namespace hri;
 
-#include <geometry_msgs/TransformStamped.h>
-
-#include "base.h"
-
-namespace hri
+Person::~Person()
 {
-class Person : FeatureTracker
+  ROS_DEBUG_STREAM("Deleting person " << id_);
+}
+
+void Person::init()
 {
-public:
-  using FeatureTracker::FeatureTracker;  // inherits FeatureTracker's ctor
+  ns_ = "/humans/persons/" + id_;
+  ROS_DEBUG_STREAM("New person detected: " << ns_);
+}
 
-  virtual ~Person();
-
-  ID getFace() const
-  {
-    return face_id;
-  }
-  ID getBody() const
-  {
-    return body_id;
-  }
-  ID getVoice() const
-  {
-    return voice_id;
-  }
-
-  geometry_msgs::TransformStamped getTransform() const;
-
-  void init() override;
-
-protected:
-  ID face_id;
-  ID body_id;
-  ID voice_id;
-};
-
-}  // namespace hri
-
-#endif

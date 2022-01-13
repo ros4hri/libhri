@@ -33,8 +33,9 @@ catkin_package(
 
 add_library(${PROJECT_NAME}
   src/hri.cpp
-  src/face.cpp
   src/body.cpp
+  src/face.cpp
+  src/person.cpp
   src/voice.cpp
 )
 
