@@ -52,11 +52,11 @@ boost::optional<hri_msgs::RegionOfInterestStamped> Face::getRoI() const
 
 void Face::init()
 {
-  ns = "/humans/faces/" + id_;
-  ROS_DEBUG_STREAM("New face detected: " << ns);
+  ns_ = "/humans/faces/" + id_;
+  ROS_DEBUG_STREAM("New face detected: " << ns_);
 
   roi_subscriber_ = node_.subscribe<hri_msgs::RegionOfInterestStamped>(
-      ns + "/roi", 1, bind(&Face::onRoI, this, _1));
+      ns_ + "/roi", 1, bind(&Face::onRoI, this, _1));
 }
 
 

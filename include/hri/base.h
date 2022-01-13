@@ -33,6 +33,18 @@ typedef std::string ID;
 class FeatureTracker
 {
 public:
+  /* creates a new feature tracker (eg, a face, body or voice tracker).
+   *
+   * This constructor should not be called directly. Instead, use one of the
+   * specialisation: hri::Face, hri::Body, hri::Voice.
+   *
+   * Note however that instances would normally be automatically created, and accessed via
+   * the methods exposed by hri::HRIListener.
+   *
+   * Note that the resulting instance is non-copyable, as it includes
+   * non-trivial, and typically non-reentrant, logic to subscribe/unsubcribe
+   * HRI-related topics.
+   */
   FeatureTracker(ID id, const ros::NodeHandle& nh) : id_(id), node_(nh)
   {
   }
@@ -49,16 +61,38 @@ public:
   FeatureTracker(const FeatureTracker&) = delete;
 
 
-
+  /* returns the unique ID of this feature.
+   *
+   * :see: FeatureTracker::getNamespace, to access the fully-qualified topic
+   * namespace under which this feature is published.
+   */
   ID id() const
   {
     return id_;
+  }
+
+  /* returns the topic namespace under which this feature is advertised.
+   */
+  std::string getNamespace() const
+  {
+    return ns_;
+  }
+
+  /* alias for FeatureTracker::getNamespace
+   */
+  std::string ns() const
+  {
+    return getNamespace();
   }
 
   virtual void init() = 0;
 
 protected:
   ID id_;
+
+  // topic namespace under which this feature is advertised
+  std::string ns_;
+
   ros::NodeHandle node_;
 };
 

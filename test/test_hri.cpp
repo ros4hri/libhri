@@ -152,6 +152,8 @@ TEST(libhri, GetFacesRoi)
   auto faces = hri_listener.getFaces();
   auto face = faces["B"].lock();
 
+  EXPECT_EQ(face->ns(), "/humans/faces/B");
+
   EXPECT_FALSE(face->getRoI());
 
   auto roi = hri_msgs::RegionOfInterestStamped();
@@ -177,7 +179,10 @@ TEST(libhri, GetFacesRoi)
   faces = hri_listener.getFaces();
   auto face_a = faces["A"].lock();
   auto face_b = faces["B"].lock();
+
+  EXPECT_EQ(face_a->ns(), "/humans/faces/A");
   EXPECT_EQ(face_a->getRoI()->roi.width, 20);
+  EXPECT_EQ(face_b->ns(), "/humans/faces/B");
   EXPECT_EQ(face_b->getRoI()->roi.width, 20);
 
   spinner.stop();

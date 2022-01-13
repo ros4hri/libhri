@@ -118,8 +118,6 @@ public:
 private:
   size_t nb_roi;
 
-  std::string ns;
-
   ros::Subscriber roi_subscriber_;
   void onRoI(hri_msgs::RegionOfInterestStampedConstPtr roi);
   hri_msgs::RegionOfInterestStampedConstPtr roi_;

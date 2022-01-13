@@ -52,11 +52,11 @@ boost::optional<hri_msgs::RegionOfInterestStamped> Body::getRoI() const
 
 void Body::init()
 {
-  ns = "/humans/bodies/" + id_;
-  ROS_DEBUG_STREAM("New body detected: " << ns);
+  ns_ = "/humans/bodies/" + id_;
+  ROS_DEBUG_STREAM("New body detected: " << ns_);
 
   roi_subscriber_ = node_.subscribe<hri_msgs::RegionOfInterestStamped>(
-      ns + "/roi", 1, bind(&Body::onRoI, this, _1));
+      ns_ + "/roi", 1, bind(&Body::onRoI, this, _1));
 }
 
 
