@@ -27,91 +27,28 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 
-#ifndef HRI_HRI_H
-#define HRI_HRI_H
+#ifndef HRI_VOICE_H
+#define HRI_VOICE_H
 
-#include <ros/ros.h>
-#include <hri_msgs/IdsList.h>
-
-#include <functional>
-#include <map>
 #include <memory>
 
 #include "base.h"
-#include "face.h"
-#include "body.h"
-#include "person.h"
-#include "ros/subscriber.h"
-
 
 namespace hri
 {
-/** \brief Main entry point to libhri. This is most likely what you want to use.
- * Use example:
- *
- * ```cpp
- * ros::init(argc, argv, "test_libhri");
- * ros::NodeHandle nh;
- *
- * HRIListener hri_listener;
- *
- * while (ros::ok()) {
- *
- *   auto faces = hri_listener.getFaces();
- *
- *   for (auto const& face : faces)
- *   {
- *     cout << "Face " << face.first << " seen!";
- *   }
- * }
- * ```
- */
-class HRIListener
+class Voice : public FeatureTracker
 {
 public:
-  enum class FeatureType
-  {
-    face,
-    body,
-    voice
-  };
+  using FeatureTracker::FeatureTracker;  // inherits FeatureTracker's ctor
 
-  HRIListener();
+  virtual ~Voice();
 
-  ~HRIListener();
-
-  /** \brief Provided callback is called every time a new person is detected.
-   */
-  void subscribe(std::function<void(const Person&)>& callback);
-
-  /** \brief Returns the list of currently detected faces, mapped to their IDs
-   *
-   * Faces are returned as std::weak_ptr as they may disappear at any point.
-   */
-  std::map<ID, std::weak_ptr<Face>> getFaces();
-
-  /** \brief Returns the list of currently detected bodies, mapped to their IDs
-   *
-   * Bodies are returned as std::weak_ptr as they may disappear at any point.
-   */
-  std::map<ID, std::weak_ptr<Body>> getBodies();
-
+  void init() override;
 
 private:
-  ros::NodeHandle node_;
-
-  void init();
-
-  void onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPtr tracked);
-
-  std::map<FeatureType, ros::Subscriber> feature_subscribers_;
-
-  std::map<ID, std::shared_ptr<Face>> faces;
-  std::map<ID, std::shared_ptr<Body>> bodies;
 };
 
+typedef std::shared_ptr<Voice> VoicePtr;
+
 }  // namespace hri
-
-
-
-#endif  // HRI_HRI_H
+#endif

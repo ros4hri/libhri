@@ -35,6 +35,7 @@ add_library(${PROJECT_NAME}
   src/hri.cpp
   src/face.cpp
   src/body.cpp
+  src/voice.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
