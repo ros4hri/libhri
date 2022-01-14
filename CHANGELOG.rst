@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.1 (2022-01-14)
+------------------
 * replace hri_msgs::RegionOfInterestStamped by sensor_msgs::RegionOfInterest
   Follows changes in hri_msgs 0.2.0
 * add skeleton of hri::Person class
