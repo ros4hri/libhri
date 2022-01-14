@@ -2,6 +2,15 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* replace hri_msgs::RegionOfInterestStamped by sensor_msgs::RegionOfInterest
+  Follows changes in hri_msgs 0.2.0
+* add skeleton of hri::Person class
+* add empty Voice class
+* expose the features' topic namespace + doc
+* Contributors: Séverin Lemaignan
+
 0.2.0 (2022-01-05)
 ------------------
 * add basic support for bodies; only the RoIs for now
