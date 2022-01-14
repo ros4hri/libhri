@@ -27,7 +27,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "hri/body.h"
-#include "hri_msgs/RegionOfInterestStamped.h"
 
 using namespace std;
 using namespace hri;
@@ -38,7 +37,7 @@ Body::~Body()
   roi_subscriber_.shutdown();
 }
 
-boost::optional<hri_msgs::RegionOfInterestStamped> Body::getRoI() const
+boost::optional<sensor_msgs::RegionOfInterest> Body::getRoI() const
 {
   if (roi_)
   {
@@ -55,12 +54,12 @@ void Body::init()
   ns_ = "/humans/bodies/" + id_;
   ROS_DEBUG_STREAM("New body detected: " << ns_);
 
-  roi_subscriber_ = node_.subscribe<hri_msgs::RegionOfInterestStamped>(
+  roi_subscriber_ = node_.subscribe<sensor_msgs::RegionOfInterest>(
       ns_ + "/roi", 1, bind(&Body::onRoI, this, _1));
 }
 
 
-void Body::onRoI(hri_msgs::RegionOfInterestStampedConstPtr roi)
+void Body::onRoI(sensor_msgs::RegionOfInterestConstPtr roi)
 {
   roi_ = roi;
 }

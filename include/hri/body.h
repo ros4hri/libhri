@@ -30,7 +30,7 @@
 #ifndef HRI_BODY_H
 #define HRI_BODY_H
 
-#include <hri_msgs/RegionOfInterestStamped.h>
+#include <sensor_msgs/RegionOfInterest.h>
 #include <memory>
 #include <boost/optional.hpp>
 
@@ -74,7 +74,7 @@ public:
    * The header's timestamp is the same as a the timestamp of the original
    * image from which the body has been detected.
    */
-  boost::optional<hri_msgs::RegionOfInterestStamped> getRoI() const;
+  boost::optional<sensor_msgs::RegionOfInterest> getRoI() const;
 
   void init() override;
 
@@ -82,8 +82,8 @@ private:
   size_t nb_roi;
 
   ros::Subscriber roi_subscriber_;
-  void onRoI(hri_msgs::RegionOfInterestStampedConstPtr roi);
-  hri_msgs::RegionOfInterestStampedConstPtr roi_;
+  void onRoI(sensor_msgs::RegionOfInterestConstPtr roi);
+  sensor_msgs::RegionOfInterestConstPtr roi_;
 };
 
 typedef std::shared_ptr<Body> BodyPtr;

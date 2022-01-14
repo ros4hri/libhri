@@ -27,7 +27,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "hri/face.h"
-#include "hri_msgs/RegionOfInterestStamped.h"
 
 using namespace std;
 using namespace hri;
@@ -38,7 +37,7 @@ Face::~Face()
   roi_subscriber_.shutdown();
 }
 
-boost::optional<hri_msgs::RegionOfInterestStamped> Face::getRoI() const
+boost::optional<sensor_msgs::RegionOfInterest> Face::getRoI() const
 {
   if (roi_)
   {
@@ -55,12 +54,12 @@ void Face::init()
   ns_ = "/humans/faces/" + id_;
   ROS_DEBUG_STREAM("New face detected: " << ns_);
 
-  roi_subscriber_ = node_.subscribe<hri_msgs::RegionOfInterestStamped>(
+  roi_subscriber_ = node_.subscribe<sensor_msgs::RegionOfInterest>(
       ns_ + "/roi", 1, bind(&Face::onRoI, this, _1));
 }
 
 
-void Face::onRoI(hri_msgs::RegionOfInterestStampedConstPtr roi)
+void Face::onRoI(sensor_msgs::RegionOfInterestConstPtr roi)
 {
   roi_ = roi;
 }

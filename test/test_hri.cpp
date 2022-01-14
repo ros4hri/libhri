@@ -33,7 +33,7 @@
 #include <chrono>
 #include <memory>
 #include "hri_msgs/IdsList.h"
-#include "hri_msgs/RegionOfInterestStamped.h"
+#include "sensor_msgs/RegionOfInterest.h"
 
 using namespace std;
 using namespace ros;
@@ -126,10 +126,8 @@ TEST(libhri, GetFacesRoi)
 
   auto pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
 
-  auto pub_r1 = nh.advertise<hri_msgs::RegionOfInterestStamped>(
-      "/humans/faces/A/roi", 1, true);  // /roi topic is latched
-  auto pub_r2 = nh.advertise<hri_msgs::RegionOfInterestStamped>(
-      "/humans/faces/B/roi", 1, true);  // /roi topic is latched
+  auto pub_r1 = nh.advertise<sensor_msgs::RegionOfInterest>("/humans/faces/A/roi", 1, true);  // /roi topic is latched
+  auto pub_r2 = nh.advertise<sensor_msgs::RegionOfInterest>("/humans/faces/B/roi", 1, true);  // /roi topic is latched
 
   auto ids = hri_msgs::IdsList();
 
@@ -156,18 +154,18 @@ TEST(libhri, GetFacesRoi)
 
   EXPECT_FALSE(face->getRoI());
 
-  auto roi = hri_msgs::RegionOfInterestStamped();
+  auto roi = sensor_msgs::RegionOfInterest();
 
-  roi.roi.width = 10;
+  roi.width = 10;
   pub_r2.publish(roi);
   WAIT;
   EXPECT_TRUE(face->getRoI());
-  EXPECT_EQ(face->getRoI()->roi.width, 10);
+  EXPECT_EQ(face->getRoI()->width, 10);
 
-  roi.roi.width = 20;
+  roi.width = 20;
   pub_r2.publish(roi);
   WAIT;
-  EXPECT_EQ(face->getRoI()->roi.width, 20);
+  EXPECT_EQ(face->getRoI()->width, 20);
 
   // RoI of face A published *before* face A is published in /faces/tracked,
   // but should still get its RoI, as /roi is latched.
@@ -181,9 +179,9 @@ TEST(libhri, GetFacesRoi)
   auto face_b = faces["B"].lock();
 
   EXPECT_EQ(face_a->ns(), "/humans/faces/A");
-  EXPECT_EQ(face_a->getRoI()->roi.width, 20);
+  EXPECT_EQ(face_a->getRoI()->width, 20);
   EXPECT_EQ(face_b->ns(), "/humans/faces/B");
-  EXPECT_EQ(face_b->getRoI()->roi.width, 20);
+  EXPECT_EQ(face_b->getRoI()->width, 20);
 
   spinner.stop();
 }
