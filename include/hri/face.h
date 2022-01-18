@@ -31,12 +31,16 @@
 #define HRI_FACE_H
 
 #include <hri_msgs/PointOfInterest2D.h>
+
 #include <sensor_msgs/RegionOfInterest.h>
+#include <sensor_msgs/Image.h>
 #include <memory>
 #include <boost/optional.hpp>
 
 #include "base.h"
 #include "ros/subscriber.h"
+
+#include <opencv2/core.hpp>
 
 namespace hri
 {
@@ -53,7 +57,7 @@ public:
 
   virtual ~Face();
 
-  /** \brief If available, returns the 2D region of interest (RoI) of the face.
+  /** \brief Returns the 2D region of interest (RoI) of the face.
    *
    * Use example:
    *
@@ -64,24 +68,22 @@ public:
    *
    * for (auto const& face : faces)
    * {
-   *   auto roi = face.second.lock()->getRoI();
-   *   if (roi) {
-   *     cout << "Size of face_" << face.first << ": ";
-   *     cout << roi->roi.width << "x" << roi->roi.height << endl;
-   *   }
-   *   else {
-   *     cerr << "Face " << face.first << " has no published RoI.";
-   *   }
+   *   auto roi = face.second.lock()->roi();
+   *   cout << "Size of face_" << face.first << ": ";
+   *   cout << roi->width << "x" << roi->height << endl;
    * }
    * ```
    *
-   * The coordinates are provided in the original camera's image coordinate
+   * The pixel coordinates are provided in the original camera's image coordinate
    * space.
-   *
-   * The header's timestamp is the same as a the timestamp of the original
-   * image from which the face has been detected.
    */
-  boost::optional<sensor_msgs::RegionOfInterest> getRoI() const;
+  cv::Rect roi() const;
+
+
+  /** \brief Returns the face image, if necessary scaled, centered and 0-padded
+   * to match the /humans/faces/width and /humans/faces/height ROS parameters.
+   */
+  cv::Mat cropped() const;
 
   /** \brief the list of the 66 facial landmarks (2D points, expressed in normalised coordinates).
    *
@@ -91,7 +93,7 @@ public:
    * Constants defined in hri_msgs/FacialLandmarks.h can be used to access
    * specific points on the face.
    */
-  boost::optional<std::array<hri_msgs::PointOfInterest2D, 66>> getFacialLandmarks() const
+  boost::optional<std::array<hri_msgs::PointOfInterest2D, 66>> facialLandmarks() const
   {
     return facial_landmarks_;
   }
@@ -108,7 +110,7 @@ public:
    * Constants defined in hri_msgs/FacialActionUnits.h can be used to access
    * specific action units by name.
    */
-  boost::optional<std::array<IntensityConfidence, 99>> getFacialActionUnits() const
+  boost::optional<std::array<IntensityConfidence, 99>> facialActionUnits() const
   {
     return facial_action_units_;
   }
@@ -120,13 +122,18 @@ private:
 
   ros::Subscriber roi_subscriber_;
   void onRoI(sensor_msgs::RegionOfInterestConstPtr roi);
-  sensor_msgs::RegionOfInterestConstPtr roi_;
+  cv::Rect roi_;
+
+  ros::Subscriber cropped_subscriber_;
+  void onCropped(sensor_msgs::ImageConstPtr roi);
+  cv::Mat cropped_;
 
   std::array<hri_msgs::PointOfInterest2D, 66> facial_landmarks_;
   std::array<IntensityConfidence, 99> facial_action_units_;
 };
 
 typedef std::shared_ptr<Face> FacePtr;
+typedef std::weak_ptr<Face> FaceWeakPtr;
 
 }  // namespace hri
 #endif

@@ -27,6 +27,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "hri/face.h"
+#include <cv_bridge/cv_bridge.h>
 
 using namespace std;
 using namespace hri;
@@ -37,18 +38,6 @@ Face::~Face()
   roi_subscriber_.shutdown();
 }
 
-boost::optional<sensor_msgs::RegionOfInterest> Face::getRoI() const
-{
-  if (roi_)
-  {
-    return *roi_;
-  }
-  else
-  {
-    return boost::none;
-  }
-}
-
 void Face::init()
 {
   ns_ = "/humans/faces/" + id_;
@@ -56,10 +45,28 @@ void Face::init()
 
   roi_subscriber_ = node_.subscribe<sensor_msgs::RegionOfInterest>(
       ns_ + "/roi", 1, bind(&Face::onRoI, this, _1));
-}
 
+  cropped_subscriber_ = node_.subscribe<sensor_msgs::Image>(
+      ns_ + "/cropped", 1, bind(&Face::onCropped, this, _1));
+}
 
 void Face::onRoI(sensor_msgs::RegionOfInterestConstPtr roi)
 {
-  roi_ = roi;
+  roi_ = cv::Rect(roi->x_offset, roi->y_offset, roi->width, roi->height);
 }
+
+cv::Rect Face::roi() const
+{
+  return roi_;
+}
+
+void Face::onCropped(sensor_msgs::ImageConstPtr msg)
+{
+  cropped_ = cv_bridge::toCvShare(msg)->image;
+}
+
+cv::Mat Face::cropped() const
+{
+  return cropped_;
+}
+

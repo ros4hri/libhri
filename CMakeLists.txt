@@ -12,12 +12,15 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   tf
+  cv_bridge
 )
 
+find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED) # for boost::optional
 
 include_directories(
     SYSTEM
+    ${OpenCV_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
 )
@@ -29,7 +32,7 @@ include_directories(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES hri
-  CATKIN_DEPENDS geometry_msgs hri_msgs rosconsole roscpp std_msgs tf
+  CATKIN_DEPENDS geometry_msgs hri_msgs rosconsole roscpp std_msgs tf cv_bridge
 )
 
 add_library(${PROJECT_NAME}

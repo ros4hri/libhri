@@ -152,20 +152,19 @@ TEST(libhri, GetFacesRoi)
 
   EXPECT_EQ(face->ns(), "/humans/faces/B");
 
-  EXPECT_FALSE(face->getRoI());
+  EXPECT_EQ(face->roi().width, 0);
 
   auto roi = sensor_msgs::RegionOfInterest();
 
   roi.width = 10;
   pub_r2.publish(roi);
   WAIT;
-  EXPECT_TRUE(face->getRoI());
-  EXPECT_EQ(face->getRoI()->width, 10);
+  EXPECT_EQ(face->roi().width, 10);
 
   roi.width = 20;
   pub_r2.publish(roi);
   WAIT;
-  EXPECT_EQ(face->getRoI()->width, 20);
+  EXPECT_EQ(face->roi().width, 20);
 
   // RoI of face A published *before* face A is published in /faces/tracked,
   // but should still get its RoI, as /roi is latched.
@@ -179,9 +178,9 @@ TEST(libhri, GetFacesRoi)
   auto face_b = faces["B"].lock();
 
   EXPECT_EQ(face_a->ns(), "/humans/faces/A");
-  EXPECT_EQ(face_a->getRoI()->width, 20);
+  EXPECT_EQ(face_a->roi().width, 20);
   EXPECT_EQ(face_b->ns(), "/humans/faces/B");
-  EXPECT_EQ(face_b->getRoI()->width, 20);
+  EXPECT_EQ(face_b->roi().width, 20);
 
   spinner.stop();
 }
