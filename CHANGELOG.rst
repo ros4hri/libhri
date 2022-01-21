@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.3 (2022-01-21)
+------------------
 * Body::{getRoI->roi} + RoI not optional + add Body::cropped
 * Contributors: Séverin Lemaignan
 
