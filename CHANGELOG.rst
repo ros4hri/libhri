@@ -2,6 +2,14 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Face::{getRoI->roi} + RoI not optional + add Face::cropped
+  In the latest revision of the ROS4HRI spec, the region of interest is
+  always expected to be available (as well as the cropped face). As such,
+  no point in using a boost::optional there.
+* Contributors: Séverin Lemaignan
+
 0.2.1 (2022-01-14)
 ------------------
 * replace hri_msgs::RegionOfInterestStamped by sensor_msgs::RegionOfInterest
