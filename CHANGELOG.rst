@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.2 (2022-01-21)
+------------------
 * Face::{getRoI->roi} + RoI not optional + add Face::cropped
   In the latest revision of the ROS4HRI spec, the region of interest is
   always expected to be available (as well as the cropped face). As such,
