@@ -31,11 +31,14 @@
 #define HRI_BODY_H
 
 #include <sensor_msgs/RegionOfInterest.h>
+#include <sensor_msgs/Image.h>
 #include <memory>
 #include <boost/optional.hpp>
 
 #include "base.h"
 #include "ros/subscriber.h"
+
+#include <opencv2/core.hpp>
 
 namespace hri
 {
@@ -57,14 +60,9 @@ public:
    *
    * for (auto const& body : bodies)
    * {
-   *   auto roi = body.second.lock()->getRoI();
-   *   if (roi) {
-   *     cout << "Size of body_" << body.first << ": ";
-   *     cout << roi->roi.width << "x" << roi->roi.height << endl;
-   *   }
-   *   else {
-   *     cerr << "Body " << body.first << " has no published RoI.";
-   *   }
+   *   auto roi = body.second.lock()->roi();
+   *   cout << "Size of body_" << body.first << ": ";
+   *   cout << roi.width << "x" << roi.height << endl;
    * }
    * ```
    *
@@ -74,7 +72,11 @@ public:
    * The header's timestamp is the same as a the timestamp of the original
    * image from which the body has been detected.
    */
-  boost::optional<sensor_msgs::RegionOfInterest> getRoI() const;
+  cv::Rect roi() const;
+
+  /** \brief Returns the body image, cropped from the source image.
+   */
+  cv::Mat cropped() const;
 
   void init() override;
 
@@ -83,10 +85,15 @@ private:
 
   ros::Subscriber roi_subscriber_;
   void onRoI(sensor_msgs::RegionOfInterestConstPtr roi);
-  sensor_msgs::RegionOfInterestConstPtr roi_;
+  cv::Rect roi_;
+
+  ros::Subscriber cropped_subscriber_;
+  void onCropped(sensor_msgs::ImageConstPtr roi);
+  cv::Mat cropped_;
 };
 
 typedef std::shared_ptr<Body> BodyPtr;
+typedef std::weak_ptr<Body> BodyWeakPtr;
 
 }  // namespace hri
 #endif

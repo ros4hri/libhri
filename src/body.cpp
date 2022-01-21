@@ -28,6 +28,8 @@
 
 #include "hri/body.h"
 
+#include <cv_bridge/cv_bridge.h>
+
 using namespace std;
 using namespace hri;
 
@@ -37,18 +39,6 @@ Body::~Body()
   roi_subscriber_.shutdown();
 }
 
-boost::optional<sensor_msgs::RegionOfInterest> Body::getRoI() const
-{
-  if (roi_)
-  {
-    return *roi_;
-  }
-  else
-  {
-    return boost::none;
-  }
-}
-
 void Body::init()
 {
   ns_ = "/humans/bodies/" + id_;
@@ -56,10 +46,29 @@ void Body::init()
 
   roi_subscriber_ = node_.subscribe<sensor_msgs::RegionOfInterest>(
       ns_ + "/roi", 1, bind(&Body::onRoI, this, _1));
+
+  cropped_subscriber_ = node_.subscribe<sensor_msgs::Image>(
+      ns_ + "/cropped", 1, bind(&Body::onCropped, this, _1));
 }
 
 
 void Body::onRoI(sensor_msgs::RegionOfInterestConstPtr roi)
 {
-  roi_ = roi;
+  roi_ = cv::Rect(roi->x_offset, roi->y_offset, roi->width, roi->height);
 }
+
+cv::Rect Body::roi() const
+{
+  return roi_;
+}
+
+void Body::onCropped(sensor_msgs::ImageConstPtr msg)
+{
+  cropped_ = cv_bridge::toCvShare(msg)->image;
+}
+
+cv::Mat Body::cropped() const
+{
+  return cropped_;
+}
+

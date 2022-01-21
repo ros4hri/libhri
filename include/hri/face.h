@@ -31,7 +31,6 @@
 #define HRI_FACE_H
 
 #include <hri_msgs/PointOfInterest2D.h>
-
 #include <sensor_msgs/RegionOfInterest.h>
 #include <sensor_msgs/Image.h>
 #include <memory>
@@ -70,7 +69,7 @@ public:
    * {
    *   auto roi = face.second.lock()->roi();
    *   cout << "Size of face_" << face.first << ": ";
-   *   cout << roi->width << "x" << roi->height << endl;
+   *   cout << roi.width << "x" << roi.height << endl;
    * }
    * ```
    *

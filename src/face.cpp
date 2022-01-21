@@ -27,6 +27,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "hri/face.h"
+
 #include <cv_bridge/cv_bridge.h>
 
 using namespace std;
