@@ -40,7 +40,7 @@ using namespace ros;
 using namespace hri;
 
 // waiting time for the libhri callback to process their inputs
-#define WAIT std::this_thread::sleep_for(std::chrono::milliseconds(5))
+#define WAIT std::this_thread::sleep_for(std::chrono::milliseconds(10))
 
 TEST(libhri, GetFaces)
 {
@@ -56,9 +56,9 @@ TEST(libhri, GetFaces)
 
     pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
 
-    EXPECT_EQ(pub.getNumSubscribers(), 1U);
+    ASSERT_EQ(pub.getNumSubscribers(), 1U);
 
-    EXPECT_EQ(hri_listener.getFaces().size(), 0);
+    ASSERT_EQ(hri_listener.getFaces().size(), 0);
 
     auto ids = hri_msgs::IdsList();
 
@@ -99,7 +99,7 @@ TEST(libhri, GetFaces)
     EXPECT_TRUE(faces.find("A") == faces.end());
     ASSERT_TRUE(faces.find("B") != faces.end());
 
-    weak_ptr<Face> face_b = faces["B"];
+    weak_ptr<const Face> face_b = faces["B"];
     EXPECT_FALSE(face_b.expired());  // face B exists!
 
     ROS_INFO("[]");
@@ -148,6 +148,7 @@ TEST(libhri, GetFacesRoi)
 
 
   auto faces = hri_listener.getFaces();
+  ASSERT_FALSE(faces["B"].expired());  // face still B exists!
   auto face = faces["B"].lock();
 
   EXPECT_EQ(face->ns(), "/humans/faces/B");
@@ -199,7 +200,7 @@ TEST(libhri, GetBodies)
 
     pub = nh.advertise<hri_msgs::IdsList>("/humans/bodies/tracked", 1);
 
-    EXPECT_EQ(pub.getNumSubscribers(), 1U);
+    ASSERT_EQ(pub.getNumSubscribers(), 1U);
 
 
     auto ids = hri_msgs::IdsList();
@@ -241,7 +242,7 @@ TEST(libhri, GetBodies)
     EXPECT_TRUE(bodies.find("A") == bodies.end());
     ASSERT_TRUE(bodies.find("B") != bodies.end());
 
-    weak_ptr<Body> body_b = bodies["B"];
+    weak_ptr<const Body> body_b = bodies["B"];
     EXPECT_FALSE(body_b.expired());  // body B exists!
 
     ROS_INFO("[]");
@@ -251,6 +252,150 @@ TEST(libhri, GetBodies)
     EXPECT_EQ(hri_listener.getBodies().size(), 0U);
 
     EXPECT_TRUE(body_b.expired());  // body B does not exist anymore!
+  }
+
+  EXPECT_EQ(pub.getNumSubscribers(), 0);
+  spinner.stop();
+}
+
+TEST(libhri, GetVoices)
+{
+  NodeHandle nh;
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  Publisher pub;
+
+  {
+    HRIListener hri_listener;
+
+    pub = nh.advertise<hri_msgs::IdsList>("/humans/voices/tracked", 1);
+
+    ASSERT_EQ(pub.getNumSubscribers(), 1U);
+
+
+    auto ids = hri_msgs::IdsList();
+
+    ROS_INFO("[A]");
+    ids.ids = { "A" };
+    pub.publish(ids);
+    WAIT;
+    auto voices = hri_listener.getVoices();
+    EXPECT_EQ(voices.size(), 1U);
+    ASSERT_TRUE(voices.find("A") != voices.end());
+    EXPECT_TRUE(voices["A"].lock()->id() == "A");
+
+    ROS_INFO("[A]");
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getVoices().size(), 1U);
+
+    ROS_INFO("[A,B]");
+    ids.ids = { "A", "B" };
+    pub.publish(ids);
+    WAIT;
+    voices = hri_listener.getVoices();
+    EXPECT_EQ(voices.size(), 2U);
+    EXPECT_TRUE(voices.find("A") != voices.end());
+    EXPECT_TRUE(voices.find("B") != voices.end());
+
+    ROS_INFO("[A,B]");
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getVoices().size(), 2U);
+
+    ROS_INFO("[B]");
+    ids.ids = { "B" };
+    pub.publish(ids);
+    WAIT;
+    voices = hri_listener.getVoices();
+    EXPECT_EQ(voices.size(), 1U);
+    EXPECT_TRUE(voices.find("A") == voices.end());
+    ASSERT_TRUE(voices.find("B") != voices.end());
+
+    weak_ptr<const Voice> voice_b = voices["B"];
+    EXPECT_FALSE(voice_b.expired());  // voice B exists!
+
+    ROS_INFO("[]");
+    ids.ids = {};
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getVoices().size(), 0U);
+
+    EXPECT_TRUE(voice_b.expired());  // voice B does not exist anymore!
+  }
+
+  EXPECT_EQ(pub.getNumSubscribers(), 0);
+  spinner.stop();
+}
+
+TEST(libhri, GetPersons)
+{
+  NodeHandle nh;
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  Publisher pub;
+
+  {
+    HRIListener hri_listener;
+
+    pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
+
+    ASSERT_EQ(pub.getNumSubscribers(), 1U);
+
+
+    auto ids = hri_msgs::IdsList();
+
+    ROS_INFO("[A]");
+    ids.ids = { "A" };
+    pub.publish(ids);
+    WAIT;
+    auto persons = hri_listener.getPersons();
+    EXPECT_EQ(persons.size(), 1U);
+    ASSERT_TRUE(persons.find("A") != persons.end());
+    EXPECT_TRUE(persons["A"]->id() == "A");
+
+    ROS_INFO("[A]");
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getPersons().size(), 1U);
+
+    ROS_INFO("[A,B]");
+    ids.ids = { "A", "B" };
+    pub.publish(ids);
+    WAIT;
+    persons = hri_listener.getPersons();
+    EXPECT_EQ(persons.size(), 2U);
+    EXPECT_TRUE(persons.find("A") != persons.end());
+    EXPECT_TRUE(persons.find("B") != persons.end());
+
+    ROS_INFO("[A,B]");
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getPersons().size(), 2U);
+
+    ROS_INFO("[B]");
+    ids.ids = { "B" };
+    pub.publish(ids);
+    WAIT;
+    persons = hri_listener.getPersons();
+    EXPECT_EQ(persons.size(), 1U);
+    EXPECT_TRUE(persons.find("A") == persons.end());
+    ASSERT_TRUE(persons.find("B") != persons.end());
+
+    shared_ptr<const Person> person_b = persons["B"];
+    EXPECT_TRUE(person_b != nullptr);  // person B exists!
+
+    ROS_INFO("[]");
+    ids.ids = {};
+    pub.publish(ids);
+    WAIT;
+    EXPECT_EQ(hri_listener.getPersons().size(), 0U);
+
+    EXPECT_TRUE(person_b != nullptr);  // person B still exists!
   }
 
   EXPECT_EQ(pub.getNumSubscribers(), 0);

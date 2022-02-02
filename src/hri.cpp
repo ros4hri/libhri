@@ -33,6 +33,8 @@
 #include <memory>
 #include <tuple>
 #include <utility>
+#include "hri/body.h"
+#include "hri/face.h"
 #include "hri_msgs/IdsList.h"
 
 using namespace std;
@@ -56,10 +58,12 @@ HRIListener::~HRIListener()
 }
 
 
-map<ID, weak_ptr<Face>> HRIListener::getFaces()
+map<ID, FaceWeakConstPtr> HRIListener::getFaces() const
 {
-  map<ID, weak_ptr<Face>> result;
+  map<ID, FaceWeakConstPtr> result;
 
+  // creates a map of *weak* pointers from the internally managed list of
+  // shared pointers
   for (auto const& f : faces)
   {
     result[f.first] = f.second;
@@ -68,16 +72,37 @@ map<ID, weak_ptr<Face>> HRIListener::getFaces()
   return result;
 }
 
-map<ID, weak_ptr<Body>> HRIListener::getBodies()
+map<ID, BodyWeakConstPtr> HRIListener::getBodies() const
 {
-  map<ID, weak_ptr<Body>> result;
+  map<ID, BodyWeakConstPtr> result;
 
+  // creates a map of *weak* pointers from the internally managed list of
+  // shared pointers
   for (auto const& f : bodies)
   {
     result[f.first] = f.second;
   }
 
   return result;
+}
+
+map<ID, VoiceWeakConstPtr> HRIListener::getVoices() const
+{
+  map<ID, VoiceWeakConstPtr> result;
+
+  // creates a map of *weak* pointers from the internally managed list of
+  // shared pointers
+  for (auto const& f : voices)
+  {
+    result[f.first] = f.second;
+  }
+
+  return result;
+}
+
+map<ID, PersonConstPtr> HRIListener::getPersons() const
+{
+  return persons;
 }
 
 void HRIListener::init()
@@ -91,6 +116,14 @@ void HRIListener::init()
   feature_subscribers_[FeatureType::body] = node_.subscribe<hri_msgs::IdsList>(
       "/humans/bodies/tracked", 1,
       bind(&HRIListener::onTrackedFeature, this, FeatureType::body, _1));
+
+  feature_subscribers_[FeatureType::body] = node_.subscribe<hri_msgs::IdsList>(
+      "/humans/voices/tracked", 1,
+      bind(&HRIListener::onTrackedFeature, this, FeatureType::voice, _1));
+
+  feature_subscribers_[FeatureType::body] = node_.subscribe<hri_msgs::IdsList>(
+      "/humans/persons/tracked", 1,
+      bind(&HRIListener::onTrackedFeature, this, FeatureType::person, _1));
 }
 
 void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPtr tracked)
@@ -124,6 +157,16 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
       }
       break;
     case FeatureType::voice:
+      for (auto const& kv : voices)
+      {
+        current_ids.insert(kv.first);
+      }
+      break;
+    case FeatureType::person:
+      for (auto const& kv : persons)
+      {
+        current_ids.insert(kv.first);
+      }
       break;
   }
 
@@ -160,6 +203,16 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
       }
       break;
     case FeatureType::voice:
+      for (auto id : to_remove)
+      {
+        voices.erase(id);
+      }
+      break;
+    case FeatureType::person:
+      for (auto id : to_remove)
+      {
+        persons.erase(id);
+      }
       break;
   }
 
@@ -182,6 +235,20 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
       }
       break;
     case FeatureType::voice:
+      for (auto id : to_add)
+      {
+        auto voice = make_shared<Voice>(id, node_);
+        voice->init();
+        voices.insert({ id, voice });
+      }
+      break;
+    case FeatureType::person:
+      for (auto id : to_add)
+      {
+        auto person = make_shared<Person>(id, this, node_);
+        person->init();
+        persons.insert({ id, person });
+      }
       break;
   }
 }

@@ -93,7 +93,9 @@ private:
 };
 
 typedef std::shared_ptr<Body> BodyPtr;
+typedef std::shared_ptr<const Body> BodyConstPtr;
 typedef std::weak_ptr<Body> BodyWeakPtr;
+typedef std::weak_ptr<const Body> BodyWeakConstPtr;
 
 }  // namespace hri
 #endif

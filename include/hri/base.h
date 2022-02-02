@@ -45,7 +45,7 @@ public:
    * non-trivial, and typically non-reentrant, logic to subscribe/unsubcribe
    * HRI-related topics.
    */
-  FeatureTracker(ID id, const ros::NodeHandle& nh) : id_(id), node_(nh)
+  FeatureTracker(ID id, const ros::NodeHandle& nh) : id_(id), node_(nh), ns_("")
   {
   }
 

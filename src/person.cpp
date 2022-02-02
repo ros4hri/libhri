@@ -28,6 +28,8 @@
 
 #include "hri/person.h"
 
+#include "hri/hri.h"
+
 using namespace std;
 using namespace hri;
 
@@ -40,5 +42,29 @@ void Person::init()
 {
   ns_ = "/humans/persons/" + id_;
   ROS_DEBUG_STREAM("New person detected: " << ns_);
+}
+
+FaceWeakConstPtr Person::face() const
+{
+  if (listener_->getFaces().count(face_id) != 0)
+    return listener_->getFaces()[face_id];
+  else
+    return FaceWeakConstPtr();
+}
+
+BodyWeakConstPtr Person::body() const
+{
+  if (listener_->getBodies().count(body_id) != 0)
+    return listener_->getBodies()[body_id];
+  else
+    return BodyWeakConstPtr();
+}
+
+VoiceWeakConstPtr Person::voice() const
+{
+  if (listener_->getVoices().count(voice_id) != 0)
+    return listener_->getVoices()[voice_id];
+  else
+    return VoiceWeakConstPtr();
 }
 

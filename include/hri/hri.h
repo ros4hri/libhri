@@ -40,6 +40,7 @@
 #include "base.h"
 #include "face.h"
 #include "body.h"
+#include "voice.h"
 #include "person.h"
 #include "ros/subscriber.h"
 
@@ -73,7 +74,8 @@ public:
   {
     face,
     body,
-    voice
+    voice,
+    person
   };
 
   HRIListener();
@@ -82,19 +84,29 @@ public:
 
   /** \brief Provided callback is called every time a new person is detected.
    */
-  void subscribe(std::function<void(const Person&)>& callback);
+  // void subscribe(std::function<void(const Person&)>& callback);
 
   /** \brief Returns the list of currently detected faces, mapped to their IDs
    *
-   * Faces are returned as std::weak_ptr as they may disappear at any point.
+   * Faces are returned as constant std::weak_ptr as they may disappear at any point.
    */
-  std::map<ID, std::weak_ptr<Face>> getFaces();
+  std::map<ID, FaceWeakConstPtr> getFaces() const;
 
   /** \brief Returns the list of currently detected bodies, mapped to their IDs
    *
-   * Bodies are returned as std::weak_ptr as they may disappear at any point.
+   * Bodies are returned as constant std::weak_ptr as they may disappear at any point.
    */
-  std::map<ID, std::weak_ptr<Body>> getBodies();
+  std::map<ID, BodyWeakConstPtr> getBodies() const;
+
+  /** \brief Returns the list of currently detected voices, mapped to their IDs
+   *
+   * Voices are returned as constant std::weak_ptr as they may disappear at any point.
+   */
+  std::map<ID, VoiceWeakConstPtr> getVoices() const;
+
+  /** \brief Returns the list of currently detected persons, mapped to their IDs
+   */
+  std::map<ID, PersonConstPtr> getPersons() const;
 
 
 private:
@@ -106,8 +118,10 @@ private:
 
   std::map<FeatureType, ros::Subscriber> feature_subscribers_;
 
-  std::map<ID, std::shared_ptr<Face>> faces;
-  std::map<ID, std::shared_ptr<Body>> bodies;
+  std::map<ID, FaceConstPtr> faces;
+  std::map<ID, BodyConstPtr> bodies;
+  std::map<ID, VoiceConstPtr> voices;
+  std::map<ID, PersonConstPtr> persons;
 };
 
 }  // namespace hri

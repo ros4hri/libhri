@@ -22,40 +22,65 @@
 #define HRI_PERSON_H
 
 #include <geometry_msgs/TransformStamped.h>
+#include <memory>
 
 #include "base.h"
+#include "face.h"
+#include "body.h"
+#include "voice.h"
 
 namespace hri
 {
-class Person : FeatureTracker
+class HRIListener;
+
+
+class Person : public FeatureTracker
 {
 public:
-  using FeatureTracker::FeatureTracker;  // inherits FeatureTracker's ctor
+  Person(ID id, const HRIListener* listener, const ros::NodeHandle& nh)
+    : FeatureTracker{ id, nh }, listener_(listener)
+  {
+  }
 
   virtual ~Person();
 
-  ID getFace() const
-  {
-    return face_id;
-  }
-  ID getBody() const
-  {
-    return body_id;
-  }
-  ID getVoice() const
-  {
-    return voice_id;
-  }
+  /* returns a (weak, constant) pointer to the face of this person, or
+   * a nullptr if this person is currently not associated to any detected face.
+   */
+  FaceWeakConstPtr face() const;
+
+  /* returns a (weak, constant) pointer to the body of this person, or
+   * a nullptr if this person is currently not associated to any detected body.
+   */
+  BodyWeakConstPtr body() const;
+
+  /* returns a (weak, constant) pointer to the voice of this person, or
+   * a nullptr if this person is currently not associated to any detected voice.
+   */
+  VoiceWeakConstPtr voice() const;
+
 
   geometry_msgs::TransformStamped getTransform() const;
 
   void init() override;
 
 protected:
+  // we use a raw pointer here. `this` is owned by the pointed HRIListener, so
+  // `this` would normally be destroyed before HRIListener (in reality, a
+  // pointer to `this` *might* outlive `HRIListener` -- make sure HRIListener
+  // is destroyed after all pointers to this person are released.
+  const HRIListener* listener_;
+
   ID face_id;
   ID body_id;
   ID voice_id;
 };
+
+typedef std::shared_ptr<Person> PersonPtr;
+typedef std::shared_ptr<const Person> PersonConstPtr;
+typedef std::weak_ptr<Person> PersonWeakPtr;
+typedef std::weak_ptr<const Person> PersonWeakConstPtr;
+
 
 }  // namespace hri
 
