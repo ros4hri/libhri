@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.1 (2022-02-07)
+------------------
 * add/update BSD license
 * Contributors: Séverin Lemaignan
 
