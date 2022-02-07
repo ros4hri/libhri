@@ -70,14 +70,6 @@ namespace hri
 class HRIListener
 {
 public:
-  enum class FeatureType
-  {
-    face,
-    body,
-    voice,
-    person
-  };
-
   HRIListener();
 
   ~HRIListener();

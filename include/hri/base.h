@@ -30,6 +30,14 @@ namespace hri
 {
 typedef std::string ID;
 
+enum FeatureType
+{
+  person,
+  face,
+  body,
+  voice
+};
+
 class FeatureTracker
 {
 public:
