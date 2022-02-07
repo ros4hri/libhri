@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>hri</name>
-  <version>0.2.3</version>
+  <version>0.3.0</version>
   <description>A wrapper library around the ROS4HRI ROS topics</description>
 
   <maintainer email="severin.lemaignan@pal-robotics.com">Séverin Lemaignan</maintainer>
