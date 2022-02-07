@@ -2,6 +2,12 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* expose enum with the 4 feature types person,face,body,voice
+* add voices and persons + improve const semantics
+* Contributors: Séverin Lemaignan
+
 0.2.3 (2022-01-21)
 ------------------
 * Body::{getRoI->roi} + RoI not optional + add Body::cropped
