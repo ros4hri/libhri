@@ -26,6 +26,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include <std_msgs/String.h>
+
 #include "hri/person.h"
 
 #include "hri/hri.h"
@@ -42,6 +44,16 @@ void Person::init()
 {
   ns_ = "/humans/persons/" + id_;
   ROS_DEBUG_STREAM("New person detected: " << ns_);
+
+  face_id_subscriber_ = node_.subscribe<std_msgs::String>(
+      ns_ + "/face_id", 1, [&](const std_msgs::StringConstPtr msg) { face_id = msg->data; });
+
+  body_id_subscriber_ = node_.subscribe<std_msgs::String>(
+      ns_ + "/body_id", 1, [&](const std_msgs::StringConstPtr msg) { body_id = msg->data; });
+
+  voice_id_subscriber_ = node_.subscribe<std_msgs::String>(
+      ns_ + "/voice_id", 1,
+      [&](const std_msgs::StringConstPtr msg) { voice_id = msg->data; });
 }
 
 FaceWeakConstPtr Person::face() const

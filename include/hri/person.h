@@ -82,6 +82,10 @@ protected:
   ID face_id;
   ID body_id;
   ID voice_id;
+
+  ros::Subscriber face_id_subscriber_;
+  ros::Subscriber body_id_subscriber_;
+  ros::Subscriber voice_id_subscriber_;
 };
 
 typedef std::shared_ptr<Person> PersonPtr;
