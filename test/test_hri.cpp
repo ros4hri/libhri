@@ -33,6 +33,7 @@
 #include <chrono>
 #include <memory>
 #include "hri_msgs/IdsList.h"
+#include "std_msgs/String.h"
 #include "sensor_msgs/RegionOfInterest.h"
 
 using namespace std;
@@ -399,6 +400,50 @@ TEST(libhri, GetPersons)
   }
 
   EXPECT_EQ(pub.getNumSubscribers(), 0);
+  spinner.stop();
+}
+
+TEST(libhri, PersonAttributes)
+{
+  NodeHandle nh;
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  HRIListener hri_listener;
+
+  auto person_pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
+  auto face_pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
+  auto person_face_pub = nh.advertise<std_msgs::String>("/humans/persons/p1/face_id", 1);
+
+  auto person_ids = hri_msgs::IdsList();
+  person_ids.ids = { "p1" };
+  person_pub.publish(person_ids);
+
+  auto face_ids = hri_msgs::IdsList();
+  face_ids.ids = { "f1", "f2" };
+  face_pub.publish(face_ids);
+
+  WAIT;
+
+  auto face0 = hri_listener.getPersons()["p1"]->face();
+
+  ASSERT_EQ(face0.lock(), nullptr);
+  ASSERT_TRUE(face0.expired());
+
+  auto face_id = std_msgs::String();
+  face_id.data = "f1";
+
+  person_face_pub.publish(face_id);
+
+  WAIT;
+
+  auto face1 = hri_listener.getPersons()["p1"]->face();
+
+  ASSERT_NE(face1.lock(), nullptr);
+  ASSERT_FALSE(face1.expired());
+  ASSERT_EQ(face1.lock()->id(), "f1");
+
   spinner.stop();
 }
 
