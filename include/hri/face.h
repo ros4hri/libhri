@@ -31,6 +31,7 @@
 #define HRI_FACE_H
 
 #include <hri_msgs/PointOfInterest2D.h>
+#include <hri_msgs/FacialLandmarks.h>
 #include <sensor_msgs/RegionOfInterest.h>
 #include <sensor_msgs/Image.h>
 #include <memory>
@@ -92,7 +93,7 @@ public:
    * Constants defined in hri_msgs/FacialLandmarks.h can be used to access
    * specific points on the face.
    */
-  boost::optional<std::array<hri_msgs::PointOfInterest2D, 66>> facialLandmarks() const
+  boost::optional<std::array<hri_msgs::PointOfInterest2D, 70>> facialLandmarks() const
   {
     return facial_landmarks_;
   }
@@ -127,7 +128,10 @@ private:
   void onCropped(sensor_msgs::ImageConstPtr roi);
   cv::Mat cropped_;
 
-  std::array<hri_msgs::PointOfInterest2D, 66> facial_landmarks_;
+  ros::Subscriber landmarks_subscriber_;
+  void onLandmarks(hri_msgs::FacialLandmarksConstPtr landmarks);
+  std::array<hri_msgs::PointOfInterest2D, 70> facial_landmarks_;
+
   std::array<IntensityConfidence, 99> facial_action_units_;
 };
 
