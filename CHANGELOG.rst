@@ -2,6 +2,16 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Facial Landmarks implementation
+  Implementation of methods and structures required to access the
+  facial landmarks
+  Face Landmarks object size correction
+* add tests for the person.face_id attribute
+* actually subscribe to the person's face/body/voice id updates
+* Contributors: Séverin Lemaignan, lorenzoferrini
+
 0.3.1 (2022-02-07)
 ------------------
 * add/update BSD license
