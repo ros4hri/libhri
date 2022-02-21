@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.0 (2022-02-21)
+------------------
 * Facial Landmarks implementation
   Implementation of methods and structures required to access the
   facial landmarks
