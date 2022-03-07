@@ -2,6 +2,11 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed wrong feature subscribers indexing
+* Contributors: lorenzoferrini
+
 0.4.0 (2022-02-21)
 ------------------
 * Facial Landmarks implementation
