@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.1 (2022-03-07)
+------------------
 * Fixed wrong feature subscribers indexing
 * Contributors: lorenzoferrini
 
