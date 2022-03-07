@@ -117,11 +117,11 @@ void HRIListener::init()
       "/humans/bodies/tracked", 1,
       bind(&HRIListener::onTrackedFeature, this, FeatureType::body, _1));
 
-  feature_subscribers_[FeatureType::body] = node_.subscribe<hri_msgs::IdsList>(
+  feature_subscribers_[FeatureType::voice] = node_.subscribe<hri_msgs::IdsList>(
       "/humans/voices/tracked", 1,
       bind(&HRIListener::onTrackedFeature, this, FeatureType::voice, _1));
 
-  feature_subscribers_[FeatureType::body] = node_.subscribe<hri_msgs::IdsList>(
+  feature_subscribers_[FeatureType::person] = node_.subscribe<hri_msgs::IdsList>(
       "/humans/persons/tracked", 1,
       bind(&HRIListener::onTrackedFeature, this, FeatureType::person, _1));
 }
@@ -130,7 +130,7 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
 {
   // update the current list of tracked feature (face, body...) with
   // what has just been received on the respective /tracked topic.
-
+  
   set<ID> new_ids;
   for (auto const& id : tracked->ids)
   {
