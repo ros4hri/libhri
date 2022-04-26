@@ -85,6 +85,13 @@ public:
    */
   cv::Mat cropped() const;
 
+  /** \brief Returns the face image, if necessary scaled, centered and 0-padded
+   * to match the /humans/faces/width and /humans/faces/height ROS parameters.
+   *
+   * In addition, the face is rotated so that the eyes are horizontal.
+   */
+  cv::Mat aligned() const;
+
   /** \brief the list of the 66 facial landmarks (2D points, expressed in normalised coordinates).
    *
    * The location of the landmarks is defined here:
@@ -127,6 +134,10 @@ private:
   ros::Subscriber cropped_subscriber_;
   void onCropped(sensor_msgs::ImageConstPtr roi);
   cv::Mat cropped_;
+
+  ros::Subscriber aligned_subscriber_;
+  void onAligned(sensor_msgs::ImageConstPtr roi);
+  cv::Mat aligned_;
 
   ros::Subscriber landmarks_subscriber_;
   void onLandmarks(hri_msgs::FacialLandmarksConstPtr landmarks);

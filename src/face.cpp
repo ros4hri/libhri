@@ -50,8 +50,12 @@ void Face::init()
   cropped_subscriber_ = node_.subscribe<sensor_msgs::Image>(
       ns_ + "/cropped", 1, bind(&Face::onCropped, this, _1));
 
+  aligned_subscriber_ = node_.subscribe<sensor_msgs::Image>(
+      ns_ + "/aligned", 1, bind(&Face::onAligned, this, _1));
+
+
   landmarks_subscriber_ = node_.subscribe<hri_msgs::FacialLandmarks>(
-      ns_ + "/landmarks", 1, bind(&Face::onLandmarks, this, _1));  
+      ns_ + "/landmarks", 1, bind(&Face::onLandmarks, this, _1));
 }
 
 void Face::onRoI(sensor_msgs::RegionOfInterestConstPtr roi)
@@ -74,11 +78,22 @@ cv::Mat Face::cropped() const
   return cropped_;
 }
 
+void Face::onAligned(sensor_msgs::ImageConstPtr msg)
+{
+  aligned_ = cv_bridge::toCvShare(msg)->image;
+}
+
+cv::Mat Face::aligned() const
+{
+  return aligned_;
+}
+
 void Face::onLandmarks(hri_msgs::FacialLandmarksConstPtr msg)
 {
   int i = 0;
 
-  for(auto landmark : msg->landmarks){
+  for (auto landmark : msg->landmarks)
+  {
     facial_landmarks_[i].x = landmark.x;
     facial_landmarks_[i].y = landmark.y;
     facial_landmarks_[i].c = landmark.c;
