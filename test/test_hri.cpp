@@ -27,11 +27,13 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <hri/hri.h>
 #include <ros/ros.h>
 #include <thread>
 #include <chrono>
 #include <memory>
+#include "hri/face.h"
 #include "hri_msgs/IdsList.h"
 #include "std_msgs/String.h"
 #include "sensor_msgs/RegionOfInterest.h"
@@ -443,6 +445,45 @@ TEST(libhri, PersonAttributes)
   ASSERT_NE(face1.lock(), nullptr);
   ASSERT_FALSE(face1.expired());
   ASSERT_EQ(face1.lock()->id(), "f1");
+
+  spinner.stop();
+}
+
+
+TEST(libhri, FaceCallbacks)
+{
+  NodeHandle nh;
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  HRIListener hri_listener;
+
+  // create a mock callback
+  testing::MockFunction<void(FaceWeakConstPtr)> face_callback;
+  hri_listener.onFace(face_callback.AsStdFunction());
+
+  auto face_pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
+  auto face_ids = hri_msgs::IdsList();
+
+
+  EXPECT_CALL(face_callback, Call).Times(1);
+  face_ids.ids = { "f1" };
+  face_pub.publish(face_ids);
+
+  WAIT;
+
+  EXPECT_CALL(face_callback, Call).Times(1);
+  face_ids.ids = { "f1", "f2" };
+  face_pub.publish(face_ids);
+
+  WAIT;
+
+  EXPECT_CALL(face_callback, Call).Times(2);
+  face_ids.ids = { "f3", "f4" };
+  face_pub.publish(face_ids);
+
+  WAIT;
 
   spinner.stop();
 }

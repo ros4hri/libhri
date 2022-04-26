@@ -130,7 +130,7 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
 {
   // update the current list of tracked feature (face, body...) with
   // what has just been received on the respective /tracked topic.
-  
+
   set<ID> new_ids;
   for (auto const& id : tracked->ids)
   {
@@ -224,6 +224,12 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
         auto face = make_shared<Face>(id, node_);
         face->init();
         faces.insert({ id, face });
+
+        // invoke all the callbacks
+        for (auto& cb : face_callbacks)
+        {
+          cb(face);
+        }
       }
       break;
     case FeatureType::body:

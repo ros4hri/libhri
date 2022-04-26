@@ -74,15 +74,19 @@ public:
 
   ~HRIListener();
 
-  /** \brief Provided callback is called every time a new person is detected.
-   */
-  // void subscribe(std::function<void(const Person&)>& callback);
-
   /** \brief Returns the list of currently detected faces, mapped to their IDs
    *
    * Faces are returned as constant std::weak_ptr as they may disappear at any point.
    */
   std::map<ID, FaceWeakConstPtr> getFaces() const;
+
+  /** \brief Registers a callback function, to be invoked everytime a new face
+   * is detected.
+   */
+  void onFace(std::function<void(FaceWeakConstPtr)> callback)
+  {
+    face_callbacks.push_back(callback);
+  }
 
   /** \brief Returns the list of currently detected bodies, mapped to their IDs
    *
@@ -111,6 +115,8 @@ private:
   std::map<FeatureType, ros::Subscriber> feature_subscribers_;
 
   std::map<ID, FaceConstPtr> faces;
+  std::vector<std::function<void(FaceWeakConstPtr)>> face_callbacks;
+
   std::map<ID, BodyConstPtr> bodies;
   std::map<ID, VoiceConstPtr> voices;
   std::map<ID, PersonConstPtr> persons;
