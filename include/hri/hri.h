@@ -94,15 +94,41 @@ public:
    */
   std::map<ID, BodyWeakConstPtr> getBodies() const;
 
+  /** \brief Registers a callback function, to be invoked everytime a new body
+   * is detected.
+   */
+  void onBody(std::function<void(BodyWeakConstPtr)> callback)
+  {
+    body_callbacks.push_back(callback);
+  }
+
   /** \brief Returns the list of currently detected voices, mapped to their IDs
    *
    * Voices are returned as constant std::weak_ptr as they may disappear at any point.
    */
   std::map<ID, VoiceWeakConstPtr> getVoices() const;
 
+  /** \brief Registers a callback function, to be invoked everytime a new voice
+   * is detected.
+   */
+  void onVoice(std::function<void(VoiceWeakConstPtr)> callback)
+  {
+    voice_callbacks.push_back(callback);
+  }
+
+
   /** \brief Returns the list of currently detected persons, mapped to their IDs
    */
   std::map<ID, PersonConstPtr> getPersons() const;
+
+  /** \brief Registers a callback function, to be invoked everytime a new person
+   * is detected.
+   */
+  void onPerson(std::function<void(PersonConstPtr)> callback)
+  {
+    person_callbacks.push_back(callback);
+  }
+
 
 
 private:
@@ -118,8 +144,13 @@ private:
   std::vector<std::function<void(FaceWeakConstPtr)>> face_callbacks;
 
   std::map<ID, BodyConstPtr> bodies;
+  std::vector<std::function<void(BodyWeakConstPtr)>> body_callbacks;
+
   std::map<ID, VoiceConstPtr> voices;
+  std::vector<std::function<void(VoiceWeakConstPtr)>> voice_callbacks;
+
   std::map<ID, PersonConstPtr> persons;
+  std::vector<std::function<void(PersonConstPtr)>> person_callbacks;
 };
 
 }  // namespace hri

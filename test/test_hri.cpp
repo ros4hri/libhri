@@ -43,7 +43,12 @@ using namespace ros;
 using namespace hri;
 
 // waiting time for the libhri callback to process their inputs
-#define WAIT std::this_thread::sleep_for(std::chrono::milliseconds(10))
+#define WAIT std::this_thread::sleep_for(std::chrono::milliseconds(20))
+#define WAIT_DEBUG                                                                       \
+  {                                                                                      \
+    WAIT;                                                                                \
+    cout << "waiting..." << endl;                                                        \
+  }
 
 TEST(libhri, GetFaces)
 {
@@ -137,6 +142,7 @@ TEST(libhri, GetFacesRoi)
   ids.ids = { "A" };
   pub.publish(ids);
   WAIT;
+
   EXPECT_EQ(pub_r1.getNumSubscribers(), 1U)
       << "Face A should have subscribed to /humans/faces/A/roi";
 
@@ -144,6 +150,7 @@ TEST(libhri, GetFacesRoi)
   ids.ids = { "B" };
   pub.publish(ids);
   WAIT;
+
   EXPECT_EQ(pub_r1.getNumSubscribers(), 0U)
       << "Face A is deleted. No one should be subscribed to /humans/faces/A/roi anymore";
   EXPECT_EQ(pub_r2.getNumSubscribers(), 1U)
@@ -151,24 +158,29 @@ TEST(libhri, GetFacesRoi)
 
 
   auto faces = hri_listener.getFaces();
-  ASSERT_FALSE(faces["B"].expired());  // face still B exists!
-  auto face = faces["B"].lock();
-
-  EXPECT_EQ(face->ns(), "/humans/faces/B");
-
-  EXPECT_EQ(face->roi().width, 0);
+  ASSERT_FALSE(faces["B"].expired());  // face B still exists!
 
   auto roi = sensor_msgs::RegionOfInterest();
 
-  roi.width = 10;
-  pub_r2.publish(roi);
-  WAIT;
-  EXPECT_EQ(face->roi().width, 10);
+  {
+    auto face = faces["B"].lock();
+    EXPECT_FALSE(face == nullptr);
 
-  roi.width = 20;
-  pub_r2.publish(roi);
-  WAIT;
-  EXPECT_EQ(face->roi().width, 20);
+    EXPECT_EQ(face->ns(), "/humans/faces/B");
+
+    EXPECT_EQ(face->roi().width, 0);
+
+
+    roi.width = 10;
+    pub_r2.publish(roi);
+    WAIT;
+    EXPECT_EQ(face->roi().width, 10);
+
+    roi.width = 20;
+    pub_r2.publish(roi);
+    WAIT;
+    EXPECT_EQ(face->roi().width, 20);
+  }
 
   // RoI of face A published *before* face A is published in /faces/tracked,
   // but should still get its RoI, as /roi is latched.
@@ -178,13 +190,17 @@ TEST(libhri, GetFacesRoi)
   WAIT;
 
   faces = hri_listener.getFaces();
-  auto face_a = faces["A"].lock();
-  auto face_b = faces["B"].lock();
+  {
+    auto face_a = faces["A"].lock();
+    ASSERT_FALSE(face_a == nullptr);
+    auto face_b = faces["B"].lock();
+    ASSERT_FALSE(face_b == nullptr);
 
-  EXPECT_EQ(face_a->ns(), "/humans/faces/A");
-  EXPECT_EQ(face_a->roi().width, 20);
-  EXPECT_EQ(face_b->ns(), "/humans/faces/B");
-  EXPECT_EQ(face_b->roi().width, 20);
+    EXPECT_EQ(face_a->ns(), "/humans/faces/A");
+    EXPECT_EQ(face_a->roi().width, 20);
+    EXPECT_EQ(face_b->ns(), "/humans/faces/B");
+    EXPECT_EQ(face_b->roi().width, 20);
+  }
 
   spinner.stop();
 }
@@ -450,7 +466,7 @@ TEST(libhri, PersonAttributes)
 }
 
 
-TEST(libhri, FaceCallbacks)
+TEST(libhri, Callbacks)
 {
   NodeHandle nh;
 
@@ -459,29 +475,73 @@ TEST(libhri, FaceCallbacks)
 
   HRIListener hri_listener;
 
-  // create a mock callback
+  // create mock callbacks
   testing::MockFunction<void(FaceWeakConstPtr)> face_callback;
   hri_listener.onFace(face_callback.AsStdFunction());
 
+  testing::MockFunction<void(BodyWeakConstPtr)> body_callback;
+  hri_listener.onBody(body_callback.AsStdFunction());
+
+  testing::MockFunction<void(VoiceWeakConstPtr)> voice_callback;
+  hri_listener.onVoice(voice_callback.AsStdFunction());
+
+  testing::MockFunction<void(PersonConstPtr)> person_callback;
+  hri_listener.onPerson(person_callback.AsStdFunction());
+
+
+  auto ids = hri_msgs::IdsList();
+
   auto face_pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
-  auto face_ids = hri_msgs::IdsList();
+  auto body_pub = nh.advertise<hri_msgs::IdsList>("/humans/bodies/tracked", 1);
+  auto voice_pub = nh.advertise<hri_msgs::IdsList>("/humans/voices/tracked", 1);
+  auto person_pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
 
 
   EXPECT_CALL(face_callback, Call).Times(1);
-  face_ids.ids = { "f1" };
-  face_pub.publish(face_ids);
+  ids.ids = { "id1" };
+  face_pub.publish(ids);
 
   WAIT;
 
   EXPECT_CALL(face_callback, Call).Times(1);
-  face_ids.ids = { "f1", "f2" };
-  face_pub.publish(face_ids);
+  ids.ids = { "id1", "id2" };
+  face_pub.publish(ids);
 
   WAIT;
 
   EXPECT_CALL(face_callback, Call).Times(2);
-  face_ids.ids = { "f3", "f4" };
-  face_pub.publish(face_ids);
+  ids.ids = { "id3", "id4" };
+  face_pub.publish(ids);
+
+  WAIT;
+
+  EXPECT_CALL(body_callback, Call).Times(2);
+  ids.ids = { "id1", "id2" };
+  body_pub.publish(ids);
+
+  WAIT;
+
+  EXPECT_CALL(face_callback, Call).Times(2);
+  EXPECT_CALL(body_callback, Call).Times(1);
+  ids.ids = { "id1", "id2", "id3" };
+  face_pub.publish(ids);
+  body_pub.publish(ids);
+
+  WAIT;
+
+  EXPECT_CALL(face_callback, Call).Times(3);
+  EXPECT_CALL(body_callback, Call).Times(3);
+  ids.ids = { "id5", "id6", "id7" };
+  face_pub.publish(ids);
+  body_pub.publish(ids);
+
+  WAIT;
+
+  EXPECT_CALL(voice_callback, Call).Times(2);
+  EXPECT_CALL(person_callback, Call).Times(2);
+  ids.ids = { "id1", "id2" };
+  voice_pub.publish(ids);
+  person_pub.publish(ids);
 
   WAIT;
 
