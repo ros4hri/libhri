@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.2 (2022-04-27)
+------------------
 * add callback support for faces, bodies, voices, persons.
   Eg, call `onFace(cb)` to register callback invoked everytime a face is detected
 * expose the aligned face in the Face class
