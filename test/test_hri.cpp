@@ -497,48 +497,48 @@ TEST(libhri, Callbacks)
   auto person_pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
 
 
-  EXPECT_CALL(face_callback, Call).Times(1);
+  EXPECT_CALL(face_callback, Call(testing::_)).Times(1);
   ids.ids = { "id1" };
   face_pub.publish(ids);
 
   WAIT;
 
-  EXPECT_CALL(face_callback, Call).Times(1);
+  EXPECT_CALL(face_callback, Call(testing::_)).Times(1);
   ids.ids = { "id1", "id2" };
   face_pub.publish(ids);
 
   WAIT;
 
-  EXPECT_CALL(face_callback, Call).Times(2);
+  EXPECT_CALL(face_callback, Call(testing::_)).Times(2);
   ids.ids = { "id3", "id4" };
   face_pub.publish(ids);
 
   WAIT;
 
-  EXPECT_CALL(body_callback, Call).Times(2);
+  EXPECT_CALL(body_callback, Call(testing::_)).Times(2);
   ids.ids = { "id1", "id2" };
   body_pub.publish(ids);
 
   WAIT;
 
-  EXPECT_CALL(face_callback, Call).Times(2);
-  EXPECT_CALL(body_callback, Call).Times(1);
+  EXPECT_CALL(face_callback, Call(testing::_)).Times(2);
+  EXPECT_CALL(body_callback, Call(testing::_)).Times(1);
   ids.ids = { "id1", "id2", "id3" };
   face_pub.publish(ids);
   body_pub.publish(ids);
 
   WAIT;
 
-  EXPECT_CALL(face_callback, Call).Times(3);
-  EXPECT_CALL(body_callback, Call).Times(3);
+  EXPECT_CALL(face_callback, Call(testing::_)).Times(3);
+  EXPECT_CALL(body_callback, Call(testing::_)).Times(3);
   ids.ids = { "id5", "id6", "id7" };
   face_pub.publish(ids);
   body_pub.publish(ids);
 
   WAIT;
 
-  EXPECT_CALL(voice_callback, Call).Times(2);
-  EXPECT_CALL(person_callback, Call).Times(2);
+  EXPECT_CALL(voice_callback, Call(testing::_)).Times(2);
+  EXPECT_CALL(person_callback, Call(testing::_)).Times(2);
   ids.ids = { "id1", "id2" };
   voice_pub.publish(ids);
   person_pub.publish(ids);
