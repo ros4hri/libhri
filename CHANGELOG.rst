@@ -2,6 +2,12 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix gmock 'Call' syntax for older version of gmock (1.8). This was causing
+  issues on ubuntu 18.04 (ROS melodic)
+* Contributors: Séverin Lemaignan
+
 0.4.2 (2022-04-27)
 ------------------
 * add callback support for faces, bodies, voices, persons.
