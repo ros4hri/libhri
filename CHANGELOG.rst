@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.3 (2022-04-28)
+------------------
 * fix gmock 'Call' syntax for older version of gmock (1.8). This was causing
   issues on ubuntu 18.04 (ROS melodic)
 * Contributors: Séverin Lemaignan
