@@ -70,7 +70,7 @@ cv::Rect Face::roi() const
 
 void Face::onCropped(sensor_msgs::ImageConstPtr msg)
 {
-  cropped_ = cv_bridge::toCvShare(msg)->image;
+  cropped_ = cv_bridge::toCvCopy(msg)->image;  // if using toCvShare, the image ends up shared with aligned_!
 }
 
 cv::Mat Face::cropped() const
@@ -80,7 +80,7 @@ cv::Mat Face::cropped() const
 
 void Face::onAligned(sensor_msgs::ImageConstPtr msg)
 {
-  aligned_ = cv_bridge::toCvShare(msg)->image;
+  aligned_ = cv_bridge::toCvCopy(msg)->image;  // if using toCvShare, the image ends up shared with cropped_!
 }
 
 cv::Mat Face::aligned() const

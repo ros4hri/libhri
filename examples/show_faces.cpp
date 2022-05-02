@@ -28,12 +28,15 @@ int main(int argc, char** argv)
       auto face = f.second.lock();
       if (face)
       {
-        if (face->aligned().empty())
+        if (!face->cropped().empty())
         {
-          continue;
+          cv::imshow("Cropped face " + face_id, face->cropped());
+        }
+        if (!face->aligned().empty())
+        {
+          cv::imshow("Aligned face " + face_id, face->aligned());
         }
 
-        cv::imshow("Aligned face " + face_id, face->aligned());
         cv::waitKey(10);
       }
     }
