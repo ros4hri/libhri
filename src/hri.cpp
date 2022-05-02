@@ -193,7 +193,6 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
     case FeatureType::face:
       for (auto id : to_remove)
       {
-        cout << "removeing face " << id << endl;
         faces.erase(id);
       }
       break;
