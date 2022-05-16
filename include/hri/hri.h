@@ -118,13 +118,17 @@ public:
 
 
   /** \brief Returns the list of currently detected persons, mapped to their IDs
+   *
+   * Persons are returned as constant std::weak_ptr: while person do *not* disappear in
+   * general, *anonymous* persons (created because, eg, a face has been detected, and we
+   * can infer a yet-to-be-recognised person does exist) can disappear.
    */
-  std::map<ID, PersonConstPtr> getPersons() const;
+  std::map<ID, PersonWeakConstPtr> getPersons() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new person
    * is detected.
    */
-  void onPerson(std::function<void(PersonConstPtr)> callback)
+  void onPerson(std::function<void(PersonWeakConstPtr)> callback)
   {
     person_callbacks.push_back(callback);
   }

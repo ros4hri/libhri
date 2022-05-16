@@ -46,7 +46,7 @@ class Person : public FeatureTracker
 {
 public:
   Person(ID id, const HRIListener* listener, const ros::NodeHandle& nh)
-    : FeatureTracker{ id, nh }, listener_(listener)
+    : FeatureTracker{ id, nh }, listener_(listener), _anonymous(false)
   {
   }
 
@@ -68,6 +68,11 @@ public:
   VoiceWeakConstPtr voice() const;
 
 
+  bool anonymous() const
+  {
+    return _anonymous;
+  }
+
   geometry_msgs::TransformStamped getTransform() const;
 
   void init() override;
@@ -83,9 +88,12 @@ protected:
   ID body_id;
   ID voice_id;
 
+  bool _anonymous;
+
   ros::Subscriber face_id_subscriber_;
   ros::Subscriber body_id_subscriber_;
   ros::Subscriber voice_id_subscriber_;
+  ros::Subscriber anonymous_subscriber_;
 };
 
 typedef std::shared_ptr<Person> PersonPtr;

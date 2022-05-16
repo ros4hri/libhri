@@ -100,9 +100,18 @@ map<ID, VoiceWeakConstPtr> HRIListener::getVoices() const
   return result;
 }
 
-map<ID, PersonConstPtr> HRIListener::getPersons() const
+map<ID, PersonWeakConstPtr> HRIListener::getPersons() const
 {
-  return persons;
+  map<ID, PersonWeakConstPtr> result;
+
+  // creates a map of *weak* pointers from the internally managed list of
+  // shared pointers
+  for (auto const& f : persons)
+  {
+    result[f.first] = f.second;
+  }
+
+  return result;
 }
 
 void HRIListener::init()

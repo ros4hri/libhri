@@ -375,7 +375,7 @@ TEST(libhri, GetPersons)
     auto persons = hri_listener.getPersons();
     EXPECT_EQ(persons.size(), 1U);
     ASSERT_TRUE(persons.find("A") != persons.end());
-    EXPECT_TRUE(persons["A"]->id() == "A");
+    EXPECT_TRUE(persons["A"].lock()->id() == "A");
 
     ROS_INFO("[A]");
     pub.publish(ids);
@@ -405,7 +405,7 @@ TEST(libhri, GetPersons)
     EXPECT_TRUE(persons.find("A") == persons.end());
     ASSERT_TRUE(persons.find("B") != persons.end());
 
-    shared_ptr<const Person> person_b = persons["B"];
+    shared_ptr<const Person> person_b = persons["B"].lock();
     EXPECT_TRUE(person_b != nullptr);  // person B exists!
 
     ROS_INFO("[]");
@@ -444,7 +444,7 @@ TEST(libhri, PersonAttributes)
 
   WAIT;
 
-  auto face0 = hri_listener.getPersons()["p1"]->face();
+  auto face0 = hri_listener.getPersons()["p1"].lock()->face();
 
   ASSERT_EQ(face0.lock(), nullptr);
   ASSERT_TRUE(face0.expired());
@@ -456,7 +456,7 @@ TEST(libhri, PersonAttributes)
 
   WAIT;
 
-  auto face1 = hri_listener.getPersons()["p1"]->face();
+  auto face1 = hri_listener.getPersons()["p1"].lock()->face();
 
   ASSERT_NE(face1.lock(), nullptr);
   ASSERT_FALSE(face1.expired());
@@ -485,7 +485,7 @@ TEST(libhri, Callbacks)
   testing::MockFunction<void(VoiceWeakConstPtr)> voice_callback;
   hri_listener.onVoice(voice_callback.AsStdFunction());
 
-  testing::MockFunction<void(PersonConstPtr)> person_callback;
+  testing::MockFunction<void(PersonWeakConstPtr)> person_callback;
   hri_listener.onPerson(person_callback.AsStdFunction());
 
 

@@ -27,6 +27,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include <std_msgs/String.h>
+#include <std_msgs/Bool.h>
 
 #include "hri/person.h"
 
@@ -54,6 +55,10 @@ void Person::init()
   voice_id_subscriber_ = node_.subscribe<std_msgs::String>(
       ns_ + "/voice_id", 1,
       [&](const std_msgs::StringConstPtr msg) { voice_id = msg->data; });
+
+  anonymous_subscriber_ = node_.subscribe<std_msgs::Bool>(
+      ns_ + "/anonymous", 1,
+      [&](const std_msgs::BoolConstPtr msg) { _anonymous = msg->data; });
 }
 
 FaceWeakConstPtr Person::face() const
