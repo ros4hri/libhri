@@ -114,6 +114,20 @@ map<ID, PersonWeakConstPtr> HRIListener::getPersons() const
   return result;
 }
 
+map<ID, PersonWeakConstPtr> HRIListener::getTrackedPersons() const
+{
+  map<ID, PersonWeakConstPtr> result;
+
+  // creates a map of *weak* pointers from the internally managed list of
+  // shared pointers
+  for (auto const& f : tracked_persons)
+  {
+    result[f.first] = f.second;
+  }
+
+  return result;
+}
+
 void HRIListener::init()
 {
   ROS_DEBUG("Initialising the HRI Listener");
@@ -130,8 +144,12 @@ void HRIListener::init()
       "/humans/voices/tracked", 1,
       bind(&HRIListener::onTrackedFeature, this, FeatureType::voice, _1));
 
-  feature_subscribers_[FeatureType::person] = node_.subscribe<hri_msgs::IdsList>(
+  feature_subscribers_[FeatureType::tracked_person] = node_.subscribe<hri_msgs::IdsList>(
       "/humans/persons/tracked", 1,
+      bind(&HRIListener::onTrackedFeature, this, FeatureType::tracked_person, _1));
+
+  feature_subscribers_[FeatureType::person] = node_.subscribe<hri_msgs::IdsList>(
+      "/humans/persons/known", 1,
       bind(&HRIListener::onTrackedFeature, this, FeatureType::person, _1));
 }
 
@@ -177,6 +195,12 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
         current_ids.insert(kv.first);
       }
       break;
+    case FeatureType::tracked_person:
+      for (auto const& kv : tracked_persons)
+      {
+        current_ids.insert(kv.first);
+      }
+      break;
   }
 
 
@@ -203,25 +227,53 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
       for (auto id : to_remove)
       {
         faces.erase(id);
+
+        // invoke all the callbacks
+        for (auto& cb : face_lost_callbacks)
+        {
+          cb(id);
+        }
       }
       break;
     case FeatureType::body:
       for (auto id : to_remove)
       {
         bodies.erase(id);
+
+        // invoke all the callbacks
+        for (auto& cb : body_lost_callbacks)
+        {
+          cb(id);
+        }
       }
       break;
     case FeatureType::voice:
       for (auto id : to_remove)
       {
         voices.erase(id);
+
+        // invoke all the callbacks
+        for (auto& cb : voice_lost_callbacks)
+        {
+          cb(id);
+        }
+      }
+      break;
+    case FeatureType::tracked_person:
+      for (auto id : to_remove)
+      {
+        tracked_persons.erase(id);
+
+        // invoke all the callbacks
+        for (auto& cb : person_tracked_lost_callbacks)
+        {
+          cb(id);
+        }
       }
       break;
     case FeatureType::person:
-      for (auto id : to_remove)
-      {
-        persons.erase(id);
-      }
+      // person should never be removed
+      assert(false);
       break;
   }
 
@@ -278,6 +330,20 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
 
         // invoke all the callbacks
         for (auto& cb : person_callbacks)
+        {
+          cb(person);
+        }
+      }
+      break;
+    case FeatureType::tracked_person:
+      for (auto id : to_add)
+      {
+        auto person = make_shared<Person>(id, this, node_);
+        person->init();
+        tracked_persons.insert({ id, person });
+
+        // invoke all the callbacks
+        for (auto& cb : person_tracked_callbacks)
         {
           cb(person);
         }

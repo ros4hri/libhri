@@ -88,6 +88,15 @@ public:
     face_callbacks.push_back(callback);
   }
 
+  /** \brief Registers a callback function, to be invoked everytime a
+   * previously tracked face is lost (eg, not detected anymore)
+   */
+  void onFaceLost(std::function<void(ID)> callback)
+  {
+    face_lost_callbacks.push_back(callback);
+  }
+
+
   /** \brief Returns the list of currently detected bodies, mapped to their IDs
    *
    * Bodies are returned as constant std::weak_ptr as they may disappear at any point.
@@ -101,6 +110,15 @@ public:
   {
     body_callbacks.push_back(callback);
   }
+
+  /** \brief Registers a callback function, to be invoked everytime a
+   * previously tracked body is lost (eg, not detected anymore)
+   */
+  void onBodyLost(std::function<void(ID)> callback)
+  {
+    body_lost_callbacks.push_back(callback);
+  }
+
 
   /** \brief Returns the list of currently detected voices, mapped to their IDs
    *
@@ -116,12 +134,24 @@ public:
     voice_callbacks.push_back(callback);
   }
 
+  /** \brief Registers a callback function, to be invoked everytime a
+   * previously tracked voice is lost (eg, not detected anymore)
+   */
+  void onVoiceLost(std::function<void(ID)> callback)
+  {
+    voice_lost_callbacks.push_back(callback);
+  }
 
-  /** \brief Returns the list of currently detected persons, mapped to their IDs
+
+
+  /** \brief Returns the list of all known persons, whether or not they are
+   * currently actively detected (eg, seen). The persons are mapped to their
+   * IDs.
    *
-   * Persons are returned as constant std::weak_ptr: while person do *not* disappear in
-   * general, *anonymous* persons (created because, eg, a face has been detected, and we
-   * can infer a yet-to-be-recognised person does exist) can disappear.
+   * Persons are returned as constant std::weak_ptr: while person do *not*
+   * disappear in general, *anonymous* persons (created because, eg, a face has
+   * been detected, and we can infer a yet-to-be-recognised person does exist)
+   * can disappear.
    */
   std::map<ID, PersonWeakConstPtr> getPersons() const;
 
@@ -133,6 +163,30 @@ public:
     person_callbacks.push_back(callback);
   }
 
+  /** \brief Returns the list of currently detected persons, mapped to their IDs
+   *
+   * Persons are returned as constant std::weak_ptr: while person do *not* disappear in
+   * general, *anonymous* persons (created because, eg, a face has been detected, and we
+   * can infer a yet-to-be-recognised person does exist) can disappear.
+   */
+  std::map<ID, PersonWeakConstPtr> getTrackedPersons() const;
+
+
+  /** \brief Registers a callback function, to be invoked everytime a new person
+   * is detected and actively tracked (eg, currently seen).
+   */
+  void onTrackedPerson(std::function<void(PersonWeakConstPtr)> callback)
+  {
+    person_tracked_callbacks.push_back(callback);
+  }
+
+  /** \brief Registers a callback function, to be invoked everytime a previously tracked
+   * person is lost.
+   */
+  void onTrackedPersonLost(std::function<void(ID)> callback)
+  {
+    person_tracked_lost_callbacks.push_back(callback);
+  }
 
 
 private:
@@ -146,15 +200,21 @@ private:
 
   std::map<ID, FaceConstPtr> faces;
   std::vector<std::function<void(FaceWeakConstPtr)>> face_callbacks;
+  std::vector<std::function<void(ID)>> face_lost_callbacks;
 
   std::map<ID, BodyConstPtr> bodies;
   std::vector<std::function<void(BodyWeakConstPtr)>> body_callbacks;
+  std::vector<std::function<void(ID)>> body_lost_callbacks;
 
   std::map<ID, VoiceConstPtr> voices;
   std::vector<std::function<void(VoiceWeakConstPtr)>> voice_callbacks;
+  std::vector<std::function<void(ID)>> voice_lost_callbacks;
 
   std::map<ID, PersonConstPtr> persons;
   std::vector<std::function<void(PersonConstPtr)>> person_callbacks;
+  std::map<ID, PersonConstPtr> tracked_persons;
+  std::vector<std::function<void(PersonConstPtr)>> person_tracked_callbacks;
+  std::vector<std::function<void(ID)>> person_tracked_lost_callbacks;
 };
 
 }  // namespace hri

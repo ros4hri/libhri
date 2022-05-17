@@ -41,7 +41,8 @@ typedef std::string ID;
 
 enum FeatureType
 {
-  person,
+  person,          // all known persons, whether or not they are currently seen
+  tracked_person,  // only the actively tracked persons
   face,
   body,
   voice
