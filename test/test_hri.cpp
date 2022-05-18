@@ -401,8 +401,8 @@ TEST(libhri, GetKnownPersons)
     pub.publish(ids);
     WAIT;
     persons = hri_listener.getPersons();
-    EXPECT_EQ(persons.size(), 2U) << "all known persons: should never go down";
-    EXPECT_TRUE(persons.find("A") != persons.end());
+    EXPECT_EQ(persons.size(), 1U) << "known persons can go down in case of eg an anonymous person";
+    EXPECT_TRUE(persons.find("A") == persons.end());
     ASSERT_TRUE(persons.find("B") != persons.end());
 
     shared_ptr<const Person> person_b = persons["B"].lock();
@@ -412,7 +412,7 @@ TEST(libhri, GetKnownPersons)
     ids.ids = {};
     pub.publish(ids);
     WAIT;
-    EXPECT_EQ(hri_listener.getPersons().size(), 2U);
+    EXPECT_EQ(hri_listener.getPersons().size(), 0U);
 
     EXPECT_TRUE(person_b != nullptr);  // person B still exists!
   }

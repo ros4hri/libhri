@@ -163,6 +163,15 @@ public:
     person_callbacks.push_back(callback);
   }
 
+  /** \brief Registers a callback function, to be invoked everytime a person
+   * is lost. This can *only* happen for anonymous persons. Identified persons
+   * will never be removed from the list of all known persons.
+   */
+  void onPersonLost(std::function<void(ID)> callback)
+  {
+    person_lost_callbacks.push_back(callback);
+  }
+
   /** \brief Returns the list of currently detected persons, mapped to their IDs
    *
    * Persons are returned as constant std::weak_ptr: while person do *not* disappear in
@@ -212,6 +221,7 @@ private:
 
   std::map<ID, PersonConstPtr> persons;
   std::vector<std::function<void(PersonConstPtr)>> person_callbacks;
+  std::vector<std::function<void(ID)>> person_lost_callbacks;
   std::map<ID, PersonConstPtr> tracked_persons;
   std::vector<std::function<void(PersonConstPtr)>> person_tracked_callbacks;
   std::vector<std::function<void(ID)>> person_tracked_lost_callbacks;

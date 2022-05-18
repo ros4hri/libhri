@@ -272,8 +272,16 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
       }
       break;
     case FeatureType::person:
-      // person should never be removed
-      assert(false);
+      for (auto id : to_remove)
+      {
+        persons.erase(id);
+
+        // invoke all the callbacks
+        for (auto& cb : person_lost_callbacks)
+        {
+          cb(id);
+        }
+      }
       break;
   }
 
