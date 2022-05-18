@@ -35,6 +35,7 @@
 #include <memory>
 #include "hri/face.h"
 #include "hri_msgs/IdsList.h"
+#include "hri_msgs/SoftBiometrics.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Bool.h"
 #include "sensor_msgs/RegionOfInterest.h"
@@ -775,6 +776,69 @@ TEST(libhri, Callbacks)
   person_tracked_pub.publish(ids);
 
   WAIT;
+
+  spinner.stop();
+}
+
+TEST(libhri, SoftBiometrics)
+{
+  NodeHandle nh;
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  HRIListener hri_listener;
+
+  auto person_pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
+  auto face_pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
+  auto person_face_pub = nh.advertise<std_msgs::String>("/humans/persons/p1/face_id", 1);
+  auto softbiometrics_pub =
+      nh.advertise<hri_msgs::SoftBiometrics>("/humans/faces/f1/softbiometrics", 1);
+
+  auto person_ids = hri_msgs::IdsList();
+  person_ids.ids = { "p1" };
+  person_pub.publish(person_ids);
+
+  auto face_ids = hri_msgs::IdsList();
+  face_ids.ids = { "f1" };
+  face_pub.publish(face_ids);
+
+  WAIT;
+
+  auto softbiometrics_msg = hri_msgs::SoftBiometrics();
+  softbiometrics_msg.age = 45;
+  softbiometrics_msg.age_confidence = 0.8;
+  softbiometrics_msg.gender = hri_msgs::SoftBiometrics::FEMALE;
+  softbiometrics_msg.gender_confidence = 0.7;
+  softbiometrics_pub.publish(softbiometrics_msg);
+
+  auto face_id = std_msgs::String();
+  face_id.data = "f1";
+
+  person_face_pub.publish(face_id);
+
+  WAIT;
+
+  auto face = hri_listener.getTrackedPersons()["p1"].lock()->face().lock();
+
+  ASSERT_EQ(face->id(), "f1");
+
+  ASSERT_TRUE(face->age());
+  ASSERT_EQ(*(face->age()), 45);
+  ASSERT_TRUE(face->gender());
+  ASSERT_EQ(*(face->gender()), hri::FEMALE);
+
+  softbiometrics_msg.gender = hri_msgs::SoftBiometrics::OTHER;
+  softbiometrics_pub.publish(softbiometrics_msg);
+  WAIT;
+
+  ASSERT_EQ(*(face->gender()), hri::OTHER);
+
+  softbiometrics_msg.gender = hri_msgs::SoftBiometrics::UNDEFINED;
+  softbiometrics_pub.publish(softbiometrics_msg);
+  WAIT;
+
+  ASSERT_FALSE(face->gender());
 
   spinner.stop();
 }

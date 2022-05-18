@@ -29,9 +29,15 @@
 #include "hri/face.h"
 
 #include <cv_bridge/cv_bridge.h>
+#include "hri_msgs/SoftBiometrics.h"
 
 using namespace std;
 using namespace hri;
+
+Face::Face(ID id, const ros::NodeHandle& nh)
+  : FeatureTracker(id, nh), softbiometrics_(nullptr)
+{
+}
 
 Face::~Face()
 {
@@ -53,9 +59,11 @@ void Face::init()
   aligned_subscriber_ = node_.subscribe<sensor_msgs::Image>(
       ns_ + "/aligned", 1, bind(&Face::onAligned, this, _1));
 
-
   landmarks_subscriber_ = node_.subscribe<hri_msgs::FacialLandmarks>(
       ns_ + "/landmarks", 1, bind(&Face::onLandmarks, this, _1));
+
+  softbiometrics_subscriber_ = node_.subscribe<hri_msgs::SoftBiometrics>(
+      ns_ + "/softbiometrics", 1, bind(&Face::onSoftBiometrics, this, _1));
 }
 
 void Face::onRoI(sensor_msgs::RegionOfInterestConstPtr roi)
@@ -101,3 +109,26 @@ void Face::onLandmarks(hri_msgs::FacialLandmarksConstPtr msg)
   }
 }
 
+void Face::onSoftBiometrics(hri_msgs::SoftBiometricsConstPtr biometrics)
+{
+  softbiometrics_ = biometrics;
+}
+
+
+boost::optional<float> Face::age() const
+{
+  if (!softbiometrics_)
+    return boost::optional<float>();
+
+  return softbiometrics_->age;
+}
+
+boost::optional<Gender> Face::gender() const
+{
+  if (!softbiometrics_)
+    return boost::optional<Gender>();
+  if (softbiometrics_->gender == 0)  // UNDEFINED
+    return boost::optional<Gender>();
+
+  return static_cast<Gender>(softbiometrics_->gender);
+}

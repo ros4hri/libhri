@@ -32,6 +32,7 @@
 
 #include <hri_msgs/PointOfInterest2D.h>
 #include <hri_msgs/FacialLandmarks.h>
+#include <hri_msgs/SoftBiometrics.h>
 #include <sensor_msgs/RegionOfInterest.h>
 #include <sensor_msgs/Image.h>
 #include <memory>
@@ -50,10 +51,17 @@ struct IntensityConfidence
   float confidence;
 };
 
+enum Gender
+{
+  FEMALE = 1,
+  MALE = 2,
+  OTHER = 3
+};
+
 class Face : public FeatureTracker
 {
 public:
-  using FeatureTracker::FeatureTracker;  // inherits FeatureTracker's ctor
+  Face(ID id, const ros::NodeHandle& nh);
 
   virtual ~Face();
 
@@ -122,6 +130,17 @@ public:
     return facial_action_units_;
   }
 
+  /* \brief estimated age of this face, if available (eg, the
+   * '/softbiometrics' is published)
+   */
+  boost::optional<float> age() const;
+
+  /* \brief estimated gender of this face, if available (eg, the
+   * '/softbiometrics' is published)
+   */
+  boost::optional<Gender> gender() const;
+
+
   void init() override;
 
 private:
@@ -142,6 +161,11 @@ private:
   ros::Subscriber landmarks_subscriber_;
   void onLandmarks(hri_msgs::FacialLandmarksConstPtr landmarks);
   std::array<hri_msgs::PointOfInterest2D, 70> facial_landmarks_;
+
+  ros::Subscriber softbiometrics_subscriber_;
+  void onSoftBiometrics(hri_msgs::SoftBiometricsConstPtr biometrics);
+  hri_msgs::SoftBiometricsConstPtr softbiometrics_;
+
 
   std::array<IntensityConfidence, 99> facial_action_units_;
 };
