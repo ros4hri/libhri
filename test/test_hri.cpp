@@ -36,6 +36,7 @@
 #include "hri/face.h"
 #include "hri_msgs/IdsList.h"
 #include "std_msgs/String.h"
+#include "std_msgs/Bool.h"
 #include "sensor_msgs/RegionOfInterest.h"
 
 using namespace std;
@@ -519,7 +520,11 @@ TEST(libhri, PersonAttributes)
 
   WAIT;
 
-  auto face0 = hri_listener.getTrackedPersons()["p1"].lock()->face();
+  auto p1 = hri_listener.getTrackedPersons()["p1"].lock();
+
+  ASSERT_FALSE(p1->anonymous()) << "by default, persons are not supposed to be anonymous";
+
+  auto face0 = p1->face();
 
   ASSERT_EQ(face0.lock(), nullptr);
   ASSERT_TRUE(face0.expired());
@@ -536,6 +541,46 @@ TEST(libhri, PersonAttributes)
   ASSERT_NE(face1.lock(), nullptr);
   ASSERT_FALSE(face1.expired());
   ASSERT_EQ(face1.lock()->id(), "f1");
+
+  spinner.stop();
+}
+
+TEST(libhri, AnonymousPersonsAndAliases)
+{
+  NodeHandle nh;
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  HRIListener hri_listener;
+
+  auto person_pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
+  auto p1_anon_pub = nh.advertise<std_msgs::Bool>("/humans/persons/p1/anonymous", 1);
+  auto p2_anon_pub = nh.advertise<std_msgs::Bool>("/humans/persons/p2/anonymous", 1);
+
+  auto person_ids = hri_msgs::IdsList();
+  person_ids.ids = { "p1", "p2" };
+  person_pub.publish(person_ids);
+
+  WAIT;
+
+  std_msgs::Bool msg;
+  msg.data = false;
+  p1_anon_pub.publish(msg);
+  msg.data = true;
+  p2_anon_pub.publish(msg);
+
+  WAIT;
+
+  auto p1 = hri_listener.getTrackedPersons()["p1"].lock();
+
+  {
+    auto p2 = hri_listener.getTrackedPersons()["p2"].lock();
+
+    ASSERT_FALSE(p1->anonymous());
+    ASSERT_TRUE(p2->anonymous());
+  }
+
 
   spinner.stop();
 }
