@@ -34,6 +34,8 @@
 #include <chrono>
 #include <memory>
 #include "hri/face.h"
+#include "hri/person.h"
+#include "hri_msgs/EngagementLevel.h"
 #include "hri_msgs/IdsList.h"
 #include "hri_msgs/SoftBiometrics.h"
 #include "std_msgs/String.h"
@@ -839,6 +841,50 @@ TEST(libhri, SoftBiometrics)
   WAIT;
 
   ASSERT_FALSE(face->gender());
+
+  spinner.stop();
+}
+
+TEST(libhri, EngagementLevel)
+{
+  NodeHandle nh;
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  HRIListener hri_listener;
+
+  auto person_pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
+  auto engagement_pub =
+      nh.advertise<hri_msgs::EngagementLevel>("/humans/persons/p1/engagement_status", 1);
+
+  auto person_ids = hri_msgs::IdsList();
+  person_ids.ids = { "p1" };
+  person_pub.publish(person_ids);
+
+  WAIT;
+
+  auto msg = hri_msgs::EngagementLevel();
+  msg.level = hri_msgs::EngagementLevel::DISENGAGED;
+  engagement_pub.publish(msg);
+
+  WAIT;
+
+  auto p = hri_listener.getTrackedPersons()["p1"].lock();
+  ASSERT_TRUE(p->engagement_status());
+  ASSERT_EQ(*(p->engagement_status()), hri::DISENGAGED);
+
+  msg.level = hri_msgs::EngagementLevel::ENGAGED;
+  engagement_pub.publish(msg);
+  WAIT;
+
+  ASSERT_EQ(*(p->engagement_status()), hri::ENGAGED);
+
+  msg.level = hri_msgs::EngagementLevel::UNKNOWN;
+  engagement_pub.publish(msg);
+  WAIT;
+
+  ASSERT_FALSE(p->engagement_status());
 
   spinner.stop();
 }

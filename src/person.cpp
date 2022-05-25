@@ -32,6 +32,7 @@
 #include "hri/person.h"
 
 #include "hri/hri.h"
+#include "std_msgs/Float32.h"
 
 using namespace std;
 using namespace hri;
@@ -62,6 +63,14 @@ void Person::init()
 
   alias_subscriber_ = node_.subscribe<std_msgs::String>(
       ns_ + "/alias", 1, [&](const std_msgs::StringConstPtr msg) { _alias = msg->data; });
+
+  engagement_subscriber_ = node_.subscribe<hri_msgs::EngagementLevel>(
+      ns_ + "/engagement_status", 1,
+      [&](const hri_msgs::EngagementLevelConstPtr msg) { _engagement_status = msg; });
+
+  loc_confidence_subscriber_ = node_.subscribe<std_msgs::Float32>(
+      ns_ + "/location_confidence", 1,
+      [&](const std_msgs::Float32ConstPtr msg) { _loc_confidence = msg->data; });
 }
 
 FaceWeakConstPtr Person::face() const
@@ -86,5 +95,23 @@ VoiceWeakConstPtr Person::voice() const
     return listener_->getVoices()[voice_id];
   else
     return VoiceWeakConstPtr();
+}
+
+boost::optional<EngagementLevel> Person::engagement_status() const
+{
+  if (!_engagement_status)
+    return boost::optional<EngagementLevel>();
+  if (_engagement_status->level == 0)  // UNKNOWN
+    return boost::optional<EngagementLevel>();
+
+  return static_cast<EngagementLevel>(_engagement_status->level);
+}
+
+boost::optional<float> Person::location_confidence() const
+{
+  if (_loc_confidence < 0)
+    return boost::optional<float>();
+
+  return _loc_confidence;
 }
 

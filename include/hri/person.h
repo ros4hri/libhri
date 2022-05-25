@@ -37,8 +37,25 @@
 #include "body.h"
 #include "voice.h"
 
+#include <hri_msgs/EngagementLevel.h>
+#include <std_msgs/Float32.h>
+
+
 namespace hri
 {
+enum EngagementLevel
+{
+  // disengaged: the human has not looked in the direction of the robot
+  DISENGAGED = 1,
+  // engaging: the human has started to look in the direction of the robot
+  ENGAGING = 2,
+  // engaged: the human is fully engaged with the robot
+  ENGAGED = 3,
+  // disengaging: the human has started to look away from the robot
+  DISENGAGING = 4
+};
+
+
 class HRIListener;
 
 
@@ -46,7 +63,12 @@ class Person : public FeatureTracker
 {
 public:
   Person(ID id, const HRIListener* listener, const ros::NodeHandle& nh)
-    : FeatureTracker{ id, nh }, listener_(listener), _anonymous(false)
+    : FeatureTracker{ id, nh }
+    , listener_(listener)
+    , _anonymous(false)
+    , _engagement_status(nullptr)
+    , _alias("")
+    , _loc_confidence(-1)
   {
   }
 
@@ -78,6 +100,10 @@ public:
     return _alias;
   }
 
+  boost::optional<EngagementLevel> engagement_status() const;
+
+  boost::optional<float> location_confidence() const;
+
   geometry_msgs::TransformStamped getTransform() const;
 
   void init() override;
@@ -100,13 +126,17 @@ protected:
 
   bool _anonymous;
 
+  hri_msgs::EngagementLevelConstPtr _engagement_status;
+
+  float _loc_confidence;
+
   ros::Subscriber face_id_subscriber_;
   ros::Subscriber body_id_subscriber_;
   ros::Subscriber voice_id_subscriber_;
   ros::Subscriber anonymous_subscriber_;
   ros::Subscriber alias_subscriber_;
-
-  void setAlias(ID alias);
+  ros::Subscriber engagement_subscriber_;
+  ros::Subscriber loc_confidence_subscriber_;
 };
 
 typedef std::shared_ptr<Person> PersonPtr;
