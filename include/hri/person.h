@@ -73,6 +73,11 @@ public:
     return _anonymous;
   }
 
+  ID alias() const
+  {
+    return _alias;
+  }
+
   geometry_msgs::TransformStamped getTransform() const;
 
   void init() override;
@@ -88,12 +93,20 @@ protected:
   ID body_id;
   ID voice_id;
 
+  // if non-empty, this person 'does not exist' and is instead an alias to
+  // another person.  hri::getPersons and hri::getTrackedPersons will returns
+  // pointers to the aliased person.
+  ID _alias;
+
   bool _anonymous;
 
   ros::Subscriber face_id_subscriber_;
   ros::Subscriber body_id_subscriber_;
   ros::Subscriber voice_id_subscriber_;
   ros::Subscriber anonymous_subscriber_;
+  ros::Subscriber alias_subscriber_;
+
+  void setAlias(ID alias);
 };
 
 typedef std::shared_ptr<Person> PersonPtr;

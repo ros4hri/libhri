@@ -558,9 +558,29 @@ TEST(libhri, AnonymousPersonsAndAliases)
   auto p1_anon_pub = nh.advertise<std_msgs::Bool>("/humans/persons/p1/anonymous", 1);
   auto p2_anon_pub = nh.advertise<std_msgs::Bool>("/humans/persons/p2/anonymous", 1);
 
+  auto face_pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
+  auto p1_face_pub = nh.advertise<std_msgs::String>("/humans/persons/p1/face_id", 1);
+  auto p2_face_pub = nh.advertise<std_msgs::String>("/humans/persons/p2/face_id", 1);
+
+  auto p2_alias_pub = nh.advertise<std_msgs::String>("/humans/persons/p2/alias", 1);
+
   auto person_ids = hri_msgs::IdsList();
   person_ids.ids = { "p1", "p2" };
   person_pub.publish(person_ids);
+
+  auto face_ids = hri_msgs::IdsList();
+  face_ids.ids = { "f1", "f2" };
+  face_pub.publish(face_ids);
+
+  WAIT;
+
+  // each person is associated to a face
+  auto face_id = std_msgs::String();
+  face_id.data = "f1";
+  p1_face_pub.publish(face_id);
+  face_id.data = "f2";
+  p2_face_pub.publish(face_id);
+
 
   WAIT;
 
@@ -572,6 +592,8 @@ TEST(libhri, AnonymousPersonsAndAliases)
 
   WAIT;
 
+  ASSERT_EQ(hri_listener.getTrackedPersons().size(), 2);
+
   auto p1 = hri_listener.getTrackedPersons()["p1"].lock();
 
   {
@@ -579,8 +601,67 @@ TEST(libhri, AnonymousPersonsAndAliases)
 
     ASSERT_FALSE(p1->anonymous());
     ASSERT_TRUE(p2->anonymous());
+
+    // being anonymous or not should have no impact on face associations
+    ASSERT_EQ(p1->face().lock()->id(), "f1");
+    ASSERT_EQ(p2->face().lock()->id(), "f2");
   }
 
+  ///////////// ALIASES ///////////////////////////
+
+  // set p2 as an alias of p1
+  auto alias_id = std_msgs::String();
+  alias_id.data = "p1";
+
+  p2_alias_pub.publish(alias_id);
+
+  WAIT;
+
+  ASSERT_EQ(hri_listener.getTrackedPersons().size(), 2U);
+
+  {
+    auto p2 = hri_listener.getTrackedPersons()["p2"].lock();
+
+    ASSERT_EQ(p1, p2) << "p2 should now point to the same person as p1";
+
+    ASSERT_EQ(p2->face().lock()->id(), "f1") << "p2's face now points to f1";
+  }
+  // remove the alias
+  alias_id.data = "";
+
+  p2_alias_pub.publish(alias_id);
+
+  WAIT;
+
+  {
+    auto p2 = hri_listener.getTrackedPersons()["p2"].lock();
+
+    ASSERT_NE(p1, p2) << "p2 is not anymore the same person as p1";
+
+    ASSERT_EQ(p2->face().lock()->id(), "f2")
+        << "p2's face should still points to its former f2 face";
+  }
+
+  // republish the alias
+  alias_id.data = "p1";
+
+  p2_alias_pub.publish(alias_id);
+
+  WAIT;
+
+  auto p2 = hri_listener.getTrackedPersons()["p2"].lock();
+
+  ASSERT_EQ(p1, p2) << "p2 is again the same person as p1";
+
+  // delete p1 -> p2 should be deleted as well
+
+  person_ids.ids = { "p2" };
+  person_pub.publish(person_ids);
+
+  WAIT;
+
+  ASSERT_EQ(hri_listener.getTrackedPersons().size(), 0U)
+      << "the aliased person should have been deleted with its alias";
 
   spinner.stop();
 }

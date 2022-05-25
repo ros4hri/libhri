@@ -35,6 +35,7 @@
 #include <utility>
 #include "hri/body.h"
 #include "hri/face.h"
+#include "hri/person.h"
 #include "hri_msgs/IdsList.h"
 
 using namespace std;
@@ -104,11 +105,32 @@ map<ID, PersonWeakConstPtr> HRIListener::getPersons() const
 {
   map<ID, PersonWeakConstPtr> result;
 
+  vector<PersonConstPtr> aliased;
+
   // creates a map of *weak* pointers from the internally managed list of
   // shared pointers
   for (auto const& f : persons)
   {
-    result[f.first] = f.second;
+    if (f.second->alias().empty())
+    {
+      result[f.first] = f.second;
+    }
+    else
+    {
+      aliased.push_back(f.second);
+    }
+  }
+
+  for (auto const& p : aliased)
+  {
+    if (result.count(p->alias()) != 0)
+    {
+      result[p->id()] = result[p->alias()];
+    }
+    else  // ouch! the person points to an inexistant alias! this should not happen
+    {
+      assert(false);
+    }
   }
 
   return result;
@@ -118,11 +140,32 @@ map<ID, PersonWeakConstPtr> HRIListener::getTrackedPersons() const
 {
   map<ID, PersonWeakConstPtr> result;
 
+  vector<PersonConstPtr> aliased;
+
   // creates a map of *weak* pointers from the internally managed list of
   // shared pointers
   for (auto const& f : tracked_persons)
   {
-    result[f.first] = f.second;
+    if (f.second->alias().empty())
+    {
+      result[f.first] = f.second;
+    }
+    else
+    {
+      aliased.push_back(f.second);
+    }
+  }
+
+  for (auto const& p : aliased)
+  {
+    if (result.count(p->alias()) != 0)
+    {
+      result[p->id()] = result[p->alias()];
+    }
+    else  // ouch! the person points to an inexistant alias! this should not happen.
+    {
+      assert(false);
+    }
   }
 
   return result;
@@ -264,6 +307,20 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
       {
         tracked_persons.erase(id);
 
+        // also erase the *aliases* of this ID
+        vector<ID> aliases;
+        for (const auto& p : tracked_persons)
+        {
+          if (p.second->alias() == id)
+          {
+            aliases.push_back(p.first);
+          }
+        }
+        for (auto alias : aliases)
+        {
+          tracked_persons.erase(alias);
+        }
+
         // invoke all the callbacks
         for (auto& cb : person_tracked_lost_callbacks)
         {
@@ -275,6 +332,20 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
       for (auto id : to_remove)
       {
         persons.erase(id);
+
+        // also erase the *aliases* of this ID
+        vector<ID> aliases;
+        for (const auto& p : persons)
+        {
+          if (p.second->alias() == id)
+          {
+            aliases.push_back(p.first);
+          }
+        }
+        for (auto alias : aliases)
+        {
+          persons.erase(alias);
+        }
 
         // invoke all the callbacks
         for (auto& cb : person_lost_callbacks)

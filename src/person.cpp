@@ -59,6 +59,9 @@ void Person::init()
   anonymous_subscriber_ = node_.subscribe<std_msgs::Bool>(
       ns_ + "/anonymous", 1,
       [&](const std_msgs::BoolConstPtr msg) { _anonymous = msg->data; });
+
+  alias_subscriber_ = node_.subscribe<std_msgs::String>(
+      ns_ + "/alias", 1, [&](const std_msgs::StringConstPtr msg) { _alias = msg->data; });
 }
 
 FaceWeakConstPtr Person::face() const
