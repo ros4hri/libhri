@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.0 (2022-05-26)
+------------------
 * expose the current TF frame + transform of the person
 * expose engagement status of people
 * expose softbiometrics (age/gender) in faces
