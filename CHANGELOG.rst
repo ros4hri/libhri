@@ -2,6 +2,27 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* expose the current TF frame + transform of the person
+* expose engagement status of people
+* expose softbiometrics (age/gender) in faces
+* add support for persons' aliases
+  if a /humans/persons/<id>/alias points to another person id, libhri will use
+  return the same pointer
+* add callbacks when face/body/... are lost + support for known vs tracked persons
+* add support for 'anonymous' persons
+  Anonymous persons are persons that *may* disappear at any point.
+  They are typically created because we *know* that a person is there (eg,
+  we've detected a face), but that person is not yet permanently
+  identified.
+  API change: HriListener::getPersons() now returns *weak* pointers that
+  need to be locked before being used.
+* ensure the cropped and aligned face do not re-use the same underlying data
+* add simple libhri example to display aligned faces
+* remove spurious logging on cout
+* Contributors: Séverin Lemaignan
+
 0.4.3 (2022-04-28)
 ------------------
 * fix gmock 'Call' syntax for older version of gmock (1.8). This was causing

@@ -62,9 +62,6 @@ if(CATKIN_ENABLE_TESTING)
 
 find_package(rostest REQUIRED)
 
-#find_package(catkin REQUIRED COMPONENTS
-#  tf2 tf2_ros)
-
 add_rostest_gmock(test_hri test/test_hri.test test/test_hri.cpp)
 target_include_directories(test_hri PRIVATE ${rostest_INCLUDE_DIRS})
 target_link_libraries(test_hri ${PROJECT_NAME})
