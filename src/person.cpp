@@ -29,6 +29,7 @@
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
 
+#include "geometry_msgs/TransformStamped.h"
 #include "hri/person.h"
 
 #include "hri/hri.h"
@@ -36,6 +37,20 @@
 
 using namespace std;
 using namespace hri;
+
+Person::Person(ID id, const HRIListener* listener, ros::NodeHandle& nh,
+               tf2_ros::Buffer* tf_buffer_ptr, const std::string& reference_frame)
+  : FeatureTracker{ id, nh }
+  , listener_(listener)
+  , _anonymous(false)
+  , _engagement_status(nullptr)
+  , _alias("")
+  , _loc_confidence(0.)
+  , _tf_buffer_ptr(tf_buffer_ptr)
+  , _reference_frame(reference_frame)
+{
+}
+
 
 Person::~Person()
 {
@@ -107,11 +122,25 @@ boost::optional<EngagementLevel> Person::engagement_status() const
   return static_cast<EngagementLevel>(_engagement_status->level);
 }
 
-boost::optional<float> Person::location_confidence() const
+boost::optional<geometry_msgs::TransformStamped> Person::transform() const
 {
-  if (_loc_confidence < 0)
-    return boost::optional<float>();
+  if (_loc_confidence == 0)
+  {
+    return boost::optional<geometry_msgs::TransformStamped>();
+  }
 
-  return _loc_confidence;
+  try
+  {
+    auto transform = _tf_buffer_ptr->lookupTransform(_reference_frame, frame(),
+                                                     ros::Time(0), PERSON_TF_TIMEOUT);
+
+    return transform;
+  }
+  catch (tf2::LookupException)
+  {
+    ROS_WARN_STREAM("failed to transform person frame " << frame() << " to " << _reference_frame
+                                                        << ". Are the frames published?");
+    return boost::optional<geometry_msgs::TransformStamped>();
+  }
 }
 

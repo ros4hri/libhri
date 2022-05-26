@@ -38,9 +38,12 @@
 #include "hri_msgs/EngagementLevel.h"
 #include "hri_msgs/IdsList.h"
 #include "hri_msgs/SoftBiometrics.h"
+#include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Bool.h"
 #include "sensor_msgs/RegionOfInterest.h"
+#include <tf2_ros/static_transform_broadcaster.h>
+#include <geometry_msgs/TransformStamped.h>
 
 using namespace std;
 using namespace ros;
@@ -885,6 +888,87 @@ TEST(libhri, EngagementLevel)
   WAIT;
 
   ASSERT_FALSE(p->engagement_status());
+
+  spinner.stop();
+}
+
+TEST(libhri, PeopleLocation)
+{
+  NodeHandle nh;
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  HRIListener hri_listener;
+  hri_listener.setReferenceFrame("base_link");
+
+  tf2_ros::StaticTransformBroadcaster static_broadcaster;
+
+  geometry_msgs::TransformStamped world_transform;
+  world_transform.header.stamp = ros::Time::now();
+  world_transform.header.frame_id = "world";
+  world_transform.child_frame_id = "base_link";
+  world_transform.transform.translation.x = -1.0;
+  world_transform.transform.translation.y = 0.0;
+  world_transform.transform.translation.z = 0.0;
+  world_transform.transform.rotation.w = 1.0;
+  static_broadcaster.sendTransform(world_transform);
+
+  geometry_msgs::TransformStamped p1_transform;
+  p1_transform.header.stamp = ros::Time::now();
+  p1_transform.header.frame_id = "world";
+  p1_transform.child_frame_id = "person_p1";
+  p1_transform.transform.translation.x = 1.0;
+  p1_transform.transform.translation.y = 0.0;
+  p1_transform.transform.translation.z = 0.0;
+  p1_transform.transform.rotation.w = 1.0;
+
+  auto person_pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
+  auto loc_confidence_pub =
+      nh.advertise<std_msgs::Float32>("/humans/persons/p1/location_confidence", 1);
+
+  auto person_ids = hri_msgs::IdsList();
+  person_ids.ids = { "p1" };
+  person_pub.publish(person_ids);
+
+  WAIT;
+
+  auto p = hri_listener.getTrackedPersons()["p1"].lock();
+
+  auto msg = std_msgs::Float32();
+  msg.data = 0.;
+  loc_confidence_pub.publish(msg);
+  WAIT;
+
+  ASSERT_EQ(p->location_confidence(), 0.);
+  ASSERT_FALSE(p->transform()) << "location confidence at 0, no transform should be available";
+
+  msg.data = 0.5;
+  loc_confidence_pub.publish(msg);
+  WAIT;
+
+  ASSERT_EQ(p->location_confidence(), 0.5);
+  p->transform();
+  ASSERT_FALSE(p->transform()) << "location confidence > 0 but no transform published yet -> no transform should be returned";
+
+
+  static_broadcaster.sendTransform(p1_transform);
+  WAIT;
+
+  ASSERT_EQ(p->location_confidence(), 0.5);
+  ASSERT_TRUE(p->transform()) << "location confidence > 0 => a transform should be available";
+  auto t = *(p->transform());
+  ASSERT_EQ(t.child_frame_id, "person_p1");
+  ASSERT_EQ(t.header.frame_id, "base_link");
+  ASSERT_EQ(t.transform.translation.x, 2.0);
+
+
+  msg.data = 1.0;
+  loc_confidence_pub.publish(msg);
+  WAIT;
+
+  ASSERT_EQ(p->location_confidence(), 1.);
+  ASSERT_TRUE(p->transform()) << "location confidence > 0 => a transform should be available";
 
   spinner.stop();
 }

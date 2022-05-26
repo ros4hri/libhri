@@ -198,6 +198,16 @@ public:
   }
 
 
+  /** sets the reference frame from which the TF transformations of the persons will
+   * be returned (via `Person::transform()`).
+   *
+   * By default, `base_link`.
+   */
+  void setReferenceFrame(const std::string& frame)
+  {
+    _reference_frame = frame;
+  }
+
 private:
   ros::NodeHandle node_;
 
@@ -225,6 +235,10 @@ private:
   std::map<ID, PersonConstPtr> tracked_persons;
   std::vector<std::function<void(PersonConstPtr)>> person_tracked_callbacks;
   std::vector<std::function<void(ID)>> person_tracked_lost_callbacks;
+
+  std::string _reference_frame;
+  tf2_ros::Buffer _tf_buffer;
+  tf2_ros::TransformListener _tf_listener;
 };
 
 }  // namespace hri

@@ -41,7 +41,7 @@
 using namespace std;
 using namespace hri;
 
-HRIListener::HRIListener()
+HRIListener::HRIListener() : _reference_frame("base_link"), _tf_listener(_tf_buffer)
 {
   init();
 }
@@ -174,6 +174,7 @@ map<ID, PersonWeakConstPtr> HRIListener::getTrackedPersons() const
 void HRIListener::init()
 {
   ROS_DEBUG("Initialising the HRI Listener");
+
 
   feature_subscribers_[FeatureType::face] = node_.subscribe<hri_msgs::IdsList>(
       "/humans/faces/tracked", 1,
@@ -403,7 +404,7 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
     case FeatureType::person:
       for (auto id : to_add)
       {
-        auto person = make_shared<Person>(id, this, node_);
+        auto person = make_shared<Person>(id, this, node_, &_tf_buffer, _reference_frame);
         person->init();
         persons.insert({ id, person });
 
@@ -417,7 +418,7 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
     case FeatureType::tracked_person:
       for (auto id : to_add)
       {
-        auto person = make_shared<Person>(id, this, node_);
+        auto person = make_shared<Person>(id, this, node_, &_tf_buffer, _reference_frame);
         person->init();
         tracked_persons.insert({ id, person });
 

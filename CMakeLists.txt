@@ -11,7 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   rosconsole
   roscpp
   std_msgs
-  tf
+  tf2
+  tf2_ros
   cv_bridge
 )
 
@@ -32,7 +33,7 @@ include_directories(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES hri
-  CATKIN_DEPENDS geometry_msgs hri_msgs rosconsole roscpp std_msgs tf cv_bridge
+  CATKIN_DEPENDS geometry_msgs hri_msgs rosconsole roscpp std_msgs tf2 cv_bridge
 )
 
 add_library(${PROJECT_NAME}
@@ -60,6 +61,9 @@ endif()
 if(CATKIN_ENABLE_TESTING)
 
 find_package(rostest REQUIRED)
+
+#find_package(catkin REQUIRED COMPONENTS
+#  tf2 tf2_ros)
 
 add_rostest_gmock(test_hri test/test_hri.test test/test_hri.cpp)
 target_include_directories(test_hri PRIVATE ${rostest_INCLUDE_DIRS})
