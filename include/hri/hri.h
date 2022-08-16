@@ -208,31 +208,31 @@ public:
     _reference_frame = frame;
   }
 
+
 private:
   ros::NodeHandle node_;
 
-  void init();
-
   void onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPtr tracked);
 
-  std::map<FeatureType, ros::Subscriber> feature_subscribers_;
+  std::map<std::string, ros::Subscriber> hri_subscribers_;
 
-  std::map<ID, FaceConstPtr> faces;
+  std::map<ID, FacePtr> faces;
   std::vector<std::function<void(FaceWeakConstPtr)>> face_callbacks;
   std::vector<std::function<void(ID)>> face_lost_callbacks;
 
-  std::map<ID, BodyConstPtr> bodies;
+  std::map<ID, BodyPtr> bodies;
   std::vector<std::function<void(BodyWeakConstPtr)>> body_callbacks;
   std::vector<std::function<void(ID)>> body_lost_callbacks;
 
-  std::map<ID, VoiceConstPtr> voices;
+  std::map<ID, VoicePtr> voices;
   std::vector<std::function<void(VoiceWeakConstPtr)>> voice_callbacks;
   std::vector<std::function<void(ID)>> voice_lost_callbacks;
 
-  std::map<ID, PersonConstPtr> persons;
+  std::map<ID, PersonPtr> persons;
   std::vector<std::function<void(PersonConstPtr)>> person_callbacks;
   std::vector<std::function<void(ID)>> person_lost_callbacks;
-  std::map<ID, PersonConstPtr> tracked_persons;
+
+  std::map<ID, PersonPtr> tracked_persons;
   std::vector<std::function<void(PersonConstPtr)>> person_tracked_callbacks;
   std::vector<std::function<void(ID)>> person_tracked_lost_callbacks;
 
@@ -240,6 +240,8 @@ private:
   tf2_ros::Buffer _tf_buffer;
   tf2_ros::TransformListener _tf_listener;
 };
+
+
 
 }  // namespace hri
 

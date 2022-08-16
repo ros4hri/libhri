@@ -33,6 +33,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <ros/ros.h>
 
 namespace hri
@@ -47,6 +48,8 @@ enum FeatureType
   body,
   voice
 };
+
+
 
 class FeatureTracker
 {

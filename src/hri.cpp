@@ -33,29 +33,216 @@
 #include <memory>
 #include <tuple>
 #include <utility>
+#include "hri/base.h"
 #include "hri/body.h"
 #include "hri/face.h"
 #include "hri/person.h"
+#include "hri_msgs/EngagementLevel.h"
+#include "hri_msgs/FacialLandmarks.h"
 #include "hri_msgs/IdsList.h"
+#include "hri_msgs/BoolHRI.h"
+#include "hri_msgs/SoftBiometrics.h"
+#include "hri_msgs/StringHRI.h"
+#include "hri_msgs/Float32HRI.h"
+#include "hri_msgs/ImageHRI.h"
+#include "hri_msgs/NormalizedRegionOfInterest2D.h"
+#include "ros/subscriber.h"
+
+#define CHECK_ID_AND_DO(dict, msg, func, param, debug_msg)                               \
+  if (dict.count(msg->header.id))                                                        \
+  {                                                                                      \
+    dict.at(msg->header.id)->func(param);                                                \
+  }                                                                                      \
+  else                                                                                   \
+  {                                                                                      \
+    ROS_WARN_STREAM(debug_msg << msg->header.id);                                        \
+  }
+
+#define CHECK_PERSON_AND_SET(msg, param, value, debug_msg)                               \
+  if (persons.count(msg->header.id))                                                     \
+  {                                                                                      \
+    persons.at(msg->header.id)->param = value;                                           \
+  }                                                                                      \
+  else                                                                                   \
+  {                                                                                      \
+    ROS_WARN_STREAM(debug_msg << msg->header.id);                                        \
+  }                                                                                      \
+  /* if the person is *also* currently tracked, update that value as well */             \
+  if (tracked_persons.count(msg->header.id))                                             \
+  {                                                                                      \
+    tracked_persons.at(msg->header.id)->param = value;                                   \
+  }
+
 
 using namespace std;
 using namespace hri;
 
-HRIListener::HRIListener() : _reference_frame("base_link"), _tf_listener(_tf_buffer)
+HRIListener::HRIListener()
+  : _reference_frame("base_link")
+  , _tf_listener(_tf_buffer)
+  , hri_subscribers_({ {
+
+        //////////////////////////////////////////////////////////////////
+        // FACES
+        //
+
+        { "face_tracked", node_.subscribe<hri_msgs::IdsList>(
+                              "/humans/faces/tracked", 1,
+                              bind(&HRIListener::onTrackedFeature, this, FeatureType::face, _1)) },
+
+        { "face_roi", node_.subscribe<hri_msgs::NormalizedRegionOfInterest2D>(
+                          "/humans/faces/roi", 1,
+                          [&](auto msg) {
+                            CHECK_ID_AND_DO(faces, msg, onRoI, msg,
+                                            "Trying to update RoI of unknown face ");
+                          }) },
+
+
+        { "face_cropped", node_.subscribe<hri_msgs::ImageHRI>(
+                              "/humans/faces/cropped", 1,
+                              [&](auto msg) {
+                                CHECK_ID_AND_DO(faces, msg, onCropped, msg->image,
+                                                "Trying to update cropped image for unknown face ");
+                              }) },
+
+        { "face_aligned", node_.subscribe<hri_msgs::ImageHRI>(
+                              "/humans/faces/aligned", 1,
+                              [&](auto msg) {
+                                CHECK_ID_AND_DO(faces, msg, onAligned, msg->image,
+                                                "Trying to update aligned image for unknown face ");
+                              }) },
+
+        { "face_landmarks", node_.subscribe<hri_msgs::FacialLandmarks>(
+                                "/humans/faces/landmarks", 1,
+                                [&](auto msg) {
+                                  CHECK_ID_AND_DO(faces, msg, onLandmarks, msg,
+                                                  "Trying to update facial landmarks for unknown face ");
+                                }) },
+
+        { "face_softbiometrics", node_.subscribe<hri_msgs::SoftBiometrics>(
+                                     "/humans/faces/softbiometrics", 1,
+                                     [&](auto msg) {
+                                       CHECK_ID_AND_DO(faces, msg, onSoftBiometrics, msg,
+                                                       "Trying to update soft biometrics for unknown face ");
+                                     }) },
+
+        //////////////////////////////////////////////////////////////////
+        // BODIES
+        //
+
+        { "body_tracked", node_.subscribe<hri_msgs::IdsList>(
+                              "/humans/bodies/tracked", 1,
+                              bind(&HRIListener::onTrackedFeature, this, FeatureType::body, _1)) },
+
+        { "body_roi", node_.subscribe<hri_msgs::NormalizedRegionOfInterest2D>(
+                          "/humans/bodies/roi", 1,
+                          [&](auto msg) {
+                            CHECK_ID_AND_DO(bodies, msg, onRoI, msg,
+                                            "Trying to update RoI for unknown body ");
+                          }) },
+
+        { "body_cropped", node_.subscribe<hri_msgs::ImageHRI>(
+                              "/humans/bodies/cropped", 1,
+                              [&](auto msg) {
+                                CHECK_ID_AND_DO(bodies, msg, onCropped, msg->image,
+                                                "Trying to update cropped image for unknown body ");
+                              }) },
+
+        //////////////////////////////////////////////////////////////////
+        // VOICES
+        //
+
+        { "voice_tracked", node_.subscribe<hri_msgs::IdsList>(
+                               "/humans/voices/tracked", 1,
+                               bind(&HRIListener::onTrackedFeature, this, FeatureType::voice, _1)) },
+
+        //////////////////////////////////////////////////////////////////
+        // PERSONS
+        //
+
+        { "person_known", node_.subscribe<hri_msgs::IdsList>(
+                              "/humans/persons/known", 1,
+                              bind(&HRIListener::onTrackedFeature, this, FeatureType::person, _1)) },
+
+        { "person_tracked",
+          node_.subscribe<hri_msgs::IdsList>("/humans/persons/tracked", 1,
+                                             bind(&HRIListener::onTrackedFeature, this,
+                                                  FeatureType::tracked_person, _1)) },
+
+        { "person_anonymous",
+          node_.subscribe<hri_msgs::BoolHRI>("/humans/persons/anonymous", 1,
+                                             [&](auto msg) {
+                                               CHECK_PERSON_AND_SET(
+                                                   msg, _anonymous, msg->data,
+                                                   "Trying to update anonymous status for unknown person ");
+                                             }) },
+
+        { "person_face_id",
+          node_.subscribe<hri_msgs::StringHRI>("/humans/persons/face_id", 1,
+                                               [&](const auto msg) {
+                                                 CHECK_PERSON_AND_SET(
+                                                     msg, face_id, msg->data,
+                                                     "Trying to update face_id for unknown person ");
+                                               }) },
+
+        { "person_body_id",
+          node_.subscribe<hri_msgs::StringHRI>("/humans/persons/body_id", 1,
+                                               [&](const auto msg) {
+                                                 CHECK_PERSON_AND_SET(
+                                                     msg, body_id, msg->data,
+                                                     "Trying to update body_id for unknown person ");
+                                               }) },
+
+        { "person_voice_id",
+          node_.subscribe<hri_msgs::StringHRI>("/humans/persons/voice_id", 1,
+                                               [&](const auto msg) {
+                                                 CHECK_PERSON_AND_SET(
+                                                     msg, voice_id, msg->data,
+                                                     "Trying to update voice_id for unknown person ");
+                                               }) },
+
+        { "person_alias", node_.subscribe<hri_msgs::StringHRI>("/humans/persons/alias", 1,
+                                                               [&](auto msg) {
+                                                                 CHECK_PERSON_AND_SET(
+                                                                     msg, _alias, msg->data,
+                                                                     "Trying to update alias for unknown person ");
+                                                               }) },
+
+        { "person_engagement_status",
+          node_.subscribe<
+              hri_msgs::EngagementLevel>("/humans/persons/engagement_status", 1,
+                                         [&](auto msg) {
+                                           CHECK_PERSON_AND_SET(
+                                               msg, _engagement_status, msg,
+                                               "Trying to update engagement status for unknown person ");
+                                         }) },
+
+        { "person_location_confidence",
+          node_.subscribe<hri_msgs::Float32HRI>("/humans/persons/location_confidence", 1,
+                                                [&](auto msg) {
+                                                  CHECK_PERSON_AND_SET(
+                                                      msg, _loc_confidence, msg->data,
+                                                      "Trying to update location confidence for unknown person ");
+                                                }) },
+    } })
 {
-  init();
+  ROS_DEBUG("Initialising the HRI Listener");
 }
 
 HRIListener::~HRIListener()
 {
   ROS_DEBUG("Closing the HRI Listener");
 
-  faces.clear();
 
-  for (auto& sub : feature_subscribers_)
+  for (auto& sub : hri_subscribers_)
   {
     sub.second.shutdown();
   }
+
+  persons.clear();
+  faces.clear();
+  bodies.clear();
+  voices.clear();
 }
 
 
@@ -169,32 +356,6 @@ map<ID, PersonWeakConstPtr> HRIListener::getTrackedPersons() const
   }
 
   return result;
-}
-
-void HRIListener::init()
-{
-  ROS_DEBUG("Initialising the HRI Listener");
-
-
-  feature_subscribers_[FeatureType::face] = node_.subscribe<hri_msgs::IdsList>(
-      "/humans/faces/tracked", 1,
-      bind(&HRIListener::onTrackedFeature, this, FeatureType::face, _1));
-
-  feature_subscribers_[FeatureType::body] = node_.subscribe<hri_msgs::IdsList>(
-      "/humans/bodies/tracked", 1,
-      bind(&HRIListener::onTrackedFeature, this, FeatureType::body, _1));
-
-  feature_subscribers_[FeatureType::voice] = node_.subscribe<hri_msgs::IdsList>(
-      "/humans/voices/tracked", 1,
-      bind(&HRIListener::onTrackedFeature, this, FeatureType::voice, _1));
-
-  feature_subscribers_[FeatureType::tracked_person] = node_.subscribe<hri_msgs::IdsList>(
-      "/humans/persons/tracked", 1,
-      bind(&HRIListener::onTrackedFeature, this, FeatureType::tracked_person, _1));
-
-  feature_subscribers_[FeatureType::person] = node_.subscribe<hri_msgs::IdsList>(
-      "/humans/persons/known", 1,
-      bind(&HRIListener::onTrackedFeature, this, FeatureType::person, _1));
 }
 
 void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPtr tracked)

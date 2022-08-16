@@ -37,11 +37,11 @@
 #include "hri/person.h"
 #include "hri_msgs/EngagementLevel.h"
 #include "hri_msgs/IdsList.h"
+#include "hri_msgs/NormalizedRegionOfInterest2D.h"
 #include "hri_msgs/SoftBiometrics.h"
-#include "std_msgs/Float32.h"
-#include "std_msgs/String.h"
-#include "std_msgs/Bool.h"
-#include "sensor_msgs/RegionOfInterest.h"
+#include "hri_msgs/Float32HRI.h"
+#include "hri_msgs/StringHRI.h"
+#include "hri_msgs/BoolHRI.h"
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 
@@ -141,8 +141,8 @@ TEST(libhri, GetFacesRoi)
 
   auto pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
 
-  auto pub_r1 = nh.advertise<sensor_msgs::RegionOfInterest>("/humans/faces/A/roi", 1, true);  // /roi topic is latched
-  auto pub_r2 = nh.advertise<sensor_msgs::RegionOfInterest>("/humans/faces/B/roi", 1, true);  // /roi topic is latched
+  auto pub_roi = nh.advertise<hri_msgs::NormalizedRegionOfInterest2D>(
+      "/humans/faces/roi", 1, true);  // /roi topic is latched
 
   auto ids = hri_msgs::IdsList();
 
@@ -150,63 +150,56 @@ TEST(libhri, GetFacesRoi)
   pub.publish(ids);
   WAIT;
 
-  EXPECT_EQ(pub_r1.getNumSubscribers(), 1U)
-      << "Face A should have subscribed to /humans/faces/A/roi";
-
-
-  ids.ids = { "B" };
-  pub.publish(ids);
-  WAIT;
-
-  EXPECT_EQ(pub_r1.getNumSubscribers(), 0U)
-      << "Face A is deleted. No one should be subscribed to /humans/faces/A/roi anymore";
-  EXPECT_EQ(pub_r2.getNumSubscribers(), 1U)
-      << "Face B should have subscribed to /humans/faces/B/roi";
-
-
   auto faces = hri_listener.getFaces();
-  ASSERT_FALSE(faces["B"].expired());  // face B still exists!
 
-  auto roi = sensor_msgs::RegionOfInterest();
+  auto roi = hri_msgs::NormalizedRegionOfInterest2D();
+  roi.header.id = "A";
 
   {
-    auto face = faces["B"].lock();
-    EXPECT_FALSE(face == nullptr);
+    auto face = faces["A"].lock();
+    EXPECT_NE(face, nullptr);
 
-    EXPECT_EQ(face->ns(), "/humans/faces/B");
+    EXPECT_EQ(face->ns(), "/humans/faces/A");
 
     EXPECT_EQ(face->roi().width, 0);
 
 
-    roi.width = 10;
-    pub_r2.publish(roi);
+    roi.xmin = 10;
+    roi.xmax = 20;
+    pub_roi.publish(roi);
     WAIT;
     EXPECT_EQ(face->roi().width, 10);
 
-    roi.width = 20;
-    pub_r2.publish(roi);
+    roi.xmax = 30;
+    pub_roi.publish(roi);
     WAIT;
     EXPECT_EQ(face->roi().width, 20);
   }
 
-  // RoI of face A published *before* face A is published in /faces/tracked,
-  // but should still get its RoI, as /roi is latched.
-  pub_r1.publish(roi);
-  ids.ids = { "B", "A" };
+  // RoI of face B published *before* face B is published in /faces/tracked,
+  // the RoI will be ignored, but nothing should crash.
+  roi.header.id = "B";
+  roi.xmax = 40;
+  EXPECT_NO_THROW({
+    pub_roi.publish(roi);
+    WAIT;
+  });
+
+  ids.ids = { "A", "B" };
   pub.publish(ids);
   WAIT;
 
   faces = hri_listener.getFaces();
   {
     auto face_a = faces["A"].lock();
-    ASSERT_FALSE(face_a == nullptr);
+    ASSERT_NE(face_a, nullptr);
     auto face_b = faces["B"].lock();
-    ASSERT_FALSE(face_b == nullptr);
+    ASSERT_NE(face_b, nullptr);
 
     EXPECT_EQ(face_a->ns(), "/humans/faces/A");
     EXPECT_EQ(face_a->roi().width, 20);
     EXPECT_EQ(face_b->ns(), "/humans/faces/B");
-    EXPECT_EQ(face_b->roi().width, 20);
+    EXPECT_EQ(face_b->roi().width, 0);
   }
 
   spinner.stop();
@@ -514,7 +507,7 @@ TEST(libhri, PersonAttributes)
 
   auto person_pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
   auto face_pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
-  auto person_face_pub = nh.advertise<std_msgs::String>("/humans/persons/p1/face_id", 1);
+  auto person_face_pub = nh.advertise<hri_msgs::StringHRI>("/humans/persons/face_id", 1);
 
   auto person_ids = hri_msgs::IdsList();
   person_ids.ids = { "p1" };
@@ -535,7 +528,8 @@ TEST(libhri, PersonAttributes)
   ASSERT_EQ(face0.lock(), nullptr);
   ASSERT_TRUE(face0.expired());
 
-  auto face_id = std_msgs::String();
+  auto face_id = hri_msgs::StringHRI();
+  face_id.header.id = "p1";
   face_id.data = "f1";
 
   person_face_pub.publish(face_id);
@@ -561,14 +555,11 @@ TEST(libhri, AnonymousPersonsAndAliases)
   HRIListener hri_listener;
 
   auto person_pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
-  auto p1_anon_pub = nh.advertise<std_msgs::Bool>("/humans/persons/p1/anonymous", 1);
-  auto p2_anon_pub = nh.advertise<std_msgs::Bool>("/humans/persons/p2/anonymous", 1);
+  auto anon_pub = nh.advertise<hri_msgs::BoolHRI>("/humans/persons/anonymous", 1);
 
   auto face_pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
-  auto p1_face_pub = nh.advertise<std_msgs::String>("/humans/persons/p1/face_id", 1);
-  auto p2_face_pub = nh.advertise<std_msgs::String>("/humans/persons/p2/face_id", 1);
-
-  auto p2_alias_pub = nh.advertise<std_msgs::String>("/humans/persons/p2/alias", 1);
+  auto face_id_pub = nh.advertise<hri_msgs::StringHRI>("/humans/persons/face_id", 1);
+  auto alias_pub = nh.advertise<hri_msgs::StringHRI>("/humans/persons/alias", 1);
 
   auto person_ids = hri_msgs::IdsList();
   person_ids.ids = { "p1", "p2" };
@@ -581,20 +572,24 @@ TEST(libhri, AnonymousPersonsAndAliases)
   WAIT;
 
   // each person is associated to a face
-  auto face_id = std_msgs::String();
+  auto face_id = hri_msgs::StringHRI();
+  face_id.header.id = "p1";
   face_id.data = "f1";
-  p1_face_pub.publish(face_id);
+  face_id_pub.publish(face_id);
+  face_id.header.id = "p2";
   face_id.data = "f2";
-  p2_face_pub.publish(face_id);
+  face_id_pub.publish(face_id);
 
 
   WAIT;
 
-  std_msgs::Bool msg;
+  hri_msgs::BoolHRI msg;
+  msg.header.id = "p1";
   msg.data = false;
-  p1_anon_pub.publish(msg);
+  anon_pub.publish(msg);
+  msg.header.id = "p2";
   msg.data = true;
-  p2_anon_pub.publish(msg);
+  anon_pub.publish(msg);
 
   WAIT;
 
@@ -609,6 +604,8 @@ TEST(libhri, AnonymousPersonsAndAliases)
     ASSERT_TRUE(p2->anonymous());
 
     // being anonymous or not should have no impact on face associations
+    ASSERT_NE(p1->face().lock(), nullptr);
+    ASSERT_NE(p2->face().lock(), nullptr);
     ASSERT_EQ(p1->face().lock()->id(), "f1");
     ASSERT_EQ(p2->face().lock()->id(), "f2");
   }
@@ -616,10 +613,11 @@ TEST(libhri, AnonymousPersonsAndAliases)
   ///////////// ALIASES ///////////////////////////
 
   // set p2 as an alias of p1
-  auto alias_id = std_msgs::String();
+  auto alias_id = hri_msgs::StringHRI();
+  alias_id.header.id = "p2";
   alias_id.data = "p1";
 
-  p2_alias_pub.publish(alias_id);
+  alias_pub.publish(alias_id);
 
   WAIT;
 
@@ -635,7 +633,7 @@ TEST(libhri, AnonymousPersonsAndAliases)
   // remove the alias
   alias_id.data = "";
 
-  p2_alias_pub.publish(alias_id);
+  alias_pub.publish(alias_id);
 
   WAIT;
 
@@ -651,7 +649,7 @@ TEST(libhri, AnonymousPersonsAndAliases)
   // republish the alias
   alias_id.data = "p1";
 
-  p2_alias_pub.publish(alias_id);
+  alias_pub.publish(alias_id);
 
   WAIT;
 
@@ -796,9 +794,9 @@ TEST(libhri, SoftBiometrics)
 
   auto person_pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
   auto face_pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
-  auto person_face_pub = nh.advertise<std_msgs::String>("/humans/persons/p1/face_id", 1);
+  auto person_face_pub = nh.advertise<hri_msgs::StringHRI>("/humans/persons/face_id", 1);
   auto softbiometrics_pub =
-      nh.advertise<hri_msgs::SoftBiometrics>("/humans/faces/f1/softbiometrics", 1);
+      nh.advertise<hri_msgs::SoftBiometrics>("/humans/faces/softbiometrics", 1);
 
   auto person_ids = hri_msgs::IdsList();
   person_ids.ids = { "p1" };
@@ -811,13 +809,15 @@ TEST(libhri, SoftBiometrics)
   WAIT;
 
   auto softbiometrics_msg = hri_msgs::SoftBiometrics();
+  softbiometrics_msg.header.id = "f1";
   softbiometrics_msg.age = 45;
   softbiometrics_msg.age_confidence = 0.8;
   softbiometrics_msg.gender = hri_msgs::SoftBiometrics::FEMALE;
   softbiometrics_msg.gender_confidence = 0.7;
   softbiometrics_pub.publish(softbiometrics_msg);
 
-  auto face_id = std_msgs::String();
+  auto face_id = hri_msgs::StringHRI();
+  face_id.header.id = "p1";
   face_id.data = "f1";
 
   person_face_pub.publish(face_id);
@@ -826,6 +826,7 @@ TEST(libhri, SoftBiometrics)
 
   auto face = hri_listener.getTrackedPersons()["p1"].lock()->face().lock();
 
+  ASSERT_NE(face, nullptr);
   ASSERT_EQ(face->id(), "f1");
 
   ASSERT_TRUE(face->age());
@@ -859,7 +860,7 @@ TEST(libhri, EngagementLevel)
 
   auto person_pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
   auto engagement_pub =
-      nh.advertise<hri_msgs::EngagementLevel>("/humans/persons/p1/engagement_status", 1);
+      nh.advertise<hri_msgs::EngagementLevel>("/humans/persons/engagement_status", 1);
 
   auto person_ids = hri_msgs::IdsList();
   person_ids.ids = { "p1" };
@@ -867,14 +868,18 @@ TEST(libhri, EngagementLevel)
 
   WAIT;
 
+  auto p = hri_listener.getTrackedPersons()["p1"].lock();
+  ASSERT_FALSE(p->engagement_status()) << "No engagement status published yet.";
+
   auto msg = hri_msgs::EngagementLevel();
+  msg.header.id = "p1";
   msg.level = hri_msgs::EngagementLevel::DISENGAGED;
   engagement_pub.publish(msg);
 
   WAIT;
 
-  auto p = hri_listener.getTrackedPersons()["p1"].lock();
-  ASSERT_TRUE(p->engagement_status());
+  ASSERT_TRUE(p->engagement_status())
+      << "An engagement status has been published, it should be available";
   ASSERT_EQ(*(p->engagement_status()), hri::DISENGAGED);
 
   msg.level = hri_msgs::EngagementLevel::ENGAGED;
@@ -925,7 +930,7 @@ TEST(libhri, PeopleLocation)
 
   auto person_pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
   auto loc_confidence_pub =
-      nh.advertise<std_msgs::Float32>("/humans/persons/p1/location_confidence", 1);
+      nh.advertise<hri_msgs::Float32HRI>("/humans/persons/location_confidence", 1);
 
   auto person_ids = hri_msgs::IdsList();
   person_ids.ids = { "p1" };
@@ -935,7 +940,8 @@ TEST(libhri, PeopleLocation)
 
   auto p = hri_listener.getTrackedPersons()["p1"].lock();
 
-  auto msg = std_msgs::Float32();
+  auto msg = hri_msgs::Float32HRI();
+  msg.header.id = "p1";
   msg.data = 0.;
   loc_confidence_pub.publish(msg);
   WAIT;

@@ -39,7 +39,6 @@
 #include "voice.h"
 
 #include <hri_msgs/EngagementLevel.h>
-#include <std_msgs/Float32.h>
 
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/message_filter.h"
@@ -155,6 +154,8 @@ protected:
   ros::Subscriber loc_confidence_subscriber_;
 
   tf2_ros::Buffer* _tf_buffer_ptr;
+
+  friend hri::HRIListener;
 };
 
 typedef std::shared_ptr<Person> PersonPtr;

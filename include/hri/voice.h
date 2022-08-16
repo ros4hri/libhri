@@ -36,6 +36,8 @@
 
 namespace hri
 {
+class HRIListener;
+
 class Voice : public FeatureTracker
 {
 public:
@@ -46,6 +48,7 @@ public:
   void init() override;
 
 private:
+  friend hri::HRIListener;
 };
 
 typedef std::shared_ptr<Voice> VoicePtr;

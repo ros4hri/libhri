@@ -36,12 +36,15 @@
 #include <boost/optional.hpp>
 
 #include "base.h"
+#include "hri_msgs/NormalizedRegionOfInterest2D.h"
 #include "ros/subscriber.h"
 
 #include <opencv2/core.hpp>
 
 namespace hri
 {
+class HRIListener;
+
 class Body : public FeatureTracker
 {
 public:
@@ -84,12 +87,14 @@ private:
   size_t nb_roi;
 
   ros::Subscriber roi_subscriber_;
-  void onRoI(sensor_msgs::RegionOfInterestConstPtr roi);
+  void onRoI(hri_msgs::NormalizedRegionOfInterest2DConstPtr roi);
   cv::Rect roi_;
 
   ros::Subscriber cropped_subscriber_;
-  void onCropped(sensor_msgs::ImageConstPtr roi);
+  void onCropped(const sensor_msgs::Image& roi);
   cv::Mat cropped_;
+
+  friend hri::HRIListener;
 };
 
 typedef std::shared_ptr<Body> BodyPtr;

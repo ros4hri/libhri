@@ -43,32 +43,22 @@ Face::~Face()
 {
   ROS_DEBUG_STREAM("Deleting face " << id_);
   roi_subscriber_.shutdown();
+  cropped_subscriber_.shutdown();
+  aligned_subscriber_.shutdown();
+  landmarks_subscriber_.shutdown();
+  softbiometrics_subscriber_.shutdown();
 }
 
 void Face::init()
 {
   ns_ = "/humans/faces/" + id_;
   ROS_DEBUG_STREAM("New face detected: " << ns_);
-
-  roi_subscriber_ = node_.subscribe<sensor_msgs::RegionOfInterest>(
-      ns_ + "/roi", 1, bind(&Face::onRoI, this, _1));
-
-  cropped_subscriber_ = node_.subscribe<sensor_msgs::Image>(
-      ns_ + "/cropped", 1, bind(&Face::onCropped, this, _1));
-
-  aligned_subscriber_ = node_.subscribe<sensor_msgs::Image>(
-      ns_ + "/aligned", 1, bind(&Face::onAligned, this, _1));
-
-  landmarks_subscriber_ = node_.subscribe<hri_msgs::FacialLandmarks>(
-      ns_ + "/landmarks", 1, bind(&Face::onLandmarks, this, _1));
-
-  softbiometrics_subscriber_ = node_.subscribe<hri_msgs::SoftBiometrics>(
-      ns_ + "/softbiometrics", 1, bind(&Face::onSoftBiometrics, this, _1));
 }
 
-void Face::onRoI(sensor_msgs::RegionOfInterestConstPtr roi)
+void Face::onRoI(hri_msgs::NormalizedRegionOfInterest2DConstPtr roi)
 {
-  roi_ = cv::Rect(roi->x_offset, roi->y_offset, roi->width, roi->height);
+  ROS_DEBUG_STREAM("updating face " << id_ << "'s ROI to " << *roi);
+  roi_ = cv::Rect(roi->xmin, roi->ymin, roi->xmax - roi->xmin, roi->ymax - roi->ymin);
 }
 
 cv::Rect Face::roi() const
@@ -76,7 +66,7 @@ cv::Rect Face::roi() const
   return roi_;
 }
 
-void Face::onCropped(sensor_msgs::ImageConstPtr msg)
+void Face::onCropped(const sensor_msgs::Image& msg)
 {
   cropped_ = cv_bridge::toCvCopy(msg)->image;  // if using toCvShare, the image ends up shared with aligned_!
 }
@@ -86,7 +76,7 @@ cv::Mat Face::cropped() const
   return cropped_;
 }
 
-void Face::onAligned(sensor_msgs::ImageConstPtr msg)
+void Face::onAligned(const sensor_msgs::Image& msg)
 {
   aligned_ = cv_bridge::toCvCopy(msg)->image;  // if using toCvShare, the image ends up shared with cropped_!
 }

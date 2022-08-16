@@ -61,31 +61,6 @@ void Person::init()
 {
   ns_ = "/humans/persons/" + id_;
   ROS_DEBUG_STREAM("New person detected: " << ns_);
-
-  face_id_subscriber_ = node_.subscribe<std_msgs::String>(
-      ns_ + "/face_id", 1, [&](const std_msgs::StringConstPtr msg) { face_id = msg->data; });
-
-  body_id_subscriber_ = node_.subscribe<std_msgs::String>(
-      ns_ + "/body_id", 1, [&](const std_msgs::StringConstPtr msg) { body_id = msg->data; });
-
-  voice_id_subscriber_ = node_.subscribe<std_msgs::String>(
-      ns_ + "/voice_id", 1,
-      [&](const std_msgs::StringConstPtr msg) { voice_id = msg->data; });
-
-  anonymous_subscriber_ = node_.subscribe<std_msgs::Bool>(
-      ns_ + "/anonymous", 1,
-      [&](const std_msgs::BoolConstPtr msg) { _anonymous = msg->data; });
-
-  alias_subscriber_ = node_.subscribe<std_msgs::String>(
-      ns_ + "/alias", 1, [&](const std_msgs::StringConstPtr msg) { _alias = msg->data; });
-
-  engagement_subscriber_ = node_.subscribe<hri_msgs::EngagementLevel>(
-      ns_ + "/engagement_status", 1,
-      [&](const hri_msgs::EngagementLevelConstPtr msg) { _engagement_status = msg; });
-
-  loc_confidence_subscriber_ = node_.subscribe<std_msgs::Float32>(
-      ns_ + "/location_confidence", 1,
-      [&](const std_msgs::Float32ConstPtr msg) { _loc_confidence = msg->data; });
 }
 
 FaceWeakConstPtr Person::face() const

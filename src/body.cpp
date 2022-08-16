@@ -43,18 +43,11 @@ void Body::init()
 {
   ns_ = "/humans/bodies/" + id_;
   ROS_DEBUG_STREAM("New body detected: " << ns_);
-
-  roi_subscriber_ = node_.subscribe<sensor_msgs::RegionOfInterest>(
-      ns_ + "/roi", 1, bind(&Body::onRoI, this, _1));
-
-  cropped_subscriber_ = node_.subscribe<sensor_msgs::Image>(
-      ns_ + "/cropped", 1, bind(&Body::onCropped, this, _1));
 }
 
-
-void Body::onRoI(sensor_msgs::RegionOfInterestConstPtr roi)
+void Body::onRoI(hri_msgs::NormalizedRegionOfInterest2DConstPtr roi)
 {
-  roi_ = cv::Rect(roi->x_offset, roi->y_offset, roi->width, roi->height);
+  roi_ = cv::Rect(roi->xmin, roi->ymin, roi->xmax - roi->xmin, roi->ymax - roi->ymin);
 }
 
 cv::Rect Body::roi() const
@@ -62,9 +55,9 @@ cv::Rect Body::roi() const
   return roi_;
 }
 
-void Body::onCropped(sensor_msgs::ImageConstPtr msg)
+void Body::onCropped(const sensor_msgs::Image& msg)
 {
-  cropped_ = cv_bridge::toCvShare(msg)->image;
+  cropped_ = cv_bridge::toCvCopy(msg)->image;
 }
 
 cv::Mat Body::cropped() const
