@@ -445,7 +445,7 @@ TEST(libhri, GetTrackedPersons)
     pub.publish(ids);
     WAIT;
     auto known_persons = hri_listener.getPersons();
-    EXPECT_EQ(known_persons.size(), 0U);
+    EXPECT_EQ(known_persons.size(), 1U) << "as the person is tracked, it should also be known";
 
     auto persons = hri_listener.getTrackedPersons();
     EXPECT_EQ(persons.size(), 1U);

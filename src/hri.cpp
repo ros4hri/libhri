@@ -66,11 +66,6 @@
   else                                                                                   \
   {                                                                                      \
     ROS_WARN_STREAM(debug_msg << msg->header.id);                                        \
-  }                                                                                      \
-  /* if the person is *also* currently tracked, update that value as well */             \
-  if (tracked_persons.count(msg->header.id))                                             \
-  {                                                                                      \
-    tracked_persons.at(msg->header.id)->param = value;                                   \
   }
 
 
@@ -331,15 +326,18 @@ map<ID, PersonWeakConstPtr> HRIListener::getTrackedPersons() const
 
   // creates a map of *weak* pointers from the internally managed list of
   // shared pointers
-  for (auto const& f : tracked_persons)
+  for (auto const& f : persons)
   {
-    if (f.second->alias().empty())
+    if (f.second->tracked())
     {
-      result[f.first] = f.second;
-    }
-    else
-    {
-      aliased.push_back(f.second);
+      if (f.second->alias().empty())
+      {
+        result[f.first] = f.second;
+      }
+      else
+      {
+        aliased.push_back(f.second);
+      }
     }
   }
 
@@ -395,13 +393,8 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
       }
       break;
     case FeatureType::person:
-      for (auto const& kv : persons)
-      {
-        current_ids.insert(kv.first);
-      }
-      break;
     case FeatureType::tracked_person:
-      for (auto const& kv : tracked_persons)
+      for (auto const& kv : persons)
       {
         current_ids.insert(kv.first);
       }
@@ -464,32 +457,6 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
         }
       }
       break;
-    case FeatureType::tracked_person:
-      for (auto id : to_remove)
-      {
-        tracked_persons.erase(id);
-
-        // also erase the *aliases* of this ID
-        vector<ID> aliases;
-        for (const auto& p : tracked_persons)
-        {
-          if (p.second->alias() == id)
-          {
-            aliases.push_back(p.first);
-          }
-        }
-        for (auto alias : aliases)
-        {
-          tracked_persons.erase(alias);
-        }
-
-        // invoke all the callbacks
-        for (auto& cb : person_tracked_lost_callbacks)
-        {
-          cb(id);
-        }
-      }
-      break;
     case FeatureType::person:
       for (auto id : to_remove)
       {
@@ -513,6 +480,30 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
         for (auto& cb : person_lost_callbacks)
         {
           cb(id);
+        }
+      }
+      break;
+    case FeatureType::tracked_person:
+      for (auto id : to_remove)
+      {
+        if (persons.at(id)->tracked())
+        {
+          persons.at(id)->_is_tracked = false;
+
+          // also erase the *aliases* of this ID
+          for (const auto& p : persons)
+          {
+            if (p.second->alias() == id && p.second->tracked())
+            {
+              p.second->_is_tracked = false;
+            }
+          }
+
+          // invoke all the callbacks
+          for (auto& cb : person_tracked_lost_callbacks)
+          {
+            cb(id);
+          }
         }
       }
       break;
@@ -562,6 +553,7 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
         }
       }
       break;
+    case FeatureType::tracked_person:
     case FeatureType::person:
       for (auto id : to_add)
       {
@@ -576,20 +568,23 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
         }
       }
       break;
-    case FeatureType::tracked_person:
-      for (auto id : to_add)
+  }
+
+  if (feature == FeatureType::tracked_person)
+  {
+    for (auto id : new_ids)
+    {
+      if (!persons.at(id)->_is_tracked)
       {
-        auto person = make_shared<Person>(id, this, node_, &_tf_buffer, _reference_frame);
-        person->init();
-        tracked_persons.insert({ id, person });
+        persons.at(id)->_is_tracked = true;
 
         // invoke all the callbacks
         for (auto& cb : person_tracked_callbacks)
         {
-          cb(person);
+          cb(persons.at(id));
         }
       }
-      break;
+    }
   }
 }
 

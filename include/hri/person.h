@@ -94,6 +94,11 @@ public:
    */
   VoiceWeakConstPtr voice() const;
 
+  bool tracked() const
+  {
+    return _is_tracked;
+  }
+
 
   bool anonymous() const
   {
@@ -131,6 +136,8 @@ protected:
   ID face_id;
   ID body_id;
   ID voice_id;
+
+  bool _is_tracked;
 
   // if non-empty, this person 'does not exist' and is instead an alias to
   // another person.  hri::getPersons and hri::getTrackedPersons will returns

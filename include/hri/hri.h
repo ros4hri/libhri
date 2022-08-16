@@ -232,7 +232,6 @@ private:
   std::vector<std::function<void(PersonConstPtr)>> person_callbacks;
   std::vector<std::function<void(ID)>> person_lost_callbacks;
 
-  std::map<ID, PersonPtr> tracked_persons;
   std::vector<std::function<void(PersonConstPtr)>> person_tracked_callbacks;
   std::vector<std::function<void(ID)>> person_tracked_lost_callbacks;
 
