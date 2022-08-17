@@ -103,6 +103,12 @@ public:
     return getNamespace();
   }
 
+  bool operator<(const FeatureTracker& other) const
+  {
+    return id_ < other.id();
+  }
+
+
   virtual void init() = 0;
 
 protected:
