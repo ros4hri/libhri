@@ -196,12 +196,56 @@ HRIListener::HRIListener()
                                                      "Trying to update voice_id for unknown person ");
                                                }) },
 
-        { "person_alias", node_.subscribe<hri_msgs::StringHRI>("/humans/persons/alias", 1,
-                                                               [&](auto msg) {
-                                                                 CHECK_PERSON_AND_SET(
-                                                                     msg, _alias, msg->data,
-                                                                     "Trying to update alias for unknown person ");
-                                                               }) },
+        { "person_alias",
+          node_.subscribe<hri_msgs::StringHRI>("/humans/persons/alias", 1,
+                                               [&](auto msg) {
+                                                 if (!persons.count(msg->header.id))
+                                                 {
+                                                   ROS_WARN_STREAM("Trying to alias unknown person "
+                                                                   << msg->header.id);
+                                                   return;
+                                                 }
+
+                                                 if (!persons.count(msg->data))
+                                                 {
+                                                   ROS_WARN_STREAM("Trying to alias person "
+                                                                   << msg->header.id << " to unknown person "
+                                                                   << msg->data);
+                                                   return;
+                                                 }
+
+                                                 // find all aliases of this person,
+                                                 // and make them point to the target person
+                                                 auto target_person = persons.at(msg->data);
+                                                 auto aliased_person =
+                                                     persons.at(msg->header.id);
+
+
+                                                 set<ID> id_and_aliases;
+
+                                                 for (const auto& p : persons)
+                                                 {
+                                                   if (p.second == aliased_person)
+                                                   {
+                                                     id_and_aliases.insert(p.first);
+                                                   }
+                                                 }
+                                                 for (auto id : id_and_aliases)
+                                                 {
+                                                   ROS_WARN_STREAM("Aliasing "
+                                                                   << id << " to "
+                                                                   << target_person->id());
+                                                   persons.erase(id);
+                                                   persons[id] = target_person;
+                                                 }
+
+
+                                                 assert(persons.at(msg->data) ==
+                                                        persons.at(msg->header.id));
+                                               }
+
+
+                                               ) },
 
         { "person_engagement_status",
           node_.subscribe<
@@ -287,32 +331,11 @@ map<ID, PersonWeakConstPtr> HRIListener::getPersons() const
 {
   map<ID, PersonWeakConstPtr> result;
 
-  vector<PersonConstPtr> aliased;
-
   // creates a map of *weak* pointers from the internally managed list of
   // shared pointers
-  for (auto const& f : persons)
+  for (auto const& p : persons)
   {
-    if (f.second->alias().empty())
-    {
-      result[f.first] = f.second;
-    }
-    else
-    {
-      aliased.push_back(f.second);
-    }
-  }
-
-  for (auto const& p : aliased)
-  {
-    if (result.count(p->alias()) != 0)
-    {
-      result[p->id()] = result[p->alias()];
-    }
-    else  // ouch! the person points to an inexistant alias! this should not happen
-    {
-      assert(false);
-    }
+    result[p.first] = p.second;
   }
 
   return result;
@@ -322,34 +345,13 @@ map<ID, PersonWeakConstPtr> HRIListener::getTrackedPersons() const
 {
   map<ID, PersonWeakConstPtr> result;
 
-  vector<PersonConstPtr> aliased;
-
   // creates a map of *weak* pointers from the internally managed list of
   // shared pointers
-  for (auto const& f : persons)
+  for (auto const& p : persons)
   {
-    if (f.second->tracked())
+    if (p.second->tracked())
     {
-      if (f.second->alias().empty())
-      {
-        result[f.first] = f.second;
-      }
-      else
-      {
-        aliased.push_back(f.second);
-      }
-    }
-  }
-
-  for (auto const& p : aliased)
-  {
-    if (result.count(p->alias()) != 0)
-    {
-      result[p->id()] = result[p->alias()];
-    }
-    else  // ouch! the person points to an inexistant alias! this should not happen.
-    {
-      assert(false);
+      result[p.first] = p.second;
     }
   }
 
@@ -433,6 +435,7 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
         }
       }
       break;
+
     case FeatureType::body:
       for (auto id : to_remove)
       {
@@ -445,6 +448,7 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
         }
       }
       break;
+
     case FeatureType::voice:
       for (auto id : to_remove)
       {
@@ -457,23 +461,25 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
         }
       }
       break;
+
     case FeatureType::person:
       for (auto id : to_remove)
       {
-        persons.erase(id);
+        auto person = persons.at(id);
 
-        // also erase the *aliases* of this ID
-        vector<ID> aliases;
+        // find all aliases of this person, and delete them all
+        set<ID> id_and_aliases;
+
         for (const auto& p : persons)
         {
-          if (p.second->alias() == id)
+          if (p.second == person)
           {
-            aliases.push_back(p.first);
+            id_and_aliases.insert(p.first);
           }
         }
-        for (auto alias : aliases)
+        for (auto id : id_and_aliases)
         {
-          persons.erase(alias);
+          persons.erase(id);
         }
 
         // invoke all the callbacks
@@ -483,21 +489,13 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
         }
       }
       break;
+
     case FeatureType::tracked_person:
       for (auto id : to_remove)
       {
         if (persons.at(id)->tracked())
         {
           persons.at(id)->_is_tracked = false;
-
-          // also erase the *aliases* of this ID
-          for (const auto& p : persons)
-          {
-            if (p.second->alias() == id && p.second->tracked())
-            {
-              p.second->_is_tracked = false;
-            }
-          }
 
           // invoke all the callbacks
           for (auto& cb : person_tracked_lost_callbacks)
