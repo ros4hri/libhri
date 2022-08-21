@@ -40,11 +40,11 @@
 #include "hri_msgs/EngagementLevel.h"
 #include "hri_msgs/FacialLandmarks.h"
 #include "hri_msgs/IdsList.h"
-#include "hri_msgs/BoolHRI.h"
+#include "hri_msgs/BoolIdStamped.h"
 #include "hri_msgs/SoftBiometrics.h"
-#include "hri_msgs/StringHRI.h"
-#include "hri_msgs/Float32HRI.h"
-#include "hri_msgs/ImageHRI.h"
+#include "hri_msgs/StringIdStamped.h"
+#include "hri_msgs/Float32IdStamped.h"
+#include "hri_msgs/ImageIdStamped.h"
 #include "hri_msgs/NormalizedRegionOfInterest2D.h"
 #include "ros/subscriber.h"
 
@@ -93,14 +93,14 @@ HRIListener::HRIListener()
                           }) },
 
 
-        { "face_cropped", node_.subscribe<hri_msgs::ImageHRI>(
+        { "face_cropped", node_.subscribe<hri_msgs::ImageIdStamped>(
                               "/humans/faces/cropped", 1,
                               [&](auto msg) {
                                 CHECK_ID_AND_DO(faces, msg, onCropped, msg->image,
                                                 "Trying to update cropped image for unknown face ");
                               }) },
 
-        { "face_aligned", node_.subscribe<hri_msgs::ImageHRI>(
+        { "face_aligned", node_.subscribe<hri_msgs::ImageIdStamped>(
                               "/humans/faces/aligned", 1,
                               [&](auto msg) {
                                 CHECK_ID_AND_DO(faces, msg, onAligned, msg->image,
@@ -136,7 +136,7 @@ HRIListener::HRIListener()
                                             "Trying to update RoI for unknown body ");
                           }) },
 
-        { "body_cropped", node_.subscribe<hri_msgs::ImageHRI>(
+        { "body_cropped", node_.subscribe<hri_msgs::ImageIdStamped>(
                               "/humans/bodies/cropped", 1,
                               [&](auto msg) {
                                 CHECK_ID_AND_DO(bodies, msg, onCropped, msg->image,
@@ -165,87 +165,88 @@ HRIListener::HRIListener()
                                                   FeatureType::tracked_person, _1)) },
 
         { "person_anonymous",
-          node_.subscribe<hri_msgs::BoolHRI>("/humans/persons/anonymous", 1,
-                                             [&](auto msg) {
-                                               CHECK_PERSON_AND_SET(
-                                                   msg, _anonymous, msg->data,
-                                                   "Trying to update anonymous status for unknown person ");
-                                             }) },
+          node_.subscribe<hri_msgs::BoolIdStamped>("/humans/persons/anonymous", 1,
+                                                   [&](auto msg) {
+                                                     CHECK_PERSON_AND_SET(
+                                                         msg, _anonymous, msg->data,
+                                                         "Trying to update anonymous status for unknown person ");
+                                                   }) },
 
         { "person_face_id",
-          node_.subscribe<hri_msgs::StringHRI>("/humans/persons/face_id", 1,
-                                               [&](const auto msg) {
-                                                 CHECK_PERSON_AND_SET(
-                                                     msg, face_id, msg->data,
-                                                     "Trying to update face_id for unknown person ");
-                                               }) },
+          node_.subscribe<hri_msgs::StringIdStamped>("/humans/persons/face_id", 1,
+                                                     [&](const auto msg) {
+                                                       CHECK_PERSON_AND_SET(
+                                                           msg, face_id, msg->data,
+                                                           "Trying to update face_id for unknown person ");
+                                                     }) },
 
         { "person_body_id",
-          node_.subscribe<hri_msgs::StringHRI>("/humans/persons/body_id", 1,
-                                               [&](const auto msg) {
-                                                 CHECK_PERSON_AND_SET(
-                                                     msg, body_id, msg->data,
-                                                     "Trying to update body_id for unknown person ");
-                                               }) },
+          node_.subscribe<hri_msgs::StringIdStamped>("/humans/persons/body_id", 1,
+                                                     [&](const auto msg) {
+                                                       CHECK_PERSON_AND_SET(
+                                                           msg, body_id, msg->data,
+                                                           "Trying to update body_id for unknown person ");
+                                                     }) },
 
         { "person_voice_id",
-          node_.subscribe<hri_msgs::StringHRI>("/humans/persons/voice_id", 1,
-                                               [&](const auto msg) {
-                                                 CHECK_PERSON_AND_SET(
-                                                     msg, voice_id, msg->data,
-                                                     "Trying to update voice_id for unknown person ");
-                                               }) },
+          node_.subscribe<hri_msgs::StringIdStamped>("/humans/persons/voice_id", 1,
+                                                     [&](const auto msg) {
+                                                       CHECK_PERSON_AND_SET(
+                                                           msg, voice_id, msg->data,
+                                                           "Trying to update voice_id for unknown person ");
+                                                     }) },
 
         { "person_alias",
-          node_.subscribe<hri_msgs::StringHRI>("/humans/persons/alias", 1,
-                                               [&](auto msg) {
-                                                 if (!persons.count(msg->header.id))
-                                                 {
-                                                   ROS_WARN_STREAM("Trying to alias unknown person "
-                                                                   << msg->header.id);
-                                                   return;
-                                                 }
+          node_.subscribe<hri_msgs::StringIdStamped>("/humans/persons/alias", 1,
+                                                     [&](auto msg) {
+                                                       if (!persons.count(msg->header.id))
+                                                       {
+                                                         ROS_WARN_STREAM("Trying to alias unknown person "
+                                                                         << msg->header.id);
+                                                         return;
+                                                       }
 
-                                                 if (!persons.count(msg->data))
-                                                 {
-                                                   ROS_WARN_STREAM("Trying to alias person "
-                                                                   << msg->header.id << " to unknown person "
-                                                                   << msg->data);
-                                                   return;
-                                                 }
+                                                       if (!persons.count(msg->data))
+                                                       {
+                                                         ROS_WARN_STREAM("Trying to alias person "
+                                                                         << msg->header.id << " to unknown person "
+                                                                         << msg->data);
+                                                         return;
+                                                       }
 
-                                                 // find all aliases of this person,
-                                                 // and make them point to the target person
-                                                 auto target_person = persons.at(msg->data);
-                                                 auto aliased_person =
-                                                     persons.at(msg->header.id);
-
-
-                                                 set<ID> id_and_aliases;
-
-                                                 for (const auto& p : persons)
-                                                 {
-                                                   if (p.second == aliased_person)
-                                                   {
-                                                     id_and_aliases.insert(p.first);
-                                                   }
-                                                 }
-                                                 for (auto id : id_and_aliases)
-                                                 {
-                                                   ROS_WARN_STREAM("Aliasing "
-                                                                   << id << " to "
-                                                                   << target_person->id());
-                                                   persons.erase(id);
-                                                   persons[id] = target_person;
-                                                 }
+                                                       // find all aliases of this person,
+                                                       // and make them point to the target person
+                                                       auto target_person =
+                                                           persons.at(msg->data);
+                                                       auto aliased_person =
+                                                           persons.at(msg->header.id);
 
 
-                                                 assert(persons.at(msg->data) ==
-                                                        persons.at(msg->header.id));
-                                               }
+                                                       set<ID> id_and_aliases;
+
+                                                       for (const auto& p : persons)
+                                                       {
+                                                         if (p.second == aliased_person)
+                                                         {
+                                                           id_and_aliases.insert(p.first);
+                                                         }
+                                                       }
+                                                       for (auto id : id_and_aliases)
+                                                       {
+                                                         ROS_WARN_STREAM("Aliasing "
+                                                                         << id << " to "
+                                                                         << target_person->id());
+                                                         persons.erase(id);
+                                                         persons[id] = target_person;
+                                                       }
 
 
-                                               ) },
+                                                       assert(persons.at(msg->data) ==
+                                                              persons.at(msg->header.id));
+                                                     }
+
+
+                                                     ) },
 
         { "person_engagement_status",
           node_.subscribe<
@@ -257,12 +258,13 @@ HRIListener::HRIListener()
                                          }) },
 
         { "person_location_confidence",
-          node_.subscribe<hri_msgs::Float32HRI>("/humans/persons/location_confidence", 1,
-                                                [&](auto msg) {
-                                                  CHECK_PERSON_AND_SET(
-                                                      msg, _loc_confidence, msg->data,
-                                                      "Trying to update location confidence for unknown person ");
-                                                }) },
+          node_
+              .subscribe<hri_msgs::Float32IdStamped>("/humans/persons/location_confidence", 1,
+                                                     [&](auto msg) {
+                                                       CHECK_PERSON_AND_SET(
+                                                           msg, _loc_confidence, msg->data,
+                                                           "Trying to update location confidence for unknown person ");
+                                                     }) },
     } })
 {
   ROS_DEBUG("Initialising the HRI Listener");

@@ -33,7 +33,6 @@
 #include "hri/person.h"
 
 #include "hri/hri.h"
-#include "std_msgs/Float32.h"
 
 using namespace std;
 using namespace hri;
