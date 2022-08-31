@@ -30,7 +30,7 @@
 #ifndef HRI_FACE_H
 #define HRI_FACE_H
 
-#include <hri_msgs/PointOfInterest2D.h>
+#include <hri_msgs/NormalizedPointOfInterest2D.h>
 #include <hri_msgs/FacialLandmarks.h>
 #include <hri_msgs/SoftBiometrics.h>
 #include <sensor_msgs/RegionOfInterest.h>
@@ -108,7 +108,7 @@ public:
    * Constants defined in hri_msgs/FacialLandmarks.h can be used to access
    * specific points on the face.
    */
-  boost::optional<std::array<hri_msgs::PointOfInterest2D, 70>> facialLandmarks() const
+  boost::optional<std::array<hri_msgs::NormalizedPointOfInterest2D, 70>> facialLandmarks() const
   {
     return facial_landmarks_;
   }
@@ -160,7 +160,7 @@ private:
 
   ros::Subscriber landmarks_subscriber_;
   void onLandmarks(hri_msgs::FacialLandmarksConstPtr landmarks);
-  std::array<hri_msgs::PointOfInterest2D, 70> facial_landmarks_;
+  std::array<hri_msgs::NormalizedPointOfInterest2D, 70> facial_landmarks_;
 
   ros::Subscriber softbiometrics_subscriber_;
   void onSoftBiometrics(hri_msgs::SoftBiometricsConstPtr biometrics);
