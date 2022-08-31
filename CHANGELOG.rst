@@ -2,6 +2,12 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add comparision between 'feature trackers'
+* update to new hri_msgs-0.8.0 names
+* Contributors: Séverin Lemaignan
+
 0.5.0 (2022-05-26)
 ------------------
 * expose the current TF frame + transform of the person
