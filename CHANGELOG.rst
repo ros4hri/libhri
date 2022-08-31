@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.1 (2022-08-31)
+------------------
 * add comparision between 'feature trackers'
 * update to new hri_msgs-0.8.0 names
 * Contributors: Séverin Lemaignan
