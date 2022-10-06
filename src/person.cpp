@@ -33,6 +33,7 @@
 #include "hri/person.h"
 
 #include "hri/hri.h"
+#include "hri_msgs/EngagementLevel.h"
 #include "std_msgs/Float32.h"
 
 using namespace std;
@@ -115,11 +116,27 @@ VoiceWeakConstPtr Person::voice() const
 boost::optional<EngagementLevel> Person::engagement_status() const
 {
   if (!_engagement_status)
+  {
     return boost::optional<EngagementLevel>();
-  if (_engagement_status->level == 0)  // UNKNOWN
-    return boost::optional<EngagementLevel>();
+  }
 
-  return static_cast<EngagementLevel>(_engagement_status->level);
+  switch (_engagement_status->level)
+  {
+    case hri_msgs::EngagementLevel::UNKNOWN:
+      return boost::optional<EngagementLevel>();
+    case hri_msgs::EngagementLevel::ENGAGING:
+      return EngagementLevel::ENGAGING;
+    case hri_msgs::EngagementLevel::ENGAGED:
+      return EngagementLevel::ENGAGED;
+    case hri_msgs::EngagementLevel::DISENGAGING:
+      return EngagementLevel::DISENGAGING;
+    case hri_msgs::EngagementLevel::DISENGAGED:
+      return EngagementLevel::DISENGAGED;
+    default:
+      // we should handle all the possible engagement values
+      assert(false);
+      return boost::optional<EngagementLevel>();
+  }
 }
 
 boost::optional<geometry_msgs::TransformStamped> Person::transform() const

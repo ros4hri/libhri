@@ -116,6 +116,10 @@ public:
   boost::optional<geometry_msgs::TransformStamped> transform() const;
 
   void init() override;
+  ID face_id;
+  ID body_id;
+  ID voice_id;
+
 
 protected:
   // we use a raw pointer here. `this` is owned by the pointed HRIListener, so
@@ -128,10 +132,6 @@ protected:
   {
     ROS_WARN("got tf transform!");
   }
-
-  ID face_id;
-  ID body_id;
-  ID voice_id;
 
   // if non-empty, this person 'does not exist' and is instead an alias to
   // another person.  hri::getPersons and hri::getTrackedPersons will returns
