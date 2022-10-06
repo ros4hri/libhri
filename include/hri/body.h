@@ -30,6 +30,7 @@
 #ifndef HRI_BODY_H
 #define HRI_BODY_H
 
+#include <geometry_msgs/TransformStamped.h>
 #include <sensor_msgs/RegionOfInterest.h>
 #include <sensor_msgs/Image.h>
 #include <memory>
@@ -40,14 +41,28 @@
 
 #include <opencv2/core.hpp>
 
+#include "tf2_ros/transform_listener.h"
+
 namespace hri
 {
+// the tf prefix follows REP-155
+const static std::string BODY_TF_PREFIX("body_");
+const static ros::Duration BODY_TF_TIMEOUT(0.01);
+
 class Body : public FeatureTracker
 {
 public:
-  using FeatureTracker::FeatureTracker;  // inherits FeatureTracker's ctor
+  Body(ID id, ros::NodeHandle& nh, tf2_ros::Buffer* tf_buffer_ptr,
+       const std::string& reference_frame);
 
   virtual ~Body();
+
+  /** \brief the name of the tf frame that correspond to this body
+   */
+  std::string frame() const
+  {
+    return BODY_TF_PREFIX + id_;
+  }
 
   /** \brief If available, returns the 2D region of interest (RoI) of the body.
    *
@@ -78,6 +93,10 @@ public:
    */
   cv::Mat cropped() const;
 
+  /** \brief Returns the (stamped) 3D transform of the body (if available).
+   */
+  boost::optional<geometry_msgs::TransformStamped> transform() const;
+
   void init() override;
 
 private:
@@ -90,6 +109,9 @@ private:
   ros::Subscriber cropped_subscriber_;
   void onCropped(sensor_msgs::ImageConstPtr roi);
   cv::Mat cropped_;
+
+  std::string _reference_frame;
+  tf2_ros::Buffer* _tf_buffer_ptr;
 };
 
 typedef std::shared_ptr<Body> BodyPtr;
