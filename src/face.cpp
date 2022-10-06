@@ -34,8 +34,12 @@
 using namespace std;
 using namespace hri;
 
-Face::Face(ID id, const ros::NodeHandle& nh)
-  : FeatureTracker(id, nh), softbiometrics_(nullptr)
+Face::Face(ID id, ros::NodeHandle& nh, tf2_ros::Buffer* tf_buffer_ptr,
+           const std::string& reference_frame)
+  : FeatureTracker{ id, nh }
+  , softbiometrics_(nullptr)
+  , _tf_buffer_ptr(tf_buffer_ptr)
+  , _reference_frame(reference_frame)
 {
 }
 
@@ -132,3 +136,38 @@ boost::optional<Gender> Face::gender() const
 
   return static_cast<Gender>(softbiometrics_->gender);
 }
+
+boost::optional<geometry_msgs::TransformStamped> Face::transform() const
+{
+  try
+  {
+    auto transform = _tf_buffer_ptr->lookupTransform(_reference_frame, frame(),
+                                                     ros::Time(0), FACE_TF_TIMEOUT);
+
+    return transform;
+  }
+  catch (tf2::LookupException)
+  {
+    ROS_WARN_STREAM("failed to transform the face frame " << frame() << " to " << _reference_frame
+                                                          << ". Are the frames published?");
+    return boost::optional<geometry_msgs::TransformStamped>();
+  }
+}
+
+boost::optional<geometry_msgs::TransformStamped> Face::gazeTransform() const
+{
+  try
+  {
+    auto transform = _tf_buffer_ptr->lookupTransform(_reference_frame, gazeFrame(),
+                                                     ros::Time(0), FACE_TF_TIMEOUT);
+
+    return transform;
+  }
+  catch (tf2::LookupException)
+  {
+    ROS_WARN_STREAM("failed to transform the gaze frame " << frame() << " to " << _reference_frame
+                                                          << ". Are the frames published?");
+    return boost::optional<geometry_msgs::TransformStamped>();
+  }
+}
+

@@ -362,7 +362,7 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
     case FeatureType::face:
       for (auto id : to_add)
       {
-        auto face = make_shared<Face>(id, node_);
+        auto face = make_shared<Face>(id, node_, &_tf_buffer, _reference_frame);
         face->init();
         faces.insert({ id, face });
 

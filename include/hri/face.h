@@ -43,6 +43,8 @@
 
 #include <opencv2/core.hpp>
 
+#include "tf2_ros/transform_listener.h"
+
 namespace hri
 {
 struct IntensityConfidence
@@ -58,12 +60,33 @@ enum Gender
   OTHER = 3
 };
 
+// the tf prefixes follow REP-155
+const static std::string FACE_TF_PREFIX("face_");
+const static std::string GAZE_TF_PREFIX("gaze_");
+const static ros::Duration FACE_TF_TIMEOUT(0.01);
+
 class Face : public FeatureTracker
 {
 public:
-  Face(ID id, const ros::NodeHandle& nh);
+  Face(ID id, ros::NodeHandle& nh, tf2_ros::Buffer* tf_buffer_ptr,
+       const std::string& reference_frame);
 
   virtual ~Face();
+
+  /** \brief the name of the tf frame that correspond to this face
+   */
+  std::string frame() const
+  {
+    return FACE_TF_PREFIX + id_;
+  }
+
+  /** \brief the name of the tf frame that correspond to the gaze direction and
+   * orientation of the face
+   */
+  std::string gazeFrame() const
+  {
+    return GAZE_TF_PREFIX + id_;
+  }
 
   /** \brief Returns the 2D region of interest (RoI) of the face.
    *
@@ -140,6 +163,13 @@ public:
    */
   boost::optional<Gender> gender() const;
 
+  /** \brief Returns the (stamped) 3D transform of the face (if available).
+   */
+  boost::optional<geometry_msgs::TransformStamped> transform() const;
+
+  /** \brief Returns the (stamped) 3D transform of the gaze (if available).
+   */
+  boost::optional<geometry_msgs::TransformStamped> gazeTransform() const;
 
   void init() override;
 
@@ -168,6 +198,9 @@ private:
 
 
   std::array<IntensityConfidence, 99> facial_action_units_;
+
+  std::string _reference_frame;
+  tf2_ros::Buffer* _tf_buffer_ptr;
 };
 
 typedef std::shared_ptr<Face> FacePtr;
