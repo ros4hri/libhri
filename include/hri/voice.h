@@ -30,22 +30,46 @@
 #ifndef HRI_VOICE_H
 #define HRI_VOICE_H
 
+#include <geometry_msgs/TransformStamped.h>
+
 #include <memory>
+#include <boost/optional.hpp>
 
 #include "base.h"
 
+#include "tf2_ros/transform_listener.h"
+
 namespace hri
 {
+// the tf prefix follows REP-155
+const static std::string VOICE_TF_PREFIX("voice_");
+const static ros::Duration VOICE_TF_TIMEOUT(0.01);
+
 class Voice : public FeatureTracker
 {
 public:
-  using FeatureTracker::FeatureTracker;  // inherits FeatureTracker's ctor
+  Voice(ID id, ros::NodeHandle& nh, tf2_ros::Buffer* tf_buffer_ptr,
+        const std::string& reference_frame);
 
   virtual ~Voice();
+
+  /** \brief the name of the tf frame that correspond to this body
+   */
+  std::string frame() const
+  {
+    return VOICE_TF_PREFIX + id_;
+  }
+
+  /** \brief Returns the estimated (stamped) 3D transform of the voice (if
+   * available).
+   */
+  boost::optional<geometry_msgs::TransformStamped> transform() const;
 
   void init() override;
 
 private:
+  std::string _reference_frame;
+  tf2_ros::Buffer* _tf_buffer_ptr;
 };
 
 typedef std::shared_ptr<Voice> VoicePtr;

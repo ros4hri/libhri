@@ -390,7 +390,7 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
     case FeatureType::voice:
       for (auto id : to_add)
       {
-        auto voice = make_shared<Voice>(id, node_);
+        auto voice = make_shared<Voice>(id, node_, &_tf_buffer, _reference_frame);
         voice->init();
         voices.insert({ id, voice });
 

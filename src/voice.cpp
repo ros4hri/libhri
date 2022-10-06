@@ -31,6 +31,12 @@
 using namespace std;
 using namespace hri;
 
+Voice::Voice(ID id, ros::NodeHandle& nh, tf2_ros::Buffer* tf_buffer_ptr,
+             const std::string& reference_frame)
+  : FeatureTracker{ id, nh }, _tf_buffer_ptr(tf_buffer_ptr), _reference_frame(reference_frame)
+{
+}
+
 Voice::~Voice()
 {
   ROS_DEBUG_STREAM("Deleting voice " << id_);
@@ -42,3 +48,19 @@ void Voice::init()
   ROS_DEBUG_STREAM("New voice detected: " << ns_);
 }
 
+boost::optional<geometry_msgs::TransformStamped> Voice::transform() const
+{
+  try
+  {
+    auto transform = _tf_buffer_ptr->lookupTransform(_reference_frame, frame(),
+                                                     ros::Time(0), VOICE_TF_TIMEOUT);
+
+    return transform;
+  }
+  catch (tf2::LookupException)
+  {
+    ROS_WARN_STREAM("failed to transform the voice frame "
+                    << frame() << " to " << _reference_frame << ". Are the frames published?");
+    return boost::optional<geometry_msgs::TransformStamped>();
+  }
+}
