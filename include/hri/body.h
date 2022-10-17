@@ -33,6 +33,8 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <sensor_msgs/RegionOfInterest.h>
 #include <sensor_msgs/Image.h>
+#include <hri_msgs/Skeleton2D.h>
+#include <hri_msgs/NormalizedPointOfInterest2D.h>
 #include <memory>
 #include <boost/optional.hpp>
 
@@ -42,6 +44,8 @@
 #include <opencv2/core.hpp>
 
 #include "tf2_ros/transform_listener.h"
+
+typedef hri_msgs::NormalizedPointOfInterest2D SkeletonPoint;
 
 namespace hri
 {
@@ -93,6 +97,16 @@ public:
    */
   cv::Mat cropped() const;
 
+  /** \brief Returns the 2D skeleton keypoints.
+   *
+   * Points coordinates are in the image space of the source image, and
+   * normalised between 0.0 and 1.0.
+   *
+   * The skeleton joints indices follow those defined in
+   * http://docs.ros.org/en/api/hri_msgs/html/msg/Skeleton2D.html
+   */
+  std::vector<SkeletonPoint> skeleton() const;
+
   /** \brief Returns the (stamped) 3D transform of the body (if available).
    */
   boost::optional<geometry_msgs::TransformStamped> transform() const;
@@ -109,6 +123,10 @@ private:
   ros::Subscriber cropped_subscriber_;
   void onCropped(sensor_msgs::ImageConstPtr roi);
   cv::Mat cropped_;
+
+  ros::Subscriber skeleton_subscriber_;
+  void onSkeleton(hri_msgs::Skeleton2DConstPtr skeleton);
+  std::vector<SkeletonPoint> skeleton_;
 
   std::string _reference_frame;
   tf2_ros::Buffer* _tf_buffer_ptr;

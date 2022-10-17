@@ -56,8 +56,10 @@ void Body::init()
 
   cropped_subscriber_ = node_.subscribe<sensor_msgs::Image>(
       ns_ + "/cropped", 1, bind(&Body::onCropped, this, _1));
-}
 
+  skeleton_subscriber_ = node_.subscribe<hri_msgs::Skeleton2D>(
+      ns_ + "/skeleton2d", 1, bind(&Body::onSkeleton, this, _1));
+}
 
 void Body::onRoI(sensor_msgs::RegionOfInterestConstPtr roi)
 {
@@ -77,6 +79,16 @@ void Body::onCropped(sensor_msgs::ImageConstPtr msg)
 cv::Mat Body::cropped() const
 {
   return cropped_;
+}
+
+void Body::onSkeleton(hri_msgs::Skeleton2DConstPtr msg)
+{
+  skeleton_ = msg->skeleton;
+}
+
+std::vector<SkeletonPoint> Body::skeleton() const
+{
+  return skeleton_;
 }
 
 boost::optional<geometry_msgs::TransformStamped> Body::transform() const
