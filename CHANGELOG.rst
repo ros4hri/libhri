@@ -2,6 +2,12 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* bodies: expose the skeleton2d points
+* package.xml: add libhri URL
+* Contributors: Séverin Lemaignan, lorenzoferrini
+
 0.5.2 (2022-10-10)
 ------------------
 * expose the 3D transform of the voices
