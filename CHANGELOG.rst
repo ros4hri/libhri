@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.3 (2022-10-26)
+------------------
 * bodies: expose the skeleton2d points
 * package.xml: add libhri URL
 * Contributors: Séverin Lemaignan, lorenzoferrini
