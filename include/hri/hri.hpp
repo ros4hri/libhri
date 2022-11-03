@@ -37,7 +37,7 @@
 #include <map>
 #include <memory>
 
-#include "base.h"
+#include "FeatureTracker.hpp"
 #include "face.h"
 #include "body.h"
 #include "voice.h"

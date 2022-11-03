@@ -35,7 +35,7 @@
 #include <memory>
 #include <boost/optional.hpp>
 
-#include "base.h"
+#include "FeatureTracker.hpp"
 
 #include "tf2_ros/transform_listener.h"
 

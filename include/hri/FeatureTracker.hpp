@@ -33,7 +33,7 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 
 namespace hri
 {
@@ -48,7 +48,7 @@ enum FeatureType
   voice
 };
 
-class FeatureTracker
+class FeatureTracker: public rclcpp::Node
 {
 public:
   /* creates a new feature tracker (eg, a face, body or voice tracker).

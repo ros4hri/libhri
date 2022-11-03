@@ -38,7 +38,7 @@
 #include <memory>
 #include <boost/optional.hpp>
 
-#include "base.h"
+#include "FeatureTracker.hpp"
 #include "ros/subscriber.h"
 
 #include <opencv2/core.hpp>

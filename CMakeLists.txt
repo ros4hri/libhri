@@ -49,57 +49,41 @@ add_library(${PROJECT_NAME} SHARED
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
 
 
-add_executable(hri src/hri.cpp)
-ament_target_dependencies(hri ${dependencies})
-target_link_libraries(body ${PROJECT_NAME})
-
-add_executable(body src/body.cpp)
-ament_target_dependencies(body ${dependencies})
-target_link_libraries(hri ${PROJECT_NAME})
-
-add_executable(hri src/hri.cpp)
-ament_target_dependencies(hri ${dependencies})
-target_link_libraries(hri ${PROJECT_NAME})
-
-add_executable(hri src/hri.cpp)
-ament_target_dependencies(hri ${dependencies})
-target_link_libraries(hri ${PROJECT_NAME})
+add_executable(show_faces examples/show_faces.cpp)
+ament_target_dependencies(show_faces ${dependencies})
+target_link_libraries(show_faces ${PROJECT_NAME})
 
 
-if(BUILD_EXAMPLES)
-add_executable(show_faces_example
-    examples/show_faces.cpp
+install(TARGETS
+  ${PROJECT_NAME}
+  show_faces
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
-target_link_libraries(show_faces_example ${PROJECT_NAME} ${catkin_LIBRARIES})
 
-endif()
+install(
+  DIRECTORY include
+  DESTINATION include
+)
+
+install(DIRECTORY examples DESTINATION share/${PROJECT_NAME})
 
 ###########################################################
-# Tests
+# if(BUILD_TESTING)
+#   find_package(ament_lint_auto REQUIRED)
+#   ament_lint_auto_find_test_dependencies()
 
-if(CATKIN_ENABLE_TESTING)
+#   set(ament_cmake_cpplint_FOUND TRUE)
+#   ament_lint_auto_find_test_dependencies()
 
-find_package(rostest REQUIRED)
+#   find_package(ament_cmake_gtest REQUIRED)
+#   add_subdirectory(test)
+# endif()
 
-add_rostest_gmock(test_hri test/test_hri.test test/test_hri.cpp)
-target_include_directories(test_hri PRIVATE ${rostest_INCLUDE_DIRS})
-target_link_libraries(test_hri ${PROJECT_NAME})
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+ament_export_dependencies(${dependencies})
+ament_package()
 
-endif() # CATKIN_ENABLE_TESTING
-
-
-###########################################################
-# Install
-
-install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
-)
 
