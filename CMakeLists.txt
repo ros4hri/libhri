@@ -1,51 +1,70 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(hri)
 
-## ROS noetic officially supports c++14
-add_compile_options(-std=c++14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_TYPE Debug)
 
-find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
-  hri_msgs
-  sensor_msgs
-  rosconsole
-  roscpp
-  std_msgs
-  tf2
-  tf2_ros
-  cv_bridge
-)
+## ROS noetic officially supports c++14
+# add_compile_options(-std=c++14)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(hri_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(cv_bridge REQUIRED)
 
 find_package(OpenCV REQUIRED)
-find_package(Boost REQUIRED) # for boost::optional
+find_package(Boost REQUIRED) 
 
-include_directories(
-    SYSTEM
-    ${OpenCV_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
-    ${catkin_INCLUDE_DIRS}
+set(dependencies
+    rclcpp
+    std_msgs
+    geometry_msgs
+    sensor_msgs
+    hri_msgs
+    tf2_ros
+    tf2
+    cv_bridge
+    OpenCV
+  )
+
+
+include_directories(include)
+
+
+
+
+
+
+add_library(${PROJECT_NAME} SHARED
+  src/libhri/hri.cpp
+  src/libhri/body.cpp
+  src/libhri/face.cpp
+  src/libhri/person.cpp
+  src/libhri/voice.cpp
 )
+ament_target_dependencies(${PROJECT_NAME} ${dependencies})
 
-include_directories(
-    include
-)
 
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES hri
-  CATKIN_DEPENDS geometry_msgs hri_msgs rosconsole roscpp std_msgs tf2 cv_bridge
-)
+add_executable(hri src/hri.cpp)
+ament_target_dependencies(hri ${dependencies})
+target_link_libraries(body ${PROJECT_NAME})
 
-add_library(${PROJECT_NAME}
-  src/hri.cpp
-  src/body.cpp
-  src/face.cpp
-  src/person.cpp
-  src/voice.cpp
-)
+add_executable(body src/body.cpp)
+ament_target_dependencies(body ${dependencies})
+target_link_libraries(hri ${PROJECT_NAME})
 
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(hri src/hri.cpp)
+ament_target_dependencies(hri ${dependencies})
+target_link_libraries(hri ${PROJECT_NAME})
+
+add_executable(hri src/hri.cpp)
+ament_target_dependencies(hri ${dependencies})
+target_link_libraries(hri ${PROJECT_NAME})
+
 
 if(BUILD_EXAMPLES)
 add_executable(show_faces_example
