@@ -26,17 +26,17 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "hri/face.h"
+#include "hri/face.hpp"
 
 #include <cv_bridge/cv_bridge.h>
-#include "hri_msgs/SoftBiometrics.h"
+#include <hri_msgs/msg/soft_biometrics.hpp>
 
 using namespace std;
 using namespace hri;
 
-Face::Face(ID id, ros::NodeHandle& nh, tf2_ros::Buffer* tf_buffer_ptr,
+Face::Face(ID id, tf2_ros::Buffer* tf_buffer_ptr,
            const std::string& reference_frame)
-  : FeatureTracker{ id, nh }
+  : FeatureTracker{ id }
   , softbiometrics_(nullptr)
   , _tf_buffer_ptr(tf_buffer_ptr)
   , _reference_frame(reference_frame)
@@ -45,32 +45,32 @@ Face::Face(ID id, ros::NodeHandle& nh, tf2_ros::Buffer* tf_buffer_ptr,
 
 Face::~Face()
 {
-  ROS_DEBUG_STREAM("Deleting face " << id_);
-  roi_subscriber_.shutdown();
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "Deleting face " << id_);
+  // roi_subscriber_.shutdown();
 }
 
 void Face::init()
 {
   ns_ = "/humans/faces/" + id_;
-  ROS_DEBUG_STREAM("New face detected: " << ns_);
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "New face detected: " << ns_);
 
-  roi_subscriber_ = node_.subscribe<sensor_msgs::RegionOfInterest>(
-      ns_ + "/roi", 1, bind(&Face::onRoI, this, _1));
+  auto roi_subscriber_ = this->create_subscription<sensor_msgs::msg::RegionOfInterest>(
+      ns_ + "/roi", 1, bind(&Face::onRoI, this, std::placeholders::_1));
 
-  cropped_subscriber_ = node_.subscribe<sensor_msgs::Image>(
-      ns_ + "/cropped", 1, bind(&Face::onCropped, this, _1));
+  auto cropped_subscriber_ = this->create_subscription<sensor_msgs::msg::Image>(
+      ns_ + "/cropped", 1, bind(&Face::onCropped, this, std::placeholders::_1));
 
-  aligned_subscriber_ = node_.subscribe<sensor_msgs::Image>(
-      ns_ + "/aligned", 1, bind(&Face::onAligned, this, _1));
+  auto aligned_subscriber_ = this->create_subscription<sensor_msgs::msg::Image>(
+      ns_ + "/aligned", 1, bind(&Face::onAligned, this, std::placeholders::_1));
 
-  landmarks_subscriber_ = node_.subscribe<hri_msgs::FacialLandmarks>(
-      ns_ + "/landmarks", 1, bind(&Face::onLandmarks, this, _1));
+  auto landmarks_subscriber_ = this->create_subscription<hri_msgs::msg::FacialLandmarks>(
+      ns_ + "/landmarks", 1, bind(&Face::onLandmarks, this, std::placeholders::_1));
 
-  softbiometrics_subscriber_ = node_.subscribe<hri_msgs::SoftBiometrics>(
-      ns_ + "/softbiometrics", 1, bind(&Face::onSoftBiometrics, this, _1));
+  auto softbiometrics_subscriber_ = this->create_subscription<hri_msgs::msg::SoftBiometrics>(
+      ns_ + "/softbiometrics", 1, bind(&Face::onSoftBiometrics, this, std::placeholders::_1));
 }
 
-void Face::onRoI(sensor_msgs::RegionOfInterestConstPtr roi)
+void Face::onRoI(sensor_msgs::msg::RegionOfInterest::SharedPtr roi)
 {
   roi_ = cv::Rect(roi->x_offset, roi->y_offset, roi->width, roi->height);
 }
@@ -80,7 +80,7 @@ cv::Rect Face::roi() const
   return roi_;
 }
 
-void Face::onCropped(sensor_msgs::ImageConstPtr msg)
+void Face::onCropped(sensor_msgs::msg::Image::SharedPtr msg)
 {
   cropped_ = cv_bridge::toCvCopy(msg)->image;  // if using toCvShare, the image ends up shared with aligned_!
 }
@@ -90,7 +90,7 @@ cv::Mat Face::cropped() const
   return cropped_;
 }
 
-void Face::onAligned(sensor_msgs::ImageConstPtr msg)
+void Face::onAligned(sensor_msgs::msg::Image::SharedPtr msg)
 {
   aligned_ = cv_bridge::toCvCopy(msg)->image;  // if using toCvShare, the image ends up shared with cropped_!
 }
@@ -100,7 +100,7 @@ cv::Mat Face::aligned() const
   return aligned_;
 }
 
-void Face::onLandmarks(hri_msgs::FacialLandmarksConstPtr msg)
+void Face::onLandmarks(hri_msgs::msg::FacialLandmarks::SharedPtr msg)
 {
   int i = 0;
 
@@ -113,7 +113,7 @@ void Face::onLandmarks(hri_msgs::FacialLandmarksConstPtr msg)
   }
 }
 
-void Face::onSoftBiometrics(hri_msgs::SoftBiometricsConstPtr biometrics)
+void Face::onSoftBiometrics(hri_msgs::msg::SoftBiometrics::SharedPtr biometrics)
 {
   softbiometrics_ = biometrics;
 }
@@ -137,37 +137,37 @@ boost::optional<Gender> Face::gender() const
   return static_cast<Gender>(softbiometrics_->gender);
 }
 
-boost::optional<geometry_msgs::TransformStamped> Face::transform() const
+boost::optional<geometry_msgs::msg::TransformStamped> Face::transform() const
 {
   try
   {
     auto transform = _tf_buffer_ptr->lookupTransform(_reference_frame, frame(),
-                                                     ros::Time(0), FACE_TF_TIMEOUT);
+                                                     rclcpp::Time(0), FACE_TF_TIMEOUT);
 
     return transform;
   }
   catch (tf2::LookupException)
   {
-    ROS_WARN_STREAM("failed to transform the face frame " << frame() << " to " << _reference_frame
+    RCLCPP_WARN_STREAM(this->get_logger(), "failed to transform the face frame " << frame() << " to " << _reference_frame
                                                           << ". Are the frames published?");
-    return boost::optional<geometry_msgs::TransformStamped>();
+    return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
 }
 
-boost::optional<geometry_msgs::TransformStamped> Face::gazeTransform() const
+boost::optional<geometry_msgs::msg::TransformStamped> Face::gazeTransform() const
 {
   try
   {
     auto transform = _tf_buffer_ptr->lookupTransform(_reference_frame, gazeFrame(),
-                                                     ros::Time(0), FACE_TF_TIMEOUT);
+                                                     rclcpp::Time(0), FACE_TF_TIMEOUT);
 
     return transform;
   }
   catch (tf2::LookupException)
   {
-    ROS_WARN_STREAM("failed to transform the gaze frame " << frame() << " to " << _reference_frame
+    RCLCPP_WARN_STREAM(this->get_logger(), "failed to transform the gaze frame " << frame() << " to " << _reference_frame
                                                           << ". Are the frames published?");
-    return boost::optional<geometry_msgs::TransformStamped>();
+    return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
 }
 

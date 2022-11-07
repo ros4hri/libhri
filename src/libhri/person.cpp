@@ -26,22 +26,20 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <std_msgs/String.h>
-#include <std_msgs/Bool.h>
 
-#include "geometry_msgs/TransformStamped.h"
-#include "hri/person.h"
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include "hri/person.hpp"
 
-#include "hri/hri.h"
-#include "hri_msgs/EngagementLevel.h"
-#include "std_msgs/Float32.h"
+#include "hri/hri.hpp"
+#include "hri_msgs/msg/engagement_level.hpp"
+#include <std_msgs/msg/float32.hpp>
 
 using namespace std;
 using namespace hri;
 
-Person::Person(ID id, const HRIListener* listener, ros::NodeHandle& nh,
-               tf2_ros::Buffer* tf_buffer_ptr, const std::string& reference_frame)
-  : FeatureTracker{ id, nh }
+Person::Person(ID id, const HRIListener* listener, tf2_ros::Buffer* tf_buffer_ptr,
+                const std::string& reference_frame)
+  : FeatureTracker{ id }
   , listener_(listener)
   , _anonymous(false)
   , _engagement_status(nullptr)
@@ -55,38 +53,38 @@ Person::Person(ID id, const HRIListener* listener, ros::NodeHandle& nh,
 
 Person::~Person()
 {
-  ROS_DEBUG_STREAM("Deleting person " << id_);
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "Deleting person " << id_);
 }
 
 void Person::init()
 {
   ns_ = "/humans/persons/" + id_;
-  ROS_DEBUG_STREAM("New person detected: " << ns_);
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "New person detected: " << ns_);
 
-  face_id_subscriber_ = node_.subscribe<std_msgs::String>(
-      ns_ + "/face_id", 1, [&](const std_msgs::StringConstPtr msg) { face_id = msg->data; });
+  auto face_id_subscriber_ = this->create_subscription<std_msgs::msg::String>(
+      ns_ + "/face_id", 1, [&](const std_msgs::msg::String::SharedPtr msg) { face_id = msg->data; });
 
-  body_id_subscriber_ = node_.subscribe<std_msgs::String>(
-      ns_ + "/body_id", 1, [&](const std_msgs::StringConstPtr msg) { body_id = msg->data; });
+  auto body_id_subscriber_ = this->create_subscription<std_msgs::msg::String>(
+      ns_ + "/body_id", 1, [&](const std_msgs::msg::String::SharedPtr msg) { body_id = msg->data; });
 
-  voice_id_subscriber_ = node_.subscribe<std_msgs::String>(
+  auto voice_id_subscriber_ = this->create_subscription<std_msgs::msg::String>(
       ns_ + "/voice_id", 1,
-      [&](const std_msgs::StringConstPtr msg) { voice_id = msg->data; });
+      [&](const std_msgs::msg::String::SharedPtr msg) { voice_id = msg->data; });
 
-  anonymous_subscriber_ = node_.subscribe<std_msgs::Bool>(
+  auto anonymous_subscriber_ = this->create_subscription<std_msgs::msg::Bool>(
       ns_ + "/anonymous", 1,
-      [&](const std_msgs::BoolConstPtr msg) { _anonymous = msg->data; });
+      [&](const std_msgs::msg::Bool::SharedPtr msg) { _anonymous = msg->data; });
 
-  alias_subscriber_ = node_.subscribe<std_msgs::String>(
-      ns_ + "/alias", 1, [&](const std_msgs::StringConstPtr msg) { _alias = msg->data; });
+  auto alias_subscriber_ = this->create_subscription<std_msgs::msg::String>(
+      ns_ + "/alias", 1, [&](const std_msgs::msg::String::SharedPtr msg) { _alias = msg->data; });
 
-  engagement_subscriber_ = node_.subscribe<hri_msgs::EngagementLevel>(
+  auto engagement_subscriber_ = this->create_subscription<hri_msgs::msg::EngagementLevel>(
       ns_ + "/engagement_status", 1,
-      [&](const hri_msgs::EngagementLevelConstPtr msg) { _engagement_status = msg; });
+      [&](const hri_msgs::msg::EngagementLevel::SharedPtr msg) { _engagement_status = msg; });
 
-  loc_confidence_subscriber_ = node_.subscribe<std_msgs::Float32>(
+  auto loc_confidence_subscriber_ = this->create_subscription<std_msgs::msg::Float32>(
       ns_ + "/location_confidence", 1,
-      [&](const std_msgs::Float32ConstPtr msg) { _loc_confidence = msg->data; });
+      [&](const std_msgs::msg::Float32::SharedPtr msg) { _loc_confidence = msg->data; });
 }
 
 FaceWeakConstPtr Person::face() const
@@ -122,15 +120,15 @@ boost::optional<EngagementLevel> Person::engagement_status() const
 
   switch (_engagement_status->level)
   {
-    case hri_msgs::EngagementLevel::UNKNOWN:
+    case hri_msgs::msg::EngagementLevel::UNKNOWN:
       return boost::optional<EngagementLevel>();
-    case hri_msgs::EngagementLevel::ENGAGING:
+    case hri_msgs::msg::EngagementLevel::ENGAGING:
       return EngagementLevel::ENGAGING;
-    case hri_msgs::EngagementLevel::ENGAGED:
+    case hri_msgs::msg::EngagementLevel::ENGAGED:
       return EngagementLevel::ENGAGED;
-    case hri_msgs::EngagementLevel::DISENGAGING:
+    case hri_msgs::msg::EngagementLevel::DISENGAGING:
       return EngagementLevel::DISENGAGING;
-    case hri_msgs::EngagementLevel::DISENGAGED:
+    case hri_msgs::msg::EngagementLevel::DISENGAGED:
       return EngagementLevel::DISENGAGED;
     default:
       // we should handle all the possible engagement values
@@ -139,25 +137,25 @@ boost::optional<EngagementLevel> Person::engagement_status() const
   }
 }
 
-boost::optional<geometry_msgs::TransformStamped> Person::transform() const
+boost::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
 {
   if (_loc_confidence == 0)
   {
-    return boost::optional<geometry_msgs::TransformStamped>();
+    return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
 
   try
   {
     auto transform = _tf_buffer_ptr->lookupTransform(_reference_frame, frame(),
-                                                     ros::Time(0), PERSON_TF_TIMEOUT);
+                                                     rclcpp::Time(0), PERSON_TF_TIMEOUT);
 
     return transform;
   }
   catch (tf2::LookupException)
   {
-    ROS_WARN_STREAM("failed to transform person frame " << frame() << " to " << _reference_frame
-                                                        << ". Are the frames published?");
-    return boost::optional<geometry_msgs::TransformStamped>();
+    RCLCPP_WARN_STREAM(this->get_logger(), "failed to transform person frame " << frame()
+                                << " to " << _reference_frame << ". Are the frames published?");
+    return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
 }
 

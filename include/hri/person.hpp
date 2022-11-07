@@ -29,27 +29,29 @@
 #ifndef HRI_PERSON_H
 #define HRI_PERSON_H
 
-#include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <functional>
 #include <memory>
 
-#include "base.h"
-#include "face.h"
-#include "body.h"
-#include "voice.h"
+#include "FeatureTracker.hpp"
+#include "face.hpp"
+#include "body.hpp"
+#include "voice.hpp"
 
-#include <hri_msgs/EngagementLevel.h>
-#include <std_msgs/Float32.h>
+#include "hri_msgs/msg/engagement_level.hpp"
+#include <std_msgs/msg/float32.hpp>
+#include <std_msgs/msg/string.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/message_filter.h"
+#include <tf2_ros/buffer.h>
 #include "message_filters/subscriber.h"
-
 
 namespace hri
 {
 const static std::string PERSON_TF_PREFIX("person_");
-const static ros::Duration PERSON_TF_TIMEOUT(0.01);
+const static rclcpp::Duration PERSON_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.01));
 
 enum EngagementLevel
 {
@@ -70,8 +72,8 @@ class HRIListener;
 class Person : public FeatureTracker
 {
 public:
-  Person(ID id, const HRIListener* listener, ros::NodeHandle& nh,
-         tf2_ros::Buffer* tf_buffer_ptr, const std::string& reference_frame);
+  Person(ID id, const HRIListener* listener, tf2_ros::Buffer* tf_buffer_ptr,
+          const std::string& reference_frame);
 
   virtual ~Person();
 
@@ -113,7 +115,7 @@ public:
     return _loc_confidence;
   }
 
-  boost::optional<geometry_msgs::TransformStamped> transform() const;
+  boost::optional<geometry_msgs::msg::TransformStamped> transform() const;
 
   void init() override;
   ID face_id;
@@ -128,9 +130,9 @@ protected:
   // is destroyed after all pointers to this person are released.
   const HRIListener* listener_;
 
-  void tfCallback(const geometry_msgs::TransformStampedConstPtr& transform_ptr)
+  void tfCallback(const geometry_msgs::msg::TransformStamped::SharedPtr& transform_ptr)
   {
-    ROS_WARN("got tf transform!");
+    RCLCPP_WARN_STREAM(this->get_logger(), "got tf transform!");
   }
 
   // if non-empty, this person 'does not exist' and is instead an alias to
@@ -140,19 +142,19 @@ protected:
 
   bool _anonymous;
 
-  hri_msgs::EngagementLevelConstPtr _engagement_status;
+  hri_msgs::msg::EngagementLevel::ConstPtr _engagement_status;
 
   float _loc_confidence;
 
   std::string _reference_frame;
 
-  ros::Subscriber face_id_subscriber_;
-  ros::Subscriber body_id_subscriber_;
-  ros::Subscriber voice_id_subscriber_;
-  ros::Subscriber anonymous_subscriber_;
-  ros::Subscriber alias_subscriber_;
-  ros::Subscriber engagement_subscriber_;
-  ros::Subscriber loc_confidence_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr face_id_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr body_id_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr voice_id_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr anonymous_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr alias_subscriber_;
+  rclcpp::Subscription<hri_msgs::msg::EngagementLevel>::SharedPtr engagement_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr loc_confidence_subscriber_;
 
   tf2_ros::Buffer* _tf_buffer_ptr;
 };
@@ -161,7 +163,6 @@ typedef std::shared_ptr<Person> PersonPtr;
 typedef std::shared_ptr<const Person> PersonConstPtr;
 typedef std::weak_ptr<Person> PersonWeakPtr;
 typedef std::weak_ptr<const Person> PersonWeakConstPtr;
-
 
 }  // namespace hri
 

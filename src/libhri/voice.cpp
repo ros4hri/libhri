@@ -26,41 +26,40 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "hri/voice.h"
-
+#include "hri/voice.hpp"
 using namespace std;
 using namespace hri;
 
-Voice::Voice(ID id, ros::NodeHandle& nh, tf2_ros::Buffer* tf_buffer_ptr,
+Voice::Voice(ID id, tf2_ros::Buffer* tf_buffer_ptr,
              const std::string& reference_frame)
-  : FeatureTracker{ id, nh }, _tf_buffer_ptr(tf_buffer_ptr), _reference_frame(reference_frame)
+  : FeatureTracker{ id }, _tf_buffer_ptr(tf_buffer_ptr), _reference_frame(reference_frame)
 {
 }
 
 Voice::~Voice()
 {
-  ROS_DEBUG_STREAM("Deleting voice " << id_);
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "Deleting voice " << id_);
 }
 
 void Voice::init()
 {
   ns_ = "/humans/voices/" + id_;
-  ROS_DEBUG_STREAM("New voice detected: " << ns_);
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "New voice detected: " << ns_);
 }
 
-boost::optional<geometry_msgs::TransformStamped> Voice::transform() const
+boost::optional<geometry_msgs::msg::TransformStamped> Voice::transform() const
 {
   try
   {
     auto transform = _tf_buffer_ptr->lookupTransform(_reference_frame, frame(),
-                                                     ros::Time(0), VOICE_TF_TIMEOUT);
+                                                     rclcpp::Time(0), VOICE_TF_TIMEOUT);
 
     return transform;
   }
   catch (tf2::LookupException)
   {
-    ROS_WARN_STREAM("failed to transform the voice frame "
+    RCLCPP_WARN_STREAM(this->get_logger(), "failed to transform the voice frame "
                     << frame() << " to " << _reference_frame << ". Are the frames published?");
-    return boost::optional<geometry_msgs::TransformStamped>();
+    return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
 }

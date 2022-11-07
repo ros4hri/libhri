@@ -30,20 +30,21 @@
 #ifndef HRI_HRI_H
 #define HRI_HRI_H
 
-#include <ros/ros.h>
-#include <hri_msgs/IdsList.h>
+#include "hri_msgs/msg/ids_list.hpp"
 
 #include <functional>
 #include <map>
 #include <memory>
 
-#include "FeatureTracker.hpp"
-#include "face.h"
-#include "body.h"
-#include "voice.h"
-#include "person.h"
-#include "ros/subscriber.h"
+#include "rclcpp/rclcpp.hpp"
 
+#include "FeatureTracker.hpp"
+#include "person.hpp"
+#include "face.hpp"
+#include "body.hpp"
+#include "voice.hpp"
+
+#include <tf2_ros/buffer.h>
 
 namespace hri
 {
@@ -67,7 +68,7 @@ namespace hri
  * }
  * ```
  */
-class HRIListener
+class HRIListener: public rclcpp::Node
 {
 public:
   HRIListener();
@@ -209,23 +210,21 @@ public:
   }
 
 private:
-  ros::NodeHandle node_;
-
   void init();
 
-  void onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPtr tracked);
+  void onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::ConstPtr tracked);
 
-  std::map<FeatureType, ros::Subscriber> feature_subscribers_;
+  std::map<FeatureType, rclcpp::Subscription::SharedPtr> feature_subscribers_;
 
-  std::map<ID, FaceConstPtr> faces;
+  std::map<ID, FaceWeakConstPtr> faces;
   std::vector<std::function<void(FaceWeakConstPtr)>> face_callbacks;
   std::vector<std::function<void(ID)>> face_lost_callbacks;
 
-  std::map<ID, BodyConstPtr> bodies;
+  std::map<ID, BodyWeakConstPtr> bodies;
   std::vector<std::function<void(BodyWeakConstPtr)>> body_callbacks;
   std::vector<std::function<void(ID)>> body_lost_callbacks;
 
-  std::map<ID, VoiceConstPtr> voices;
+  std::map<ID, VoiceWeakConstPtr> voices;
   std::vector<std::function<void(VoiceWeakConstPtr)>> voice_callbacks;
   std::vector<std::function<void(ID)>> voice_lost_callbacks;
 
