@@ -1,9 +1,8 @@
 #include <hri/hri.h>
 #include <ros/ros.h>
 
-#include <opencv2/highgui.hpp>
+#include "rclcpp/rclcpp.hpp"
 
-using namespace ros;
 using namespace hri;
 using namespace std;
 

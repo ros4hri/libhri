@@ -30,33 +30,33 @@
 #ifndef HRI_BODY_H
 #define HRI_BODY_H
 
-#include <geometry_msgs/TransformStamped.h>
-#include <sensor_msgs/RegionOfInterest.h>
-#include <sensor_msgs/Image.h>
-#include <hri_msgs/Skeleton2D.h>
-#include <hri_msgs/NormalizedPointOfInterest2D.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <sensor_msgs/msg/region_of_interest.hpp>
+#include <sensor_msgs/msg/image.hpp>
+#include <hri_msgs/msg/skeleton2_d.hpp>
+#include <hri_msgs/msg/normalized_point_of_interest2_d.hpp>
 #include <memory>
 #include <boost/optional.hpp>
 
 #include "FeatureTracker.hpp"
-#include "ros/subscriber.h"
 
 #include <opencv2/core.hpp>
 
 #include "tf2_ros/transform_listener.h"
+#include <tf2_ros/buffer.h>
 
-typedef hri_msgs::NormalizedPointOfInterest2D SkeletonPoint;
+typedef hri_msgs::msg::NormalizedPointOfInterest2D SkeletonPoint;
 
 namespace hri
 {
 // the tf prefix follows REP-155
 const static std::string BODY_TF_PREFIX("body_");
-const static ros::Duration BODY_TF_TIMEOUT(0.01);
+const static rclcpp::Duration BODY_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.01));
 
 class Body : public FeatureTracker
 {
 public:
-  Body(ID id, ros::NodeHandle& nh, tf2_ros::Buffer* tf_buffer_ptr,
+  Body(ID id, tf2_ros::Buffer* tf_buffer_ptr,
        const std::string& reference_frame);
 
   virtual ~Body();
@@ -109,23 +109,23 @@ public:
 
   /** \brief Returns the (stamped) 3D transform of the body (if available).
    */
-  boost::optional<geometry_msgs::TransformStamped> transform() const;
+  boost::optional<geometry_msgs::msg::TransformStamped> transform() const;
 
   void init() override;
 
 private:
   size_t nb_roi;
 
-  ros::Subscriber roi_subscriber_;
-  void onRoI(sensor_msgs::RegionOfInterestConstPtr roi);
+  rclcpp::Subscription<sensor_msgs::msg::RegionOfInterest>::SharedPtr roi_subscriber_;
+  void onRoI(sensor_msgs::msg::RegionOfInterest::SharedPtr roi);
   cv::Rect roi_;
 
-  ros::Subscriber cropped_subscriber_;
-  void onCropped(sensor_msgs::ImageConstPtr roi);
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr cropped_subscriber_;
+  void onCropped(sensor_msgs::msg::Image::SharedPtr roi);
   cv::Mat cropped_;
 
-  ros::Subscriber skeleton_subscriber_;
-  void onSkeleton(hri_msgs::Skeleton2DConstPtr skeleton);
+  rclcpp::Subscription<hri_msgs::msg::Skeleton2D>::SharedPtr skeleton_subscriber_;
+  void onSkeleton(hri_msgs::msg::Skeleton2D::SharedPtr skeleton);
   std::vector<SkeletonPoint> skeleton_;
 
   std::string _reference_frame;

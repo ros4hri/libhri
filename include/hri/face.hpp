@@ -30,20 +30,20 @@
 #ifndef HRI_FACE_H
 #define HRI_FACE_H
 
-#include <hri_msgs/NormalizedPointOfInterest2D.h>
-#include <hri_msgs/FacialLandmarks.h>
-#include <hri_msgs/SoftBiometrics.h>
-#include <sensor_msgs/RegionOfInterest.h>
-#include <sensor_msgs/Image.h>
+#include <hri_msgs/msg/normalized_point_of_interest2_d.hpp>
+#include <hri_msgs/msg/facial_landmarks.hpp>
+#include <hri_msgs/msg/soft_biometrics.hpp>
+#include <sensor_msgs/msg/region_of_interest.hpp>
+#include <sensor_msgs/msg/image.hpp>
 #include <memory>
 #include <boost/optional.hpp>
 
 #include "FeatureTracker.hpp"
-#include "ros/subscriber.h"
 
 #include <opencv2/core.hpp>
 
 #include "tf2_ros/transform_listener.h"
+#include "tf2_ros/buffer.h"
 
 namespace hri
 {
@@ -63,12 +63,12 @@ enum Gender
 // the tf prefixes follow REP-155
 const static std::string FACE_TF_PREFIX("face_");
 const static std::string GAZE_TF_PREFIX("gaze_");
-const static ros::Duration FACE_TF_TIMEOUT(0.01);
+const static rclcpp::Duration FACE_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.01));
 
 class Face : public FeatureTracker
 {
 public:
-  Face(ID id, ros::NodeHandle& nh, tf2_ros::Buffer* tf_buffer_ptr,
+  Face(ID id, tf2_ros::Buffer* tf_buffer_ptr,
        const std::string& reference_frame);
 
   virtual ~Face();
@@ -131,7 +131,7 @@ public:
    * Constants defined in hri_msgs/FacialLandmarks.h can be used to access
    * specific points on the face.
    */
-  boost::optional<std::array<hri_msgs::NormalizedPointOfInterest2D, 70>> facialLandmarks() const
+  boost::optional<std::array<hri_msgs::msg::NormalizedPointOfInterest2D, 70>> facialLandmarks() const
   {
     return facial_landmarks_;
   }
@@ -165,36 +165,37 @@ public:
 
   /** \brief Returns the (stamped) 3D transform of the face (if available).
    */
-  boost::optional<geometry_msgs::TransformStamped> transform() const;
+  boost::optional<geometry_msgs::msg::TransformStamped> transform() const;
 
   /** \brief Returns the (stamped) 3D transform of the gaze (if available).
    */
-  boost::optional<geometry_msgs::TransformStamped> gazeTransform() const;
+  boost::optional<geometry_msgs::msg::TransformStamped> gazeTransform() const;
 
   void init() override;
 
 private:
   size_t nb_roi;
 
-  ros::Subscriber roi_subscriber_;
-  void onRoI(sensor_msgs::RegionOfInterestConstPtr roi);
+
+  rclcpp::Subscription<sensor_msgs::msg::RegionOfInterest>::SharedPtr roi_subscriber_;
+  void onRoI(sensor_msgs::msg::RegionOfInterest::SharedPtr roi);
   cv::Rect roi_;
 
-  ros::Subscriber cropped_subscriber_;
-  void onCropped(sensor_msgs::ImageConstPtr roi);
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr cropped_subscriber_;
+  void onCropped(sensor_msgs::msg::Image::SharedPtr roi);
   cv::Mat cropped_;
 
-  ros::Subscriber aligned_subscriber_;
-  void onAligned(sensor_msgs::ImageConstPtr roi);
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr aligned_subscriber_;
+  void onAligned(sensor_msgs::msg::Image::SharedPtr roi);
   cv::Mat aligned_;
 
-  ros::Subscriber landmarks_subscriber_;
-  void onLandmarks(hri_msgs::FacialLandmarksConstPtr landmarks);
-  std::array<hri_msgs::NormalizedPointOfInterest2D, 70> facial_landmarks_;
+  rclcpp::Subscription<hri_msgs::msg::FacialLandmarks>::SharedPtr landmarks_subscriber_;
+  void onLandmarks(hri_msgs::msg::FacialLandmarks::SharedPtr landmarks);
+  std::array<hri_msgs::msg::NormalizedPointOfInterest2D, 70> facial_landmarks_;
 
-  ros::Subscriber softbiometrics_subscriber_;
-  void onSoftBiometrics(hri_msgs::SoftBiometricsConstPtr biometrics);
-  hri_msgs::SoftBiometricsConstPtr softbiometrics_;
+  rclcpp::Subscription<hri_msgs::msg::SoftBiometrics>::SharedPtr softbiometrics_subscriber_;
+  void onSoftBiometrics(hri_msgs::msg::SoftBiometrics::SharedPtr biometrics);
+  hri_msgs::msg::SoftBiometrics::SharedPtr softbiometrics_;
 
 
   std::array<IntensityConfidence, 99> facial_action_units_;

@@ -63,7 +63,7 @@ public:
    * non-trivial, and typically non-reentrant, logic to subscribe/unsubcribe
    * HRI-related topics.
    */
-  FeatureTracker(ID id, const ros::NodeHandle& nh) : id_(id), node_(nh), ns_("")
+  FeatureTracker(ID id) : Node(id, ""), id_(id)
   {
   }
 
@@ -116,8 +116,6 @@ protected:
 
   // topic namespace under which this feature is advertised
   std::string ns_;
-
-  ros::NodeHandle node_;
 };
 
 }  // namespace hri

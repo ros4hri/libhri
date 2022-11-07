@@ -26,42 +26,42 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "hri/body.h"
+#include "hri/body.hpp"
 
 #include <cv_bridge/cv_bridge.h>
 
 using namespace std;
 using namespace hri;
 
-Body::Body(ID id, ros::NodeHandle& nh, tf2_ros::Buffer* tf_buffer_ptr,
+Body::Body(ID id, tf2_ros::Buffer* tf_buffer_ptr,
            const std::string& reference_frame)
-  : FeatureTracker{ id, nh }, _tf_buffer_ptr(tf_buffer_ptr), _reference_frame(reference_frame)
+  : FeatureTracker{ id }, _tf_buffer_ptr(tf_buffer_ptr), _reference_frame(reference_frame)
 {
 }
 
 
 Body::~Body()
 {
-  ROS_DEBUG_STREAM("Deleting body " << id_);
-  roi_subscriber_.shutdown();
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "Deleting body " << id_);
+  // roi_subscriber_.shutdown();
 }
 
 void Body::init()
 {
   ns_ = "/humans/bodies/" + id_;
-  ROS_DEBUG_STREAM("New body detected: " << ns_);
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "New body detected: " << ns_);
 
-  roi_subscriber_ = node_.subscribe<sensor_msgs::RegionOfInterest>(
-      ns_ + "/roi", 1, bind(&Body::onRoI, this, _1));
+  auto roi_subscriber_ = this->create_subscription<sensor_msgs::msg::RegionOfInterest>(
+      ns_ + "/roi", 1, bind(&Body::onRoI, this, std::placeholders::_1));
 
-  cropped_subscriber_ = node_.subscribe<sensor_msgs::Image>(
-      ns_ + "/cropped", 1, bind(&Body::onCropped, this, _1));
+  auto cropped_subscriber_ = this->create_subscription<sensor_msgs::msg::Image>(
+      ns_ + "/cropped", 1, bind(&Body::onCropped, this, std::placeholders::_1));
 
-  skeleton_subscriber_ = node_.subscribe<hri_msgs::Skeleton2D>(
-      ns_ + "/skeleton2d", 1, bind(&Body::onSkeleton, this, _1));
+  auto skeleton_subscriber_ = this->create_subscription<hri_msgs::msg::Skeleton2D>(
+      ns_ + "/skeleton2d", 1, bind(&Body::onSkeleton, this, std::placeholders::_1));
 }
 
-void Body::onRoI(sensor_msgs::RegionOfInterestConstPtr roi)
+void Body::onRoI(sensor_msgs::msg::RegionOfInterest::SharedPtr roi)
 {
   roi_ = cv::Rect(roi->x_offset, roi->y_offset, roi->width, roi->height);
 }
@@ -71,7 +71,7 @@ cv::Rect Body::roi() const
   return roi_;
 }
 
-void Body::onCropped(sensor_msgs::ImageConstPtr msg)
+void Body::onCropped(sensor_msgs::msg::Image::SharedPtr msg)
 {
   cropped_ = cv_bridge::toCvShare(msg)->image;
 }
@@ -81,7 +81,7 @@ cv::Mat Body::cropped() const
   return cropped_;
 }
 
-void Body::onSkeleton(hri_msgs::Skeleton2DConstPtr msg)
+void Body::onSkeleton(hri_msgs::msg::Skeleton2D::SharedPtr msg)
 {
   skeleton_ = msg->skeleton;
 }
@@ -91,19 +91,19 @@ std::vector<SkeletonPoint> Body::skeleton() const
   return skeleton_;
 }
 
-boost::optional<geometry_msgs::TransformStamped> Body::transform() const
+boost::optional<geometry_msgs::msg::TransformStamped> Body::transform() const
 {
   try
   {
     auto transform = _tf_buffer_ptr->lookupTransform(_reference_frame, frame(),
-                                                     ros::Time(0), BODY_TF_TIMEOUT);
+                                                     rclcpp::Time(0), BODY_TF_TIMEOUT);
 
     return transform;
   }
   catch (tf2::LookupException)
   {
-    ROS_WARN_STREAM("failed to transform the body frame " << frame() << " to " << _reference_frame
+    RCLCPP_WARN_STREAM(this->get_logger(), "failed to transform the body frame " << frame() << " to " << _reference_frame
                                                           << ". Are the frames published?");
-    return boost::optional<geometry_msgs::TransformStamped>();
+    return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
 }
