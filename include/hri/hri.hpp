@@ -43,8 +43,7 @@
 #include "face.hpp"
 #include "body.hpp"
 #include "voice.hpp"
-
-#include <tf2_ros/buffer.h>
+#include "tf2_ros/buffer.h"
 
 namespace hri
 {
@@ -211,10 +210,14 @@ public:
 
 private:
   void init();
+  //Libreria de c++ de nodos 
+  //probabilidad de todos los estados de que el robot este ahi
+  //modelo de actuacion y un modelo 
+  void onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::SharedPtr tracked);
 
-  void onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::ConstPtr tracked);
 
-  std::map<FeatureType, rclcpp::Subscription::SharedPtr> feature_subscribers_;
+  std::map<FeatureType, rclcpp::Subscription<hri_msgs::msg::IdsList>::SharedPtr> feature_subscribers_;
+
 
   std::map<ID, FaceWeakConstPtr> faces;
   std::vector<std::function<void(FaceWeakConstPtr)>> face_callbacks;
@@ -236,7 +239,11 @@ private:
   std::vector<std::function<void(ID)>> person_tracked_lost_callbacks;
 
   std::string _reference_frame;
-  tf2_ros::Buffer _tf_buffer;
+  // _tf_buffer_ = 
+  //     std::make_unique<tf2_ros::Buffer>(this->get_clock());
+  // _tf_listener_ =
+  //     std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+  tf2::BufferCore _tf_buffer;
   tf2_ros::TransformListener _tf_listener;
 };
 

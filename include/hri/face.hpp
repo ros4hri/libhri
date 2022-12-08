@@ -68,8 +68,10 @@ const static rclcpp::Duration FACE_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.0
 class Face : public FeatureTracker
 {
 public:
-  Face(ID id, tf2_ros::Buffer* tf_buffer_ptr,
+  Face(ID id, tf2::BufferCore* tf_buffer_ptr,
        const std::string& reference_frame);
+
+
 
   virtual ~Face();
 

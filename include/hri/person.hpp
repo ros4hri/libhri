@@ -72,7 +72,7 @@ class HRIListener;
 class Person : public FeatureTracker
 {
 public:
-  Person(ID id, const HRIListener* listener, tf2_ros::Buffer* tf_buffer_ptr,
+  Person(ID id, const HRIListener* listener, tf2::BufferCore* tf_buffer_ptr,
           const std::string& reference_frame);
 
   virtual ~Person();
@@ -142,7 +142,7 @@ protected:
 
   bool _anonymous;
 
-  hri_msgs::msg::EngagementLevel::ConstPtr _engagement_status;
+  hri_msgs::msg::EngagementLevel::SharedPtr _engagement_status;
 
   float _loc_confidence;
 

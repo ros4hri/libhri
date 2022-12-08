@@ -37,7 +37,7 @@
 using namespace std;
 using namespace hri;
 
-Person::Person(ID id, const HRIListener* listener, tf2_ros::Buffer* tf_buffer_ptr,
+Person::Person(ID id, const HRIListener* listener, tf2::BufferCore* tf_buffer_ptr,
                 const std::string& reference_frame)
   : FeatureTracker{ id }
   , listener_(listener)
@@ -45,7 +45,7 @@ Person::Person(ID id, const HRIListener* listener, tf2_ros::Buffer* tf_buffer_pt
   , _engagement_status(nullptr)
   , _alias("")
   , _loc_confidence(0.)
-  , _tf_buffer_ptr(tf_buffer_ptr)
+  , _tf_buffer_ptr()
   , _reference_frame(reference_frame)
 {
 }

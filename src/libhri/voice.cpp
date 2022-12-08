@@ -30,9 +30,9 @@
 using namespace std;
 using namespace hri;
 
-Voice::Voice(ID id, tf2_ros::Buffer* tf_buffer_ptr,
+Voice::Voice(ID id, tf2::BufferCore* tf_buffer_ptr,
              const std::string& reference_frame)
-  : FeatureTracker{ id }, _tf_buffer_ptr(tf_buffer_ptr), _reference_frame(reference_frame)
+  : FeatureTracker{ id }, _tf_buffer_ptr(), _reference_frame(reference_frame)
 {
 }
 
