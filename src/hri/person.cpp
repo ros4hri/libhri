@@ -87,14 +87,12 @@ void Person::init()
       [&](const std_msgs::msg::Float32::SharedPtr msg) { _loc_confidence = msg->data; });
 }
 
-// FaceWeakConstPtr Person::face() const
-FaceSharedConstPtr Person::face() const
+FaceWeakConstPtr Person::face() const
 {
   if (listener_->getFaces().count(face_id) != 0)
     return listener_->getFaces()[face_id];
   else
-    // return FaceWeakConstPtr();
-    return FaceSharedConstPtr();
+    return FaceWeakConstPtr();
 }
 
 BodyWeakConstPtr Person::body() const

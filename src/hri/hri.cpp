@@ -62,11 +62,9 @@ HRIListener::~HRIListener()
 }
 
 
-// map<ID, FaceWeakConstPtr> HRIListener::getFaces() const
-map<ID, FaceSharedConstPtr> HRIListener::getFaces() const
+map<ID, FaceWeakConstPtr> HRIListener::getFaces() const
 {
-  // map<ID, FaceWeakConstPtr> result;
-  map<ID, FaceSharedConstPtr> result;
+  map<ID, FaceWeakConstPtr> result;
 
   // creates a map of *weak* pointers from the internally managed list of
   // shared pointers

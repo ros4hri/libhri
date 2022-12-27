@@ -208,8 +208,8 @@ private:
 
 typedef std::shared_ptr<Face> FacePtr;
 typedef std::shared_ptr<const Face> FaceConstPtr;
-typedef std::shared_ptr<Face> FaceSharedPtr;
-typedef std::shared_ptr<const Face> FaceSharedConstPtr;
+typedef std::weak_ptr<Face> FaceWeakPtr;
+typedef std::weak_ptr<const Face> FaceWeakConstPtr;
 
 }  // namespace hri
 #endif

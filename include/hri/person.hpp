@@ -85,8 +85,7 @@ public:
   /* returns a (weak, constant) pointer to the face of this person, or
    * a nullptr if this person is currently not associated to any detected face.
    */
-  // FaceWeakConstPtr face() const;
-  FaceSharedConstPtr face() const;
+  FaceWeakConstPtr face() const;
 
   /* returns a (weak, constant) pointer to the body of this person, or
    * a nullptr if this person is currently not associated to any detected body.
