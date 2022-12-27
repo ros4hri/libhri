@@ -78,12 +78,14 @@ public:
    *
    * Faces are returned as constant std::weak_ptr as they may disappear at any point.
    */
-  std::map<ID, FaceWeakConstPtr> getFaces() const;
+  // std::map<ID, FaceWeakConstPtr> getFaces() const;
+    std::map<ID, FaceSharedConstPtr> getFaces() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new face
    * is detected.
    */
-  void onFace(std::function<void(FaceWeakConstPtr)> callback)
+  // void onFace(std::function<void(FaceWeakConstPtr)> callback)
+  void onFace(std::function<void(FaceSharedConstPtr)> callback)
   {
     face_callbacks.push_back(callback);
   }
@@ -219,8 +221,10 @@ private:
   std::map<FeatureType, rclcpp::Subscription<hri_msgs::msg::IdsList>::SharedPtr> feature_subscribers_;
 
 
-  std::map<ID, FaceWeakConstPtr> faces;
-  std::vector<std::function<void(FaceWeakConstPtr)>> face_callbacks;
+  // std::map<ID, FaceWeakConstPtr> faces;
+  std::map<ID, FaceSharedConstPtr> faces;
+  // std::vector<std::function<void(FaceWeakConstPtr)>> face_callbacks;
+  std::vector<std::function<void(FaceSharedConstPtr)>> face_callbacks;
   std::vector<std::function<void(ID)>> face_lost_callbacks;
 
   std::map<ID, BodyWeakConstPtr> bodies;

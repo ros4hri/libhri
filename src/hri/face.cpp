@@ -52,7 +52,8 @@ Face::~Face()
 void Face::init()
 {
   ns_ = "/humans/faces/" + id_;
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "New face detected: " << ns_);
+  // RCLCPP_DEBUG_STREAM(this->get_logger(), "New face detected: " << ns_);
+  RCLCPP_INFO_STREAM(this->get_logger(), "New face detected: " << ns_);
 
   auto roi_subscriber_ = this->create_subscription<sensor_msgs::msg::RegionOfInterest>(
       ns_ + "/roi", 1, bind(&Face::onRoI, this, std::placeholders::_1));
@@ -82,6 +83,7 @@ cv::Rect Face::roi() const
 
 void Face::onCropped(sensor_msgs::msg::Image::SharedPtr msg)
 {
+  RCLCPP_INFO_STREAM(this->get_logger(), "got to cropped");
   cropped_ = cv_bridge::toCvCopy(msg)->image;  // if using toCvShare, the image ends up shared with aligned_!
 }
 

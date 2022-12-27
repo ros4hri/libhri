@@ -33,10 +33,13 @@
 #include <iterator>
 #include <tuple>
 #include <utility>
+#include <string> 
 #include "hri/person.hpp"
 #include "hri/face.hpp"
 #include "hri/body.hpp"
 #include "hri_msgs/msg/ids_list.hpp"
+#include <iostream>
+#include <opencv2/opencv.hpp>
 
 using namespace std;
 using namespace hri;
@@ -59,16 +62,21 @@ HRIListener::~HRIListener()
 }
 
 
-map<ID, FaceWeakConstPtr> HRIListener::getFaces() const
+// map<ID, FaceWeakConstPtr> HRIListener::getFaces() const
+map<ID, FaceSharedConstPtr> HRIListener::getFaces() const
 {
-  map<ID, FaceWeakConstPtr> result;
+  // map<ID, FaceWeakConstPtr> result;
+  map<ID, FaceSharedConstPtr> result;
 
   // creates a map of *weak* pointers from the internally managed list of
   // shared pointers
+  RCLCPP_INFO(this->get_logger(),"got face");
   for (auto const& f : faces)
   {
     result[f.first] = f.second;
+    RCLCPP_INFO_ONCE(this->get_logger(),"Printing ID %s",f.first);
   }
+  
 
   return result;
 }
@@ -174,12 +182,13 @@ map<ID, PersonWeakConstPtr> HRIListener::getTrackedPersons() const
 void HRIListener::init()
 {
   RCLCPP_DEBUG_STREAM(this->get_logger(), "Initialising the HRI Listener");
+  
 
  //https://github.com/ros2/rclcpp/issues/273
  //https://github.com/ros2/rclcpp/issues/583 
 //  std::function<void(const FeatureType::face::SharedPtr msg)> bound_callback_func =
 //   std::bind(&HRIListener::onTrackedFeature, std::placeholders::_1, topic_name);
-
+//map
   feature_subscribers_[FeatureType::face] = this->create_subscription<hri_msgs::msg::IdsList>(
       "/humans/faces/tracked", 1,[this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
         HRIListener::onTrackedFeature(FeatureType::face,tracked);
@@ -210,45 +219,53 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
 {
   // update the current list of tracked feature (face, body...) with
   // what has just been received on the respective /tracked topic.
+  
 
-  set<ID> new_ids;
+  std::set<ID> new_ids;
   for (auto const& id : tracked->ids)
   {
+    // new_ids.insert(ID(id.c_str()));
     new_ids.insert(ID(id));
   }
 
-  set<ID> to_remove;
-  set<ID> to_add;
 
-  set<ID> current_ids;
+  std::set<ID> to_remove;
+  std::set<ID> to_add;
+
+  std::set<ID> current_ids;
 
   switch (feature)
   {
     case FeatureType::face:
+      RCLCPP_INFO(this->get_logger(),"got to face callback");
       for (auto const& kv : faces)
       {
         current_ids.insert(kv.first);
-      }
+      }      
       break;
     case FeatureType::body:
+    RCLCPP_INFO(this->get_logger(),"got to body callback");
       for (auto const& kv : bodies)
       {
         current_ids.insert(kv.first);
       }
       break;
     case FeatureType::voice:
+    RCLCPP_INFO(this->get_logger(),"got to body callback");
       for (auto const& kv : voices)
       {
         current_ids.insert(kv.first);
       }
       break;
     case FeatureType::person:
+    RCLCPP_INFO(this->get_logger(),"got to person callback");
       for (auto const& kv : persons)
       {
         current_ids.insert(kv.first);
       }
       break;
     case FeatureType::tracked_person:
+    RCLCPP_INFO(this->get_logger(),"got to tracked person callback");
       for (auto const& kv : tracked_persons)
       {
         current_ids.insert(kv.first);
@@ -374,7 +391,8 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
         
         auto face = std::make_shared<Face>(id, &_tf_buffer, _reference_frame);
       
-        face->init();
+        face->init();        
+        RCLCPP_INFO(this->get_logger(),"got to face adding switch, id:%s",id.c_str());
         faces.insert({ id, face });
 
         // invoke all the callbacks

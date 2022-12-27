@@ -1,29 +1,33 @@
-#include <hri/hri.h>
-#include <ros/ros.h>
-
+#include <hri/hri.hpp>
 #include "rclcpp/rclcpp.hpp"
 
-using namespace hri;
-using namespace std;
+#include <opencv2/opencv.hpp>
 
-int main(int argc, char** argv)
+
+
+
+using namespace std::chrono_literals;
+
+int main(int argc, char * argv[])
 {
-  ros::init(argc, argv, "hri_example_show_faces");
+  rclcpp::init(argc, argv);
 
-  ros::NodeHandle nh;
 
-  ros::Rate loop_rate(10);
+  // ros::NodeHandle nh;
 
-  HRIListener hri_listener;
+  rclcpp::Rate loop_rate(10ms);
+  auto hri_listener_ = std::make_shared<hri::HRIListener>();
+  // hri::HRIListener hri_listener;
 
   // hri_listener.onFace(&onFace);
 
-  while (ros::ok())
+  while (rclcpp::ok())
   {
-    auto faces = hri_listener.getFaces();
+    auto faces = hri_listener_->getFaces();
     for (auto& f : faces)
     {
       auto face_id = f.first;
+      RCLCPP_INFO(hri_listener_->get_logger(),"face_id: %s",face_id);
       auto face = f.second.lock();
       if (face)
       {
@@ -40,8 +44,8 @@ int main(int argc, char** argv)
       }
     }
 
+    rclcpp::spin(hri_listener_);
     loop_rate.sleep();
-    ros::spinOnce();
   }
 
   return 0;

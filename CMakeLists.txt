@@ -36,50 +36,54 @@ include_directories(include)
 
 
 add_library(${PROJECT_NAME} SHARED
-  src/libhri/hri.cpp
-  src/libhri/body.cpp
-  src/libhri/face.cpp
-  src/libhri/person.cpp
-  src/libhri/voice.cpp
+  src/hri/hri.cpp
+  src/hri/body.cpp
+  src/hri/face.cpp
+  src/hri/person.cpp
+  src/hri/voice.cpp
 )
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
 
 
-#add_executable(show_faces examples/show_faces.cpp)
-#ament_target_dependencies(show_faces ${dependencies})
-#target_link_libraries(show_faces ${PROJECT_NAME})
+
+add_executable(show_faces examples/show_faces.cpp)
+ament_target_dependencies(show_faces ${dependencies})
+target_link_libraries(show_faces ${PROJECT_NAME})
 
 
 install(TARGETS
-  ${PROJECT_NAME}
-  #show_faces
+  show_faces
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
-
-install(
-  DIRECTORY include
-  DESTINATION include
-)
-
-#install(DIRECTORY examples DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY examples DESTINATION share/${PROJECT_NAME})
 
 ###########################################################
-# if(BUILD_TESTING)
-#   find_package(ament_lint_auto REQUIRED)
-#   ament_lint_auto_find_test_dependencies()
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
 
-#   set(ament_cmake_cpplint_FOUND TRUE)
-#   ament_lint_auto_find_test_dependencies()
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
 
-#   find_package(ament_cmake_gtest REQUIRED)
-#   add_subdirectory(test)
-# endif()
+  find_package(ament_cmake_gtest REQUIRED)
+  add_subdirectory(test)
+endif()
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 ament_export_dependencies(${dependencies})
 ament_package()
+
+
+install(DIRECTORY include/
+  DESTINATION include)
+
+install(TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}  
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
 
 

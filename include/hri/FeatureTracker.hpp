@@ -63,7 +63,7 @@ public:
    * non-trivial, and typically non-reentrant, logic to subscribe/unsubcribe
    * HRI-related topics.
    */
-  FeatureTracker(ID id) : Node(id, ""), id_(id)
+  FeatureTracker(ID id) : Node(id), id_(id),ns_("")
   {
   }
 
