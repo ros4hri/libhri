@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.0 (2023-01-05)
+------------------
 * redefine hri::FeatureType enum to be used as bitmask
 * Contributors: Séverin Lemaignan
 
