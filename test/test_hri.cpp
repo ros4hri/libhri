@@ -35,8 +35,10 @@
 #include <memory>
 #include "hri/face.h"
 #include "hri/person.h"
+#include "hri/voice.h"
 #include "hri_msgs/EngagementLevel.h"
 #include "hri_msgs/IdsList.h"
+#include "hri_msgs/LiveSpeech.h"
 #include "hri_msgs/SoftBiometrics.h"
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
@@ -973,7 +975,86 @@ TEST(libhri, PeopleLocation)
   spinner.stop();
 }
 
-int main(int argc, char **argv)
+TEST(libhri, SpeechCallbacks)
+{
+  NodeHandle nh;
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  HRIListener hri_listener;
+
+  // create mock callbacks
+  testing::MockFunction<void(bool)> is_speaking_callback;
+  testing::MockFunction<void(string)> speech_callback;
+  testing::MockFunction<void(string)> incremental_speech_callback;
+
+  hri_listener.onVoice([&](VoiceWeakPtr weak_voice) {
+    auto voice = weak_voice.lock();
+    voice->onSpeaking(is_speaking_callback.AsStdFunction());
+    voice->onSpeech(speech_callback.AsStdFunction());
+    voice->onIncrementatalSpeech(incremental_speech_callback.AsStdFunction());
+  });
+
+  // testing::MockFunction<void(ID)> voice_lost_callback;
+  // hri_listener.onVoiceLost(voice_lost_callback.AsStdFunction());
+
+  auto ids = hri_msgs::IdsList();
+  auto is_speaking = std_msgs::Bool();
+  auto speech = hri_msgs::LiveSpeech();
+
+  auto voice_pub = nh.advertise<hri_msgs::IdsList>("/humans/voices/tracked", 1);
+  auto is_speaking_pub = nh.advertise<std_msgs::Bool>("/humans/voices/id1/is_speaking", 1);
+  auto speech_pub = nh.advertise<hri_msgs::LiveSpeech>("/humans/voices/id1/speech", 1);
+
+  ids.ids = { "id1" };
+  voice_pub.publish(ids);
+
+  EXPECT_CALL(is_speaking_callback, Call(testing::_)).Times(1);
+  EXPECT_CALL(speech_callback, Call(testing::_)).Times(0);
+  EXPECT_CALL(incremental_speech_callback, Call(testing::_)).Times(0);
+  is_speaking.data = true;
+  is_speaking_pub.publish(is_speaking);
+
+  WAIT;
+
+  EXPECT_CALL(is_speaking_callback, Call(testing::_)).Times(1);
+  is_speaking.data = false;
+  is_speaking_pub.publish(is_speaking);
+
+  WAIT;
+
+  EXPECT_CALL(is_speaking_callback, Call(testing::_)).Times(0);
+  EXPECT_CALL(speech_callback, Call(testing::_)).Times(1);
+  EXPECT_CALL(incremental_speech_callback, Call(testing::_)).Times(0);
+  speech.final = "final sentence";
+  speech.incremental = "";
+  speech_pub.publish(speech);
+
+  WAIT;
+
+  EXPECT_CALL(is_speaking_callback, Call(testing::_)).Times(0);
+  EXPECT_CALL(speech_callback, Call(testing::_)).Times(0);
+  EXPECT_CALL(incremental_speech_callback, Call(testing::_)).Times(1);
+  speech.final = "";
+  speech.incremental = "incremental sentence";
+  speech_pub.publish(speech);
+
+  WAIT;
+
+  EXPECT_CALL(is_speaking_callback, Call(testing::_)).Times(0);
+  EXPECT_CALL(speech_callback, Call(testing::_)).Times(1);
+  EXPECT_CALL(incremental_speech_callback, Call(testing::_)).Times(1);
+  speech.final = "final sentence";
+  speech.incremental = "incremental sentence";
+  speech_pub.publish(speech);
+
+  WAIT;
+
+  spinner.stop();
+}
+
+int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);
   ros::Time::init();  // needed for ros::Time::now()

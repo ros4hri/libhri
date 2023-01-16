@@ -26,6 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include <std_msgs/Bool.h>
 #include "hri/voice.h"
 
 using namespace std;
@@ -46,6 +47,39 @@ void Voice::init()
 {
   ns_ = "/humans/voices/" + id_;
   ROS_DEBUG_STREAM("New voice detected: " << ns_);
+
+  is_speaking_subscriber_ = node_.subscribe<std_msgs::Bool>(
+      ns_ + "/is_speaking", 1, [&](const std_msgs::BoolConstPtr msg) {
+        _is_speaking = msg->data;
+        for (auto& cb : is_speaking_callbacks)
+        {
+          cb(msg->data);
+        }
+      });
+
+  speech_subscriber_ =
+      node_.subscribe<hri_msgs::LiveSpeech>(ns_ + "/speech", 1, &Voice::_onSpeech, this);
+}
+
+void Voice::_onSpeech(const hri_msgs::LiveSpeechConstPtr& msg)
+{
+  if (msg->incremental.size() > 0)
+  {
+    _incremental_speech = msg->incremental;
+    for (auto cb : incremental_speech_callbacks)
+    {
+      cb(_incremental_speech);
+    }
+  }
+
+  if (msg->final.size() > 0)
+  {
+    _speech = msg->final;
+    for (auto cb : speech_callbacks)
+    {
+      cb(_speech);
+    }
+  }
 }
 
 boost::optional<geometry_msgs::TransformStamped> Voice::transform() const

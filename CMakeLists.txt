@@ -6,6 +6,7 @@ add_compile_options(-std=c++14)
 
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
+  std_msgs
   hri_msgs
   sensor_msgs
   rosconsole
