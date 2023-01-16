@@ -2,6 +2,11 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add callbacks for when speech is detected on a voice
+* Contributors: Séverin Lemaignan
+
 0.6.0 (2023-01-05)
 ------------------
 * redefine hri::FeatureType enum to be used as bitmask
