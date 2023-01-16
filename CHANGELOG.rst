@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.1 (2023-01-16)
+------------------
 * add callbacks for when speech is detected on a voice
 * Contributors: Séverin Lemaignan
 
