@@ -17,7 +17,11 @@ int main(int argc, char * argv[])
 
   rclcpp::Rate loop_rate(10ms);
   auto hri_listener_ = std::make_shared<hri::HRIListener>();
+  // rclcpp::executors::SingleThreadedExecutor executor;
+  // executor.add_node(node_pub);
   // hri::HRIListener hri_listener;
+
+
 
   // hri_listener.onFace(&onFace);
 
@@ -44,7 +48,7 @@ int main(int argc, char * argv[])
       }
     }
 
-    rclcpp::spin(hri_listener_);
+    rclcpp::spin_some(hri_listener_);
     loop_rate.sleep();
   }
 

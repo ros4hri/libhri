@@ -57,6 +57,23 @@ using namespace hri;
     cout << "waiting..." << endl;                                                        \
   }
 
+// TEST(callback_test, GetMsg)
+// {
+//   auto node = rclcpp::Node::make_shared("test_node");
+//   rclcpp::executors::SingleThreadedExecutor executor;
+//   executor.add_node(node);
+//   auto test_sub = node->create_subscription<std_msgs::msg::Float32>(
+//   "multiply_output", 1, [&last_msg](std_msgs::msg::Float64::SharedPtr msg) {
+//     last_msg = *msg;
+//   });
+
+
+
+
+
+  
+// }
+
 TEST(libhri_tests, GetFaces)
 {
   auto node = rclcpp::Node::make_shared("test_node");

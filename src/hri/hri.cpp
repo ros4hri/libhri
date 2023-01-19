@@ -393,6 +393,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
         RCLCPP_INFO(this->get_logger(),"got to face adding switch, id:%s",id.c_str());
         faces.insert({ id, face });
 
+         RCLCPP_INFO(this->get_logger(),"callbacks len :%d",face_callbacks.size());
         // invoke all the callbacks
         for (auto& cb : face_callbacks)
         {
