@@ -34,8 +34,9 @@
 #include "hri_msgs/msg/engagement_level.hpp"
 #include <std_msgs/msg/float32.hpp>
 
-using namespace std;
-using namespace hri;
+
+namespace hri
+{
 
 Person::Person(ID id, const HRIListener* listener, tf2::BufferCore* tf_buffer_ptr,
                 const std::string& reference_frame)
@@ -159,3 +160,4 @@ boost::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
   }
 }
 
+}  // namespace hri

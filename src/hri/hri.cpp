@@ -41,8 +41,9 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
-using namespace std;
-using namespace hri;
+
+namespace hri
+{
 
 HRIListener::HRIListener() : Node("HRIListener", ""), _reference_frame("base_link"), _tf_listener(_tf_buffer)
 {
@@ -62,11 +63,11 @@ HRIListener::~HRIListener()
 }
 
 
-map<ID, FaceWeakConstPtr> HRIListener::getFaces() const
+std::map<ID, FaceWeakConstPtr> HRIListener::getFaces() const
 {
-  map<ID, FaceWeakConstPtr> result;
+  std::map<ID, FaceWeakConstPtr> result;
 
-  // creates a map of *weak* pointers from the internally managed list of
+  // creates a std::map of *weak* pointers from the internally managed list of
   // shared pointers
   RCLCPP_INFO(this->get_logger(),"got face");
   for (auto const& f : faces)
@@ -79,11 +80,11 @@ map<ID, FaceWeakConstPtr> HRIListener::getFaces() const
   return result;
 }
 
-map<ID, BodyWeakConstPtr> HRIListener::getBodies() const
+std::map<ID, BodyWeakConstPtr> HRIListener::getBodies() const
 {
-  map<ID, BodyWeakConstPtr> result;
+  std::map<ID, BodyWeakConstPtr> result;
 
-  // creates a map of *weak* pointers from the internally managed list of
+  // creates a std::map of *weak* pointers from the internally managed list of
   // shared pointers
   for (auto const& f : bodies)
   {
@@ -93,11 +94,11 @@ map<ID, BodyWeakConstPtr> HRIListener::getBodies() const
   return result;
 }
 
-map<ID, VoiceWeakConstPtr> HRIListener::getVoices() const
+std::map<ID, VoiceWeakConstPtr> HRIListener::getVoices() const
 {
-  map<ID, VoiceWeakConstPtr> result;
+  std::map<ID, VoiceWeakConstPtr> result;
 
-  // creates a map of *weak* pointers from the internally managed list of
+  // creates a std::map of *weak* pointers from the internally managed list of
   // shared pointers
   for (auto const& f : voices)
   {
@@ -107,11 +108,11 @@ map<ID, VoiceWeakConstPtr> HRIListener::getVoices() const
   return result;
 }
 
-map<ID, PersonWeakConstPtr> HRIListener::getPersons() const
+std::map<ID, PersonWeakConstPtr> HRIListener::getPersons() const
 {
-  map<ID, PersonWeakConstPtr> result;
+  std::map<ID, PersonWeakConstPtr> result;
 
-  vector<PersonConstPtr> aliased;
+  std::vector<PersonConstPtr> aliased;
 
   // creates a map of *weak* pointers from the internally managed list of
   // shared pointers
@@ -142,11 +143,11 @@ map<ID, PersonWeakConstPtr> HRIListener::getPersons() const
   return result;
 }
 
-map<ID, PersonWeakConstPtr> HRIListener::getTrackedPersons() const
+std::map<ID, PersonWeakConstPtr> HRIListener::getTrackedPersons() const
 {
-  map<ID, PersonWeakConstPtr> result;
+  std::map<ID, PersonWeakConstPtr> result;
 
-  vector<PersonConstPtr> aliased;
+  std::vector<PersonConstPtr> aliased;
 
   // creates a map of *weak* pointers from the internally managed list of
   // shared pointers
@@ -333,7 +334,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
         tracked_persons.erase(id);
 
         // also erase the *aliases* of this ID
-        vector<ID> aliases;
+        std::vector<ID> aliases;
         for (const auto& p : tracked_persons)
         {
           if (p.second->alias() == id)
@@ -359,7 +360,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
         persons.erase(id);
 
         // also erase the *aliases* of this ID
-        vector<ID> aliases;
+        std::vector<ID> aliases;
         for (const auto& p : persons)
         {
           if (p.second->alias() == id)
@@ -460,3 +461,4 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
   }
 }
 
+}  // namespace hri

@@ -31,8 +31,9 @@
 #include <cv_bridge/cv_bridge.h>
 #include <hri_msgs/msg/soft_biometrics.hpp>
 
-using namespace std;
-using namespace hri;
+
+namespace hri
+{
 
 Face::Face(ID id, tf2::BufferCore* tf_buffer_ptr,
            const std::string& reference_frame)
@@ -173,3 +174,4 @@ boost::optional<geometry_msgs::msg::TransformStamped> Face::gazeTransform() cons
   }
 }
 
+}  // namespace hri

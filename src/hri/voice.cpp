@@ -27,8 +27,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "hri/voice.hpp"
-using namespace std;
-using namespace hri;
+
+namespace hri
+{
 
 Voice::Voice(ID id, tf2::BufferCore* tf_buffer_ptr,
              const std::string& reference_frame)
@@ -63,3 +64,4 @@ boost::optional<geometry_msgs::msg::TransformStamped> Voice::transform() const
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
 }
+}  // namespace hri

@@ -30,8 +30,9 @@
 
 #include <cv_bridge/cv_bridge.h>
 
-using namespace std;
-using namespace hri;
+
+namespace hri
+{
 
 Body::Body(ID id, tf2::BufferCore* tf_buffer_ptr,
            const std::string& reference_frame)
@@ -107,3 +108,4 @@ boost::optional<geometry_msgs::msg::TransformStamped> Body::transform() const
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
 }
+}  // namespace hri
