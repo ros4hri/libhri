@@ -27,8 +27,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 
-#ifndef HRI_VOICE_H
-#define HRI_VOICE_H
+#ifndef HRI__VOICE_HPP_
+#define HRI__VOICE_HPP_
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
@@ -79,4 +79,4 @@ typedef std::weak_ptr<Voice> VoiceWeakPtr;
 typedef std::weak_ptr<const Voice> VoiceWeakConstPtr;
 
 }  // namespace hri
-#endif
+#endif // HRI__VOICE_HPP_

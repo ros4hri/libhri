@@ -27,8 +27,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 
-#ifndef HRI_HRI_H
-#define HRI_HRI_H
+#ifndef HRI__HRI_HPP_
+#define HRI__HRI_HPP_
 
 #include "hri_msgs/msg/ids_list.hpp"
 
@@ -251,4 +251,4 @@ private:
 
 
 
-#endif  // HRI_HRI_H
+#endif  // HRI__HRI_HPP_

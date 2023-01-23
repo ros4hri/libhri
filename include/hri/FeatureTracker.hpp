@@ -27,8 +27,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 
-#ifndef HRI_BASE_H
-#define HRI_BASE_H
+#ifndef HRI__FEATURETRACKER_HPP_
+#define HRI__FEATURETRACKER_HPP_
 
 #include <memory>
 #include <optional>
@@ -120,4 +120,4 @@ protected:
 
 }  // namespace hri
 
-#endif
+#endif // HRI__FEATURETRACKER_HPP_

@@ -27,8 +27,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 
-#ifndef HRI_FACE_H
-#define HRI_FACE_H
+#ifndef HRI__FACE_HPP_
+#define HRI__FACE_HPP_
 
 #include <hri_msgs/msg/normalized_point_of_interest2_d.hpp>
 #include <hri_msgs/msg/facial_landmarks.hpp>
@@ -212,4 +212,4 @@ typedef std::weak_ptr<Face> FaceWeakPtr;
 typedef std::weak_ptr<const Face> FaceWeakConstPtr;
 
 }  // namespace hri
-#endif
+#endif // HRI__FACE_HPP_

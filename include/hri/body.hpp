@@ -27,8 +27,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 
-#ifndef HRI_BODY_H
-#define HRI_BODY_H
+#ifndef HRI__BODY_HPP_
+#define HRI__BODY_HPP_
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <sensor_msgs/msg/region_of_interest.hpp>
@@ -138,4 +138,4 @@ typedef std::weak_ptr<Body> BodyWeakPtr;
 typedef std::weak_ptr<const Body> BodyWeakConstPtr;
 
 }  // namespace hri
-#endif
+#endif // HRI__BODY_HPP_

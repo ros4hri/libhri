@@ -26,8 +26,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef HRI_PERSON_H
-#define HRI_PERSON_H
+#ifndef HRI__PERSON_HPP_
+#define HRI__PERSON_HPP_
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <functional>
@@ -166,4 +166,4 @@ typedef std::weak_ptr<const Person> PersonWeakConstPtr;
 
 }  // namespace hri
 
-#endif
+#endif // HRI__PERSON_HPP_
