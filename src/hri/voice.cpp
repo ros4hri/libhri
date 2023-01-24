@@ -31,21 +31,21 @@
 namespace hri
 {
 
-Voice::Voice(ID id, tf2::BufferCore* tf_buffer_ptr,
+Voice::Voice(ID id, rclcpp::Node::SharedPtr node, tf2::BufferCore* tf_buffer_ptr,
              const std::string& reference_frame)
-  : FeatureTracker{ id }, _tf_buffer_ptr(), _reference_frame(reference_frame)
+  : FeatureTracker{ id, node}, _tf_buffer_ptr(), _reference_frame(reference_frame)
 {
 }
 
 Voice::~Voice()
 {
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "Deleting voice " << id_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting voice " << id_);
 }
 
 void Voice::init()
 {
   ns_ = "/humans/voices/" + id_;
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "New voice detected: " << ns_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New voice detected: " << ns_);
 }
 
 boost::optional<geometry_msgs::msg::TransformStamped> Voice::transform() const
@@ -59,7 +59,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> Voice::transform() const
   }
   catch (tf2::LookupException)
   {
-    RCLCPP_WARN_STREAM(this->get_logger(), "failed to transform the voice frame "
+    RCLCPP_WARN_STREAM(node_->get_logger(), "failed to transform the voice frame "
                     << frame() << " to " << _reference_frame << ". Are the frames published?");
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }

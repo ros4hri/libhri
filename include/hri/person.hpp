@@ -72,7 +72,7 @@ class HRIListener;
 class Person : public FeatureTracker
 {
 public:
-  Person(ID id, const HRIListener* listener, tf2::BufferCore* tf_buffer_ptr,
+  Person(ID id, const HRIListener* listener, rclcpp::Node::SharedPtr node, tf2::BufferCore* tf_buffer_ptr,
           const std::string& reference_frame);
 
   virtual ~Person();
@@ -132,7 +132,7 @@ protected:
 
   void tfCallback(const geometry_msgs::msg::TransformStamped::SharedPtr& transform_ptr)
   {
-    RCLCPP_WARN_STREAM(this->get_logger(), "got tf transform!");
+    RCLCPP_WARN_STREAM(node_->get_logger(), "got tf transform!");
   }
 
   // if non-empty, this person 'does not exist' and is instead an alias to

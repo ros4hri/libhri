@@ -49,7 +49,7 @@ const static rclcpp::Duration VOICE_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.
 class Voice : public FeatureTracker
 {
 public:
-  Voice(ID id, tf2::BufferCore* tf_buffer_ptr,
+  Voice(ID id, rclcpp::Node::SharedPtr node, tf2::BufferCore* tf_buffer_ptr,
         const std::string& reference_frame);
 
   virtual ~Voice();

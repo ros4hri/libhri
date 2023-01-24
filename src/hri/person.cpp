@@ -38,9 +38,9 @@
 namespace hri
 {
 
-Person::Person(ID id, const HRIListener* listener, tf2::BufferCore* tf_buffer_ptr,
+Person::Person(ID id, const HRIListener* listener, rclcpp::Node::SharedPtr node, tf2::BufferCore* tf_buffer_ptr,
                 const std::string& reference_frame)
-  : FeatureTracker{ id }
+  : FeatureTracker{ id, node }
   , listener_(listener)
   , _anonymous(false)
   , _engagement_status(nullptr)
@@ -54,36 +54,36 @@ Person::Person(ID id, const HRIListener* listener, tf2::BufferCore* tf_buffer_pt
 
 Person::~Person()
 {
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "Deleting person " << id_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting person " << id_);
 }
 
 void Person::init()
 {
   ns_ = "/humans/persons/" + id_;
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "New person detected: " << ns_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New person detected: " << ns_);
 
-  auto face_id_subscriber_ = this->create_subscription<std_msgs::msg::String>(
+  auto face_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
       ns_ + "/face_id", 1, [&](const std_msgs::msg::String::SharedPtr msg) { face_id = msg->data; });
 
-  auto body_id_subscriber_ = this->create_subscription<std_msgs::msg::String>(
+  auto body_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
       ns_ + "/body_id", 1, [&](const std_msgs::msg::String::SharedPtr msg) { body_id = msg->data; });
 
-  auto voice_id_subscriber_ = this->create_subscription<std_msgs::msg::String>(
+  auto voice_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
       ns_ + "/voice_id", 1,
       [&](const std_msgs::msg::String::SharedPtr msg) { voice_id = msg->data; });
 
-  auto anonymous_subscriber_ = this->create_subscription<std_msgs::msg::Bool>(
+  auto anonymous_subscriber_ = node_->create_subscription<std_msgs::msg::Bool>(
       ns_ + "/anonymous", 1,
       [&](const std_msgs::msg::Bool::SharedPtr msg) { _anonymous = msg->data; });
 
-  auto alias_subscriber_ = this->create_subscription<std_msgs::msg::String>(
+  auto alias_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
       ns_ + "/alias", 1, [&](const std_msgs::msg::String::SharedPtr msg) { _alias = msg->data; });
 
-  auto engagement_subscriber_ = this->create_subscription<hri_msgs::msg::EngagementLevel>(
+  auto engagement_subscriber_ = node_->create_subscription<hri_msgs::msg::EngagementLevel>(
       ns_ + "/engagement_status", 1,
       [&](const hri_msgs::msg::EngagementLevel::SharedPtr msg) { _engagement_status = msg; });
 
-  auto loc_confidence_subscriber_ = this->create_subscription<std_msgs::msg::Float32>(
+  auto loc_confidence_subscriber_ = node_->create_subscription<std_msgs::msg::Float32>(
       ns_ + "/location_confidence", 1,
       [&](const std_msgs::msg::Float32::SharedPtr msg) { _loc_confidence = msg->data; });
 }
@@ -154,7 +154,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
   }
   catch (tf2::LookupException)
   {
-    RCLCPP_WARN_STREAM(this->get_logger(), "failed to transform person frame " << frame()
+    RCLCPP_WARN_STREAM(node_->get_logger(), "failed to transform person frame " << frame()
                                 << " to " << _reference_frame << ". Are the frames published?");
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }

@@ -34,31 +34,31 @@
 namespace hri
 {
 
-Body::Body(ID id, tf2::BufferCore* tf_buffer_ptr,
+Body::Body(ID id, rclcpp::Node::SharedPtr node, tf2::BufferCore* tf_buffer_ptr,
            const std::string& reference_frame)
-  : FeatureTracker{ id }, _tf_buffer_ptr(), _reference_frame(reference_frame)
+  : FeatureTracker{ id, node }, _tf_buffer_ptr(), _reference_frame(reference_frame)
 {
 }
 
 
 Body::~Body()
 {
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "Deleting body " << id_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting body " << id_);
   // roi_subscriber_.shutdown();
 }
 
 void Body::init()
 {
   ns_ = "/humans/bodies/" + id_;
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "New body detected: " << ns_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New body detected: " << ns_);
 
-  auto roi_subscriber_ = this->create_subscription<sensor_msgs::msg::RegionOfInterest>(
+  auto roi_subscriber_ = node_->create_subscription<sensor_msgs::msg::RegionOfInterest>(
       ns_ + "/roi", 1, bind(&Body::onRoI, this, std::placeholders::_1));
 
-  auto cropped_subscriber_ = this->create_subscription<sensor_msgs::msg::Image>(
+  auto cropped_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
       ns_ + "/cropped", 1, bind(&Body::onCropped, this, std::placeholders::_1));
 
-  auto skeleton_subscriber_ = this->create_subscription<hri_msgs::msg::Skeleton2D>(
+  auto skeleton_subscriber_ = node_->create_subscription<hri_msgs::msg::Skeleton2D>(
       ns_ + "/skeleton2d", 1, bind(&Body::onSkeleton, this, std::placeholders::_1));
 }
 
@@ -103,7 +103,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> Body::transform() const
   }
   catch (tf2::LookupException)
   {
-    RCLCPP_WARN_STREAM(this->get_logger(), "failed to transform the body frame " << frame() << " to " << _reference_frame
+    RCLCPP_WARN_STREAM(node_->get_logger(), "failed to transform the body frame " << frame() << " to " << _reference_frame
                                                           << ". Are the frames published?");
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
