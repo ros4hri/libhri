@@ -68,10 +68,13 @@ const static rclcpp::Duration FACE_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.0
 class Face : public FeatureTracker
 {
 public:
-  Face(ID id, rclcpp::Node::SharedPtr node, tf2::BufferCore* tf_buffer_ptr,
-       const std::string& reference_frame);
+  Face(
+    ID id,
+    rclcpp::Node::SharedPtr node,
+    tf2::BufferCore* tf_buffer_ptr,
+    const std::string& reference_frame);
 
-
+ 
 
   virtual ~Face();
 
@@ -178,6 +181,13 @@ public:
 private:
   size_t nb_roi;
 
+  std::unique_ptr<std::thread> dedicated_listener_thread_ {nullptr};
+  rclcpp::Node::SharedPtr optional_default_node_ {nullptr};
+ 
+
+  rclcpp::Executor::SharedPtr executor_ {nullptr};
+ 
+  rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
   rclcpp::Subscription<sensor_msgs::msg::RegionOfInterest>::SharedPtr roi_subscriber_;
   void onRoI(sensor_msgs::msg::RegionOfInterest::SharedPtr roi);

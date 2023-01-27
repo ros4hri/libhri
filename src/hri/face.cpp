@@ -35,42 +35,65 @@
 namespace hri
 {
 
-Face::Face(ID id, rclcpp::Node::SharedPtr node, tf2::BufferCore* tf_buffer_ptr,
-           const std::string& reference_frame)
+Face::Face(
+  ID id,
+  rclcpp::Node::SharedPtr node,
+  tf2::BufferCore* tf_buffer_ptr,
+  const std::string& reference_frame)
   : FeatureTracker{ id, node }
   , softbiometrics_(nullptr)
   , _tf_buffer_ptr()
   , _reference_frame(reference_frame)
+
 {
 }
 
 Face::~Face()
 {
+    executor_->cancel();
+    dedicated_listener_thread_->join();
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting face " << id_);
   // roi_subscriber_.shutdown();
 }
 
 void Face::init()
 {
- 
+  rclcpp::NodeOptions node_options;
+
+  // node_options.arguments({"--ros-args", "-r", "__node:=" + id_});
+  node_options.start_parameter_event_publisher(false);
+  node_options.start_parameter_services(false);
+  optional_default_node_ = rclcpp::Node::make_shared("_", node_options);
+
+  callback_group_ = optional_default_node_->create_callback_group(
+    rclcpp::CallbackGroupType::MutuallyExclusive);
+
+  rclcpp::SubscriptionOptionsWithAllocator<std::allocator<void>> options;
+  options.callback_group = callback_group_;
+
   ns_ = "/humans/faces/" + id_;
   // RCLCPP_DEBUG_STREAM(node_->get_logger(), "New face detected: " << ns_);
   RCLCPP_INFO_STREAM(node_->get_logger(), "New face detected: " << ns_);
 
-  auto roi_subscriber_ = node_->create_subscription<sensor_msgs::msg::RegionOfInterest>(
-      ns_ + "/roi", 1, bind(&Face::onRoI, this, std::placeholders::_1));
+  auto roi_subscriber_ = optional_default_node_->create_subscription<sensor_msgs::msg::RegionOfInterest>(
+      ns_ + "/roi", 1, bind(&Face::onRoI, this, std::placeholders::_1), options);
 
-  auto cropped_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
-      ns_ + "/cropped", 1, bind(&Face::onCropped, this, std::placeholders::_1));
+  auto cropped_subscriber_ = optional_default_node_->create_subscription<sensor_msgs::msg::Image>(
+      "/humans/faces/bdfab/cropped", 1, bind(&Face::onCropped, this, std::placeholders::_1), options);
 
-  auto aligned_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
-      ns_ + "/aligned", 1, bind(&Face::onAligned, this, std::placeholders::_1));
+  auto aligned_subscriber_ = optional_default_node_->create_subscription<sensor_msgs::msg::Image>(
+      ns_ + "/aligned", 1, bind(&Face::onAligned, this, std::placeholders::_1), options);
 
-  auto landmarks_subscriber_ = node_->create_subscription<hri_msgs::msg::FacialLandmarks>(
-      ns_ + "/landmarks", 1, bind(&Face::onLandmarks, this, std::placeholders::_1));
+  auto landmarks_subscriber_ = optional_default_node_->create_subscription<hri_msgs::msg::FacialLandmarks>(
+      ns_ + "/landmarks", 1, bind(&Face::onLandmarks, this, std::placeholders::_1), options);
 
-  auto softbiometrics_subscriber_ = node_->create_subscription<hri_msgs::msg::SoftBiometrics>(
-      ns_ + "/softbiometrics", 1, bind(&Face::onSoftBiometrics, this, std::placeholders::_1));
+  auto softbiometrics_subscriber_ = optional_default_node_->create_subscription<hri_msgs::msg::SoftBiometrics>(
+      ns_ + "/softbiometrics", 1, bind(&Face::onSoftBiometrics, this, std::placeholders::_1), options);
+
+  executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+  executor_->add_callback_group(callback_group_, optional_default_node_->get_node_base_interface());  
+  dedicated_listener_thread_ = std::make_unique<std::thread>([&]() {executor_->spin();});
+  
 }
 
 void Face::onRoI(sensor_msgs::msg::RegionOfInterest::SharedPtr roi)
@@ -83,9 +106,10 @@ cv::Rect Face::roi() const
   return roi_;
 }
 
-void Face::onCropped(sensor_msgs::msg::Image::SharedPtr msg)
+void Face::onCropped(const sensor_msgs::msg::Image::SharedPtr msg)
 {
-  RCLCPP_INFO_STREAM(node_->get_logger(), "got to cropped");
+  RCLCPP_INFO_STREAM(node_->get_logger(), "Got to cropped");
+  RCLCPP_INFO(node_->get_logger(), "I heard: '%u'",msg->height);
   cropped_ = cv_bridge::toCvCopy(msg)->image;  // if using toCvShare, the image ends up shared with aligned_!
 }
 

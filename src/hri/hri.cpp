@@ -388,7 +388,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
       for (auto id  : to_add)
       {      
         
-        auto face = std::make_shared<Face>(id,shared_from_this(), &_tf_buffer, _reference_frame);
+        auto face = std::make_shared<Face>(id.c_str(), shared_from_this(), &_tf_buffer, _reference_frame);
       
         face->init();        
         RCLCPP_INFO(this->get_logger(),"got to face adding switch, id:%s",id.c_str());
