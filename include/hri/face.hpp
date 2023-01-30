@@ -182,7 +182,9 @@ private:
   size_t nb_roi;
 
   std::unique_ptr<std::thread> dedicated_listener_thread_ {nullptr};
-  rclcpp::Node::SharedPtr optional_default_node_ {nullptr};
+  rclcpp::Node::SharedPtr default_node_ {nullptr};
+
+  // rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr test_publisher_;
  
 
   rclcpp::Executor::SharedPtr executor_ {nullptr};
@@ -193,8 +195,8 @@ private:
   void onRoI(sensor_msgs::msg::RegionOfInterest::SharedPtr roi);
   cv::Rect roi_;
 
-  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr cropped_subscriber_;
-  void onCropped(sensor_msgs::msg::Image::SharedPtr roi);
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr cropped_subscriber_{nullptr};
+  void onCropped(sensor_msgs::msg::Image::ConstSharedPtr roi);
   cv::Mat cropped_;
 
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr aligned_subscriber_;

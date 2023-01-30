@@ -40,10 +40,12 @@ Face::Face(
   rclcpp::Node::SharedPtr node,
   tf2::BufferCore* tf_buffer_ptr,
   const std::string& reference_frame)
-  : FeatureTracker{ id, node }
+  : FeatureTracker{id}
   , softbiometrics_(nullptr)
   , _tf_buffer_ptr()
   , _reference_frame(reference_frame)
+  , default_node_(node)
+
 
 {
 }
@@ -52,7 +54,7 @@ Face::~Face()
 {
     executor_->cancel();
     dedicated_listener_thread_->join();
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting face " << id_);
+  RCLCPP_DEBUG_STREAM(default_node_->get_logger(), "Deleting face " << id_);
   // roi_subscriber_.shutdown();
 }
 
@@ -60,12 +62,15 @@ void Face::init()
 {
   rclcpp::NodeOptions node_options;
 
-  // node_options.arguments({"--ros-args", "-r", "__node:=" + id_});
+  node_options.arguments({"--ros-args", "-r", "__node:=" + id_});
   node_options.start_parameter_event_publisher(false);
   node_options.start_parameter_services(false);
-  optional_default_node_ = rclcpp::Node::make_shared("_", node_options);
+  // default_node_ = rclcpp::Node::make_shared("_", node_options);
+  auto node_params = default_node_->get_node_parameters_interface();
+  auto node_topics = default_node_->get_node_topics_interface();
+  auto qos = rclcpp::SystemDefaultsQoS();
 
-  callback_group_ = optional_default_node_->create_callback_group(
+  callback_group_ = default_node_->create_callback_group(
     rclcpp::CallbackGroupType::MutuallyExclusive);
 
   rclcpp::SubscriptionOptionsWithAllocator<std::allocator<void>> options;
@@ -73,25 +78,31 @@ void Face::init()
 
   ns_ = "/humans/faces/" + id_;
   // RCLCPP_DEBUG_STREAM(node_->get_logger(), "New face detected: " << ns_);
-  RCLCPP_INFO_STREAM(node_->get_logger(), "New face detected: " << ns_);
+  RCLCPP_INFO_STREAM(default_node_->get_logger(), "New face detected: " << ns_);
 
-  auto roi_subscriber_ = optional_default_node_->create_subscription<sensor_msgs::msg::RegionOfInterest>(
+  auto roi_subscriber_ = default_node_->create_subscription<sensor_msgs::msg::RegionOfInterest>(
       ns_ + "/roi", 1, bind(&Face::onRoI, this, std::placeholders::_1), options);
 
-  auto cropped_subscriber_ = optional_default_node_->create_subscription<sensor_msgs::msg::Image>(
-      "/humans/faces/bdfab/cropped", 1, bind(&Face::onCropped, this, std::placeholders::_1), options);
+  // auto testrclcpp::create_publisher<tf2_msgs::msg::TFMessage>(
+  //     node_parameters, node_topics, "/tf_static", qos, options);
+  // auto cropped_subscriber_ = default_node_->create_subscription<sensor_msgs::msg::Image>(
+  //     ns_ + "/cropped", 1, bind(&Face::onCropped, this, std::placeholders::_1), options);
+  cropped_subscriber_ = rclcpp::create_subscription<sensor_msgs::msg::Image>(
+    node_params, node_topics,  ns_ + "/cropped", qos, bind(&Face::onCropped, this, std::placeholders::_1), options);
 
-  auto aligned_subscriber_ = optional_default_node_->create_subscription<sensor_msgs::msg::Image>(
+
+  auto aligned_subscriber_ = default_node_->create_subscription<sensor_msgs::msg::Image>(
       ns_ + "/aligned", 1, bind(&Face::onAligned, this, std::placeholders::_1), options);
 
-  auto landmarks_subscriber_ = optional_default_node_->create_subscription<hri_msgs::msg::FacialLandmarks>(
+  auto landmarks_subscriber_ = default_node_->create_subscription<hri_msgs::msg::FacialLandmarks>(
       ns_ + "/landmarks", 1, bind(&Face::onLandmarks, this, std::placeholders::_1), options);
 
-  auto softbiometrics_subscriber_ = optional_default_node_->create_subscription<hri_msgs::msg::SoftBiometrics>(
+  auto softbiometrics_subscriber_ = default_node_->create_subscription<hri_msgs::msg::SoftBiometrics>(
       ns_ + "/softbiometrics", 1, bind(&Face::onSoftBiometrics, this, std::placeholders::_1), options);
 
   executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-  executor_->add_callback_group(callback_group_, optional_default_node_->get_node_base_interface());  
+  // executor_->add_node(default_node_);
+  executor_->add_callback_group(callback_group_, default_node_->get_node_base_interface());  
   dedicated_listener_thread_ = std::make_unique<std::thread>([&]() {executor_->spin();});
   
 }
@@ -106,10 +117,10 @@ cv::Rect Face::roi() const
   return roi_;
 }
 
-void Face::onCropped(const sensor_msgs::msg::Image::SharedPtr msg)
+void Face::onCropped(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 {
-  RCLCPP_INFO_STREAM(node_->get_logger(), "Got to cropped");
-  RCLCPP_INFO(node_->get_logger(), "I heard: '%u'",msg->height);
+  RCLCPP_INFO_STREAM(default_node_->get_logger(), "Got to cropped");
+  RCLCPP_INFO(default_node_->get_logger(), "I heard: '%u'",msg->height);
   cropped_ = cv_bridge::toCvCopy(msg)->image;  // if using toCvShare, the image ends up shared with aligned_!
 }
 
@@ -176,7 +187,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> Face::transform() const
   }
   catch (tf2::LookupException)
   {
-    RCLCPP_WARN_STREAM(node_->get_logger(), "failed to transform the face frame " << frame() << " to " << _reference_frame
+    RCLCPP_WARN_STREAM(default_node_->get_logger(), "failed to transform the face frame " << frame() << " to " << _reference_frame
                                                           << ". Are the frames published?");
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
@@ -193,7 +204,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> Face::gazeTransform() cons
   }
   catch (tf2::LookupException)
   {
-    RCLCPP_WARN_STREAM(node_->get_logger(), "failed to transform the gaze frame " << frame() << " to " << _reference_frame
+    RCLCPP_WARN_STREAM(default_node_->get_logger(), "failed to transform the gaze frame " << frame() << " to " << _reference_frame
                                                           << ". Are the frames published?");
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }

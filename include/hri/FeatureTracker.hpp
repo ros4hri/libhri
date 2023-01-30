@@ -63,7 +63,7 @@ public:
    * non-trivial, and typically non-reentrant, logic to subscribe/unsubcribe
    * HRI-related topics.
    */
-  FeatureTracker(ID id, rclcpp::Node::SharedPtr node) : node_(node), id_(id),ns_("")
+  FeatureTracker(ID id) : id_(id),ns_("")
   {
   }
 
@@ -112,8 +112,7 @@ public:
   virtual void init() = 0;
 
 protected:
-  ID id_;
-  std::shared_ptr<rclcpp::Node> node_;
+  ID id_; 
   // topic namespace under which this feature is advertised
   std::string ns_;
 };

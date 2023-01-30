@@ -56,7 +56,7 @@ const static rclcpp::Duration BODY_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.0
 class Body : public FeatureTracker
 {
 public:
-  Body(ID id, rclcpp::Node::SharedPtr node, tf2::BufferCore* tf_buffer_ptr,
+  Body(ID id, tf2::BufferCore* tf_buffer_ptr,
        const std::string& reference_frame);
 
   virtual ~Body();
@@ -115,6 +115,8 @@ public:
 
 private:
   size_t nb_roi;
+
+  rclcpp::Node::SharedPtr default_node_ {nullptr};
 
   rclcpp::Subscription<sensor_msgs::msg::RegionOfInterest>::SharedPtr roi_subscriber_;
   void onRoI(sensor_msgs::msg::RegionOfInterest::SharedPtr roi);

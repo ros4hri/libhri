@@ -63,9 +63,9 @@ HRIListener::~HRIListener()
 }
 
 
-std::map<ID, FaceWeakConstPtr> HRIListener::getFaces() const
+std::map<ID, FacePtr> HRIListener::getFaces() const
 {
-  std::map<ID, FaceWeakConstPtr> result;
+  std::map<ID, FacePtr> result;
 
   // creates a std::map of *weak* pointers from the internally managed list of
   // shared pointers
@@ -388,7 +388,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
       for (auto id  : to_add)
       {      
         
-        auto face = std::make_shared<Face>(id.c_str(), shared_from_this(), &_tf_buffer, _reference_frame);
+        auto face = std::make_shared<Face>(id, shared_from_this(), &_tf_buffer, _reference_frame);
       
         face->init();        
         RCLCPP_INFO(this->get_logger(),"got to face adding switch, id:%s",id.c_str());
@@ -405,7 +405,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
     case FeatureType::body:
       for (auto id : to_add)
       {
-        auto body = std::make_shared<Body>(id,shared_from_this(), &_tf_buffer, _reference_frame);
+        auto body = std::make_shared<Body>(id, &_tf_buffer, _reference_frame);
         body->init();
         bodies.insert({ id, body });
 
@@ -419,7 +419,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
     case FeatureType::voice:
       for (auto id : to_add)
       {
-        auto voice = std::make_shared<Voice>(id, shared_from_this(), &_tf_buffer, _reference_frame);
+        auto voice = std::make_shared<Voice>(id, &_tf_buffer, _reference_frame);
         voice->init();
         voices.insert({ id, voice });
 
@@ -433,7 +433,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
     case FeatureType::person:
       for (auto id : to_add)
       {
-        auto person = std::make_shared<Person>(id, this, shared_from_this(), &_tf_buffer, _reference_frame);
+        auto person = std::make_shared<Person>(id, this, &_tf_buffer, _reference_frame);
         person->init();
         persons.insert({ id, person });
 
@@ -447,7 +447,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
     case FeatureType::tracked_person:
       for (auto id : to_add)
       {
-        auto person = std::make_shared<Person>(id, this, shared_from_this(), &_tf_buffer, _reference_frame);
+        auto person = std::make_shared<Person>(id, this, &_tf_buffer, _reference_frame);
         person->init();
         tracked_persons.insert({ id, person });
 
