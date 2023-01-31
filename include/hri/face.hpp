@@ -191,25 +191,25 @@ private:
  
   rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
-  rclcpp::Subscription<sensor_msgs::msg::RegionOfInterest>::SharedPtr roi_subscriber_;
-  void onRoI(sensor_msgs::msg::RegionOfInterest::SharedPtr roi);
+  rclcpp::Subscription<sensor_msgs::msg::RegionOfInterest>::SharedPtr roi_subscriber_{nullptr};
+  void onRoI(sensor_msgs::msg::RegionOfInterest::ConstSharedPtr roi);
   cv::Rect roi_;
 
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr cropped_subscriber_{nullptr};
   void onCropped(sensor_msgs::msg::Image::ConstSharedPtr roi);
   cv::Mat cropped_;
 
-  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr aligned_subscriber_;
-  void onAligned(sensor_msgs::msg::Image::SharedPtr roi);
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr aligned_subscriber_{nullptr};
+  void onAligned(sensor_msgs::msg::Image::ConstSharedPtr roi);
   cv::Mat aligned_;
 
-  rclcpp::Subscription<hri_msgs::msg::FacialLandmarks>::SharedPtr landmarks_subscriber_;
-  void onLandmarks(hri_msgs::msg::FacialLandmarks::SharedPtr landmarks);
+  rclcpp::Subscription<hri_msgs::msg::FacialLandmarks>::SharedPtr landmarks_subscriber_{nullptr};
+  void onLandmarks(hri_msgs::msg::FacialLandmarks::ConstSharedPtr landmarks);
   std::array<hri_msgs::msg::NormalizedPointOfInterest2D, 70> facial_landmarks_;
 
-  rclcpp::Subscription<hri_msgs::msg::SoftBiometrics>::SharedPtr softbiometrics_subscriber_;
-  void onSoftBiometrics(hri_msgs::msg::SoftBiometrics::SharedPtr biometrics);
-  hri_msgs::msg::SoftBiometrics::SharedPtr softbiometrics_;
+  rclcpp::Subscription<hri_msgs::msg::SoftBiometrics>::SharedPtr softbiometrics_subscriber_{nullptr};
+  void onSoftBiometrics(hri_msgs::msg::SoftBiometrics::ConstSharedPtr biometrics);
+  hri_msgs::msg::SoftBiometrics::ConstSharedPtr softbiometrics_;
 
 
   std::array<IntensityConfidence, 99> facial_action_units_;

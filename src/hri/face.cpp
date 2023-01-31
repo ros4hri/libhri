@@ -62,10 +62,8 @@ void Face::init()
 {
   rclcpp::NodeOptions node_options;
 
-  node_options.arguments({"--ros-args", "-r", "__node:=" + id_});
   node_options.start_parameter_event_publisher(false);
   node_options.start_parameter_services(false);
-  // default_node_ = rclcpp::Node::make_shared("_", node_options);
   auto node_params = default_node_->get_node_parameters_interface();
   auto node_topics = default_node_->get_node_topics_interface();
   auto qos = rclcpp::SystemDefaultsQoS();
@@ -80,8 +78,8 @@ void Face::init()
   // RCLCPP_DEBUG_STREAM(node_->get_logger(), "New face detected: " << ns_);
   RCLCPP_INFO_STREAM(default_node_->get_logger(), "New face detected: " << ns_);
 
-  auto roi_subscriber_ = default_node_->create_subscription<sensor_msgs::msg::RegionOfInterest>(
-      ns_ + "/roi", 1, bind(&Face::onRoI, this, std::placeholders::_1), options);
+  roi_subscriber_ = rclcpp::create_subscription<sensor_msgs::msg::RegionOfInterest>(
+    node_params, node_topics,  ns_ + "/cropped", qos, bind(&Face::onRoI, this, std::placeholders::_1), options);
 
   // auto testrclcpp::create_publisher<tf2_msgs::msg::TFMessage>(
   //     node_parameters, node_topics, "/tf_static", qos, options);
@@ -91,23 +89,22 @@ void Face::init()
     node_params, node_topics,  ns_ + "/cropped", qos, bind(&Face::onCropped, this, std::placeholders::_1), options);
 
 
-  auto aligned_subscriber_ = default_node_->create_subscription<sensor_msgs::msg::Image>(
-      ns_ + "/aligned", 1, bind(&Face::onAligned, this, std::placeholders::_1), options);
+  aligned_subscriber_ = rclcpp::create_subscription<sensor_msgs::msg::Image>(
+    node_params, node_topics,  ns_ + "/cropped", qos, bind(&Face::onAligned, this, std::placeholders::_1), options);
 
-  auto landmarks_subscriber_ = default_node_->create_subscription<hri_msgs::msg::FacialLandmarks>(
-      ns_ + "/landmarks", 1, bind(&Face::onLandmarks, this, std::placeholders::_1), options);
+  landmarks_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::FacialLandmarks>(
+    node_params, node_topics,  ns_ + "/cropped", qos, bind(&Face::onLandmarks, this, std::placeholders::_1), options);
 
-  auto softbiometrics_subscriber_ = default_node_->create_subscription<hri_msgs::msg::SoftBiometrics>(
-      ns_ + "/softbiometrics", 1, bind(&Face::onSoftBiometrics, this, std::placeholders::_1), options);
+  softbiometrics_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::SoftBiometrics>(
+    node_params, node_topics,  ns_ + "/cropped", qos, bind(&Face::onSoftBiometrics, this, std::placeholders::_1), options);
 
   executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-  // executor_->add_node(default_node_);
   executor_->add_callback_group(callback_group_, default_node_->get_node_base_interface());  
-  dedicated_listener_thread_ = std::make_unique<std::thread>([&]() {executor_->spin();});
-  
+  dedicated_listener_thread_ = std::make_unique<std::thread>([&]() {executor_->spin();});  
 }
 
-void Face::onRoI(sensor_msgs::msg::RegionOfInterest::SharedPtr roi)
+
+void Face::onRoI(const sensor_msgs::msg::RegionOfInterest::ConstSharedPtr roi)
 {
   roi_ = cv::Rect(roi->x_offset, roi->y_offset, roi->width, roi->height);
 }
@@ -119,8 +116,6 @@ cv::Rect Face::roi() const
 
 void Face::onCropped(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 {
-  RCLCPP_INFO_STREAM(default_node_->get_logger(), "Got to cropped");
-  RCLCPP_INFO(default_node_->get_logger(), "I heard: '%u'",msg->height);
   cropped_ = cv_bridge::toCvCopy(msg)->image;  // if using toCvShare, the image ends up shared with aligned_!
 }
 
@@ -129,7 +124,7 @@ cv::Mat Face::cropped() const
   return cropped_;
 }
 
-void Face::onAligned(sensor_msgs::msg::Image::SharedPtr msg)
+void Face::onAligned(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 {
   aligned_ = cv_bridge::toCvCopy(msg)->image;  // if using toCvShare, the image ends up shared with cropped_!
 }
@@ -139,7 +134,7 @@ cv::Mat Face::aligned() const
   return aligned_;
 }
 
-void Face::onLandmarks(hri_msgs::msg::FacialLandmarks::SharedPtr msg)
+void Face::onLandmarks(const hri_msgs::msg::FacialLandmarks::ConstSharedPtr msg)
 {
   int i = 0;
 
@@ -152,7 +147,7 @@ void Face::onLandmarks(hri_msgs::msg::FacialLandmarks::SharedPtr msg)
   }
 }
 
-void Face::onSoftBiometrics(hri_msgs::msg::SoftBiometrics::SharedPtr biometrics)
+void Face::onSoftBiometrics(const hri_msgs::msg::SoftBiometrics::ConstSharedPtr biometrics)
 {
   softbiometrics_ = biometrics;
 }

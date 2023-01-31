@@ -18,7 +18,7 @@ int main(int argc, char * argv[])
   rclcpp::Rate loop_rate(10ms);
   auto hri_listener_ = std::make_shared<hri::HRIListener>();
   // rclcpp::executors::SingleThreadedExecutor executor;
-  // executor.add_node(node_pub);
+  // executor.add_node(hri_listener_);
   // hri::HRIListener hri_listener;
 
 
@@ -33,6 +33,7 @@ int main(int argc, char * argv[])
       auto face_id = f.first;
       RCLCPP_INFO(hri_listener_->get_logger(),"face_id: %s",face_id);
       auto face = f.second.lock();
+      //  auto face = f.second;    
       if (face)
       {
         if (!face->cropped().empty())
@@ -47,7 +48,7 @@ int main(int argc, char * argv[])
         cv::waitKey(10);
       }
     }
-
+    // executor.spin();
     rclcpp::spin_some(hri_listener_);
     loop_rate.sleep();
   }
