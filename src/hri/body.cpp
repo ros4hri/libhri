@@ -34,35 +34,41 @@
 namespace hri
 {
 
-Body::Body(ID id, tf2::BufferCore* tf_buffer_ptr,
-           const std::string& reference_frame)
-  : FeatureTracker{ id }, _tf_buffer_ptr(), _reference_frame(reference_frame)
+Body::Body(
+  ID id,
+  rclcpp::Node::SharedPtr node,
+  tf2::BufferCore* tf_buffer_ptr,
+  const std::string& reference_frame)
+  : FeatureTracker{ id }
+  , _tf_buffer_ptr()
+  , _reference_frame(reference_frame)
+  , node_(node)
 {
 }
 
 
 Body::~Body()
 {
-  RCLCPP_DEBUG_STREAM(default_node_->get_logger(), "Deleting body " << id_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting body " << id_);
   // roi_subscriber_.shutdown();
 }
 
 void Body::init()
 {
   ns_ = "/humans/bodies/" + id_;
-  RCLCPP_DEBUG_STREAM(default_node_->get_logger(), "New body detected: " << ns_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New body detected: " << ns_);
 
-  auto roi_subscriber_ = default_node_->create_subscription<sensor_msgs::msg::RegionOfInterest>(
+  auto roi_subscriber_ = node_->create_subscription<sensor_msgs::msg::RegionOfInterest>(
       ns_ + "/roi", 1, bind(&Body::onRoI, this, std::placeholders::_1));
 
-  auto cropped_subscriber_ = default_node_->create_subscription<sensor_msgs::msg::Image>(
+  auto cropped_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
       ns_ + "/cropped", 1, bind(&Body::onCropped, this, std::placeholders::_1));
 
-  auto skeleton_subscriber_ = default_node_->create_subscription<hri_msgs::msg::Skeleton2D>(
+  auto skeleton_subscriber_ = node_->create_subscription<hri_msgs::msg::Skeleton2D>(
       ns_ + "/skeleton2d", 1, bind(&Body::onSkeleton, this, std::placeholders::_1));
 }
 
-void Body::onRoI(sensor_msgs::msg::RegionOfInterest::SharedPtr roi)
+void Body::onRoI(const sensor_msgs::msg::RegionOfInterest::ConstSharedPtr roi)
 {
   roi_ = cv::Rect(roi->x_offset, roi->y_offset, roi->width, roi->height);
 }
@@ -72,7 +78,7 @@ cv::Rect Body::roi() const
   return roi_;
 }
 
-void Body::onCropped(sensor_msgs::msg::Image::SharedPtr msg)
+void Body::onCropped(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 {
   cropped_ = cv_bridge::toCvShare(msg)->image;
 }
@@ -82,7 +88,7 @@ cv::Mat Body::cropped() const
   return cropped_;
 }
 
-void Body::onSkeleton(hri_msgs::msg::Skeleton2D::SharedPtr msg)
+void Body::onSkeleton(const hri_msgs::msg::Skeleton2D::ConstSharedPtr msg)
 {
   skeleton_ = msg->skeleton;
 }
@@ -103,7 +109,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> Body::transform() const
   }
   catch (tf2::LookupException)
   {
-    RCLCPP_WARN_STREAM(default_node_->get_logger(), "failed to transform the body frame " << frame() << " to " << _reference_frame
+    RCLCPP_WARN_STREAM(node_->get_logger(), "failed to transform the body frame " << frame() << " to " << _reference_frame
                                                           << ". Are the frames published?");
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }

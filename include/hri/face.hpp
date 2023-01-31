@@ -182,7 +182,7 @@ private:
   size_t nb_roi;
 
   std::unique_ptr<std::thread> dedicated_listener_thread_ {nullptr};
-  rclcpp::Node::SharedPtr default_node_ {nullptr};
+  rclcpp::Node::SharedPtr node_ {nullptr};
 
   // rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr test_publisher_;
  

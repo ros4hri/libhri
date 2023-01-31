@@ -221,13 +221,11 @@ private:
 
 
   std::map<ID, FaceConstPtr> faces;
-// std::map<ID, FacePtr> faces;
-  // std::map<ID, FaceWeakConstPtr> faces;
-  std::vector<std::function<void(FaceWeakConstPtr)>> face_callbacks;
+  std::vector<std::function<void(FaceConstPtr)>> face_callbacks;
   std::vector<std::function<void(ID)>> face_lost_callbacks;
 
-  std::map<ID, BodyWeakConstPtr> bodies;
-  std::vector<std::function<void(BodyWeakConstPtr)>> body_callbacks;
+  std::map<ID, BodyConstPtr> bodies;
+  std::vector<std::function<void(BodyConstPtr)>> body_callbacks;
   std::vector<std::function<void(ID)>> body_lost_callbacks;
 
   std::map<ID, VoiceWeakConstPtr> voices;

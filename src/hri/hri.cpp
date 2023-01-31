@@ -407,7 +407,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
     case FeatureType::body:
       for (auto id : to_add)
       {
-        auto body = std::make_shared<Body>(id, &_tf_buffer, _reference_frame);
+        auto body = std::make_shared<Body>(id, shared_from_this(), &_tf_buffer, _reference_frame);
         body->init();
         bodies.insert({ id, body });
 

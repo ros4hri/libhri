@@ -44,7 +44,7 @@ Face::Face(
   , softbiometrics_(nullptr)
   , _tf_buffer_ptr()
   , _reference_frame(reference_frame)
-  , default_node_(node)
+  , node_(node)
 
 
 {
@@ -54,7 +54,7 @@ Face::~Face()
 {
     executor_->cancel();
     dedicated_listener_thread_->join();
-  RCLCPP_DEBUG_STREAM(default_node_->get_logger(), "Deleting face " << id_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting face " << id_);
   // roi_subscriber_.shutdown();
 }
 
@@ -64,42 +64,37 @@ void Face::init()
 
   node_options.start_parameter_event_publisher(false);
   node_options.start_parameter_services(false);
-  auto node_params = default_node_->get_node_parameters_interface();
-  auto node_topics = default_node_->get_node_topics_interface();
+  auto node_params = node_->get_node_parameters_interface();
+  auto node_topics = node_->get_node_topics_interface();
   auto qos = rclcpp::SystemDefaultsQoS();
 
-  callback_group_ = default_node_->create_callback_group(
-    rclcpp::CallbackGroupType::MutuallyExclusive);
-
+  callback_group_ = node_->create_callback_group(
+    rclcpp::CallbackGroupType::MutuallyExclusive, true);
   rclcpp::SubscriptionOptionsWithAllocator<std::allocator<void>> options;
   options.callback_group = callback_group_;
-
+  
   ns_ = "/humans/faces/" + id_;
   // RCLCPP_DEBUG_STREAM(node_->get_logger(), "New face detected: " << ns_);
-  RCLCPP_INFO_STREAM(default_node_->get_logger(), "New face detected: " << ns_);
+  RCLCPP_INFO_STREAM(node_->get_logger(), "New face detected: " << ns_);
 
   roi_subscriber_ = rclcpp::create_subscription<sensor_msgs::msg::RegionOfInterest>(
-    node_params, node_topics,  ns_ + "/cropped", qos, bind(&Face::onRoI, this, std::placeholders::_1), options);
+    node_params, node_topics,  ns_ + "/roi", qos, bind(&Face::onRoI, this, std::placeholders::_1), options);
 
-  // auto testrclcpp::create_publisher<tf2_msgs::msg::TFMessage>(
-  //     node_parameters, node_topics, "/tf_static", qos, options);
-  // auto cropped_subscriber_ = default_node_->create_subscription<sensor_msgs::msg::Image>(
-  //     ns_ + "/cropped", 1, bind(&Face::onCropped, this, std::placeholders::_1), options);
   cropped_subscriber_ = rclcpp::create_subscription<sensor_msgs::msg::Image>(
     node_params, node_topics,  ns_ + "/cropped", qos, bind(&Face::onCropped, this, std::placeholders::_1), options);
 
 
   aligned_subscriber_ = rclcpp::create_subscription<sensor_msgs::msg::Image>(
-    node_params, node_topics,  ns_ + "/cropped", qos, bind(&Face::onAligned, this, std::placeholders::_1), options);
+    node_params, node_topics,  ns_ + "/aligned", qos, bind(&Face::onAligned, this, std::placeholders::_1), options);
 
   landmarks_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::FacialLandmarks>(
-    node_params, node_topics,  ns_ + "/cropped", qos, bind(&Face::onLandmarks, this, std::placeholders::_1), options);
+    node_params, node_topics,  ns_ + "/landmarks", qos, bind(&Face::onLandmarks, this, std::placeholders::_1), options);
 
   softbiometrics_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::SoftBiometrics>(
-    node_params, node_topics,  ns_ + "/cropped", qos, bind(&Face::onSoftBiometrics, this, std::placeholders::_1), options);
+    node_params, node_topics,  ns_ + "/softbiometrics", qos, bind(&Face::onSoftBiometrics, this, std::placeholders::_1), options);
 
   executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-  executor_->add_callback_group(callback_group_, default_node_->get_node_base_interface());  
+  executor_->add_callback_group(callback_group_, node_->get_node_base_interface());  
   dedicated_listener_thread_ = std::make_unique<std::thread>([&]() {executor_->spin();});  
 }
 
@@ -182,7 +177,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> Face::transform() const
   }
   catch (tf2::LookupException)
   {
-    RCLCPP_WARN_STREAM(default_node_->get_logger(), "failed to transform the face frame " << frame() << " to " << _reference_frame
+    RCLCPP_WARN_STREAM(node_->get_logger(), "failed to transform the face frame " << frame() << " to " << _reference_frame
                                                           << ". Are the frames published?");
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
@@ -199,7 +194,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> Face::gazeTransform() cons
   }
   catch (tf2::LookupException)
   {
-    RCLCPP_WARN_STREAM(default_node_->get_logger(), "failed to transform the gaze frame " << frame() << " to " << _reference_frame
+    RCLCPP_WARN_STREAM(node_->get_logger(), "failed to transform the gaze frame " << frame() << " to " << _reference_frame
                                                           << ". Are the frames published?");
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
