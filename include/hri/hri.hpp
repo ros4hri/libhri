@@ -228,8 +228,8 @@ private:
   std::vector<std::function<void(BodyConstPtr)>> body_callbacks;
   std::vector<std::function<void(ID)>> body_lost_callbacks;
 
-  std::map<ID, VoiceWeakConstPtr> voices;
-  std::vector<std::function<void(VoiceWeakConstPtr)>> voice_callbacks;
+  std::map<ID, VoiceConstPtr> voices;
+  std::vector<std::function<void(VoiceConstPtr)>> voice_callbacks;
   std::vector<std::function<void(ID)>> voice_lost_callbacks;
 
   std::map<ID, PersonConstPtr> persons;

@@ -49,8 +49,11 @@ const static rclcpp::Duration VOICE_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.
 class Voice : public FeatureTracker
 {
 public:
-  Voice(ID id, tf2::BufferCore* tf_buffer_ptr,
-        const std::string& reference_frame);
+  Voice(
+    ID id,
+    rclcpp::Node::SharedPtr node,
+    tf2::BufferCore* tf_buffer_ptr,
+    const std::string& reference_frame);
 
   virtual ~Voice();
 
@@ -69,7 +72,11 @@ public:
   void init() override;
 
 private:
-  rclcpp::Node::SharedPtr default_node_ {nullptr};
+  std::unique_ptr<std::thread> dedicated_listener_thread_ {nullptr};
+  rclcpp::Node::SharedPtr node_ {nullptr};
+  rclcpp::Executor::SharedPtr executor_ {nullptr}; 
+  rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
+  
   std::string _reference_frame;
   tf2_ros::Buffer* _tf_buffer_ptr;
 };

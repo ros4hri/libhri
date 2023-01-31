@@ -421,7 +421,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
     case FeatureType::voice:
       for (auto id : to_add)
       {
-        auto voice = std::make_shared<Voice>(id, &_tf_buffer, _reference_frame);
+        auto voice = std::make_shared<Voice>(id, shared_from_this(), &_tf_buffer, _reference_frame);
         voice->init();
         voices.insert({ id, voice });
 
