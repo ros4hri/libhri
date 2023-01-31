@@ -184,8 +184,6 @@ private:
   std::unique_ptr<std::thread> dedicated_listener_thread_ {nullptr};
   rclcpp::Node::SharedPtr node_ {nullptr};
 
-  // rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr test_publisher_;
- 
 
   rclcpp::Executor::SharedPtr executor_ {nullptr};
  
