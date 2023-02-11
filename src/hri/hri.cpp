@@ -426,7 +426,7 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
       for (auto id  : to_add)
       {      
         
-        auto face = std::make_shared<Face>(id, node_, &_tf_buffer, _reference_frame);
+        auto face = std::make_shared<Face>(id, node_, _tf_buffer, _reference_frame);
       
         face->init();        
         RCLCPP_INFO(node_->get_logger(),"got to face adding switch, id:%s",id.c_str());
@@ -444,7 +444,7 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
     case FeatureType::body:
       for (auto id : to_add)
       {
-        auto body = std::make_shared<Body>(id, node_, &_tf_buffer, _reference_frame);
+        auto body = std::make_shared<Body>(id, node_, _tf_buffer, _reference_frame);
         body->init();
         bodies.insert({ id, body });
 
@@ -458,7 +458,7 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
     case FeatureType::voice:
       for (auto id : to_add)
       {
-        auto voice = std::make_shared<Voice>(id, node_, &_tf_buffer, _reference_frame);
+        auto voice = std::make_shared<Voice>(id, node_, _tf_buffer, _reference_frame);
         voice->init();
         voices.insert({ id, voice });
 

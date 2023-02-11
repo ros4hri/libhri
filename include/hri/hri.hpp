@@ -211,12 +211,9 @@ public:
 
 private:
   void init();
-  //Libreria de c++ de nodos 
-  //probabilidad de todos los estados de que el robot este ahi
-  //modelo de actuacion y un modelo 
+
   void onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::SharedPtr tracked);
-
-
+  
   std::map<FeatureType, rclcpp::Subscription<hri_msgs::msg::IdsList>::SharedPtr> feature_subscribers_;
   std::unique_ptr<std::thread> dedicated_listener_thread_ {nullptr};
   rclcpp::Node::SharedPtr node_ {nullptr};
@@ -243,10 +240,6 @@ private:
   std::vector<std::function<void(ID)>> person_tracked_lost_callbacks;
 
   std::string _reference_frame;
-  // _tf_buffer_ = 
-  //     std::make_unique<tf2_ros::Buffer>(this->get_clock());
-  // _tf_listener_ =
-  //     std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   tf2::BufferCore _tf_buffer;
   tf2_ros::TransformListener _tf_listener;
 };

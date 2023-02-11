@@ -59,7 +59,7 @@ public:
   Body(
     ID id,
     rclcpp::Node::SharedPtr node,
-    tf2::BufferCore* tf_buffer_ptr,    
+    tf2::BufferCore &tf_buffer,    
     const std::string& reference_frame);
 
   virtual ~Body();
@@ -137,7 +137,7 @@ private:
   std::vector<SkeletonPoint> skeleton_;
 
   std::string _reference_frame;
-  tf2_ros::Buffer* _tf_buffer_ptr;
+  tf2::BufferCore &tf_buffer_;
 };
 
 typedef std::shared_ptr<Body> BodyPtr;

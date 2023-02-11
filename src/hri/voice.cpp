@@ -34,10 +34,10 @@ namespace hri
 Voice::Voice(
   ID id,
   rclcpp::Node::SharedPtr node,
-  tf2::BufferCore* tf_buffer_ptr,
+  tf2::BufferCore &tf_buffer,
   const std::string& reference_frame)
   : FeatureTracker{id}
-  , _tf_buffer_ptr()
+  , tf_buffer_(tf_buffer)
   , _reference_frame(reference_frame)
   ,node_(node)
 {
@@ -73,15 +73,15 @@ boost::optional<geometry_msgs::msg::TransformStamped> Voice::transform() const
 {
   try
   {
-    auto transform = _tf_buffer_ptr->lookupTransform(_reference_frame, frame(),
-                                                     rclcpp::Time(0), VOICE_TF_TIMEOUT);
+    auto transform = tf_buffer_.lookupTransform(_reference_frame, frame(),
+                                                     tf2::TimePointZero);
 
     return transform;
   }
-  catch (tf2::LookupException)
+  catch (const tf2::TransformException & ex)
   {
-    RCLCPP_WARN_STREAM(node_->get_logger(), "failed to transform the voice frame "
-                    << frame() << " to " << _reference_frame << ". Are the frames published?");
+    RCLCPP_WARN_STREAM(node_->get_logger(), "failed to transform person frame " << frame()
+                                << " to " << _reference_frame << ex.what());
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
 }

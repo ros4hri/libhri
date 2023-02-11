@@ -1188,7 +1188,7 @@ TEST(libhri,Callback)
   body_pub->publish(ids);
   executor.spin_some();
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(30));
+  std::this_thread::sleep_for(std::chrono::milliseconds(60));
 
 
   EXPECT_EQ(face_callbacks_invoked, 9);
@@ -1216,7 +1216,7 @@ TEST(libhri,Callback)
   executor.remove_node(node);
   executor.cancel();
 }
-TEST(libhri, PeopleLocation1)
+TEST(libhri, PeopleLocation)
 {
   auto node = rclcpp::Node::make_shared("test_node");
   rclcpp::Rate rate(30);

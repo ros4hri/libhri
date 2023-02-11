@@ -71,7 +71,7 @@ public:
   Face(
     ID id,
     rclcpp::Node::SharedPtr node,
-    tf2::BufferCore* tf_buffer_ptr,
+    tf2::BufferCore &tf_buffer,
     const std::string& reference_frame);
 
  
@@ -96,18 +96,34 @@ public:
   /** \brief Returns the 2D region of interest (RoI) of the face.
    *
    * Use example:
-   *
-   * ```cpp
-   * HRIListener hri_listener;
-   *
-   * auto faces = hri_listener.getFaces();
-   *
-   * for (auto const& face : faces)
+   * ```
+   * class ShowFaces : public rclcpp::Node
    * {
-   *   auto roi = face.second.lock()->roi();
-   *   cout << "Size of face_" << face.first << ": ";
-   *   cout << roi.width << "x" << roi.height << endl;
-   * }
+   * public:
+   *   ShowFaces()
+   *   : Node("show_faces")
+   *   {
+   *     hri_listener_ = std::make_shared<hri::HRIListener>();
+   *     timer_ = create_wall_timer(
+   *       500ms, std::bind(&ShowFaces::timer_callback, this));
+   *   }
+   * 
+   * 
+   *   void timer_callback()
+   *   {
+   *      auto faces = hri_listener_->getFaces();
+   *     for (auto& f : faces)
+   *     {
+   *        auto roi = face.second.lock()->roi();
+   *        cout << "Size of face_" << face.first << ": ";
+   *        cout << roi.width << "x" << roi.height << endl;
+   *     }
+   *   }
+   * 
+   * private:
+   *   std::shared_ptr<hri::HRIListener> hri_listener_{nullptr};
+   *   rclcpp::TimerBase::SharedPtr timer_;
+   * };
    * ```
    *
    * The pixel coordinates are provided in the original camera's image coordinate
@@ -128,7 +144,7 @@ public:
    */
   cv::Mat aligned() const;
 
-  /** \brief the list of the 66 facial landmarks (2D points, expressed in normalised coordinates).
+  /** \brief the list of the 66 facial landmarks (2D points, expressed in normalized coordinates).
    *
    * The location of the landmarks is defined here:
    * https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/output.md#face-output-format
@@ -213,7 +229,7 @@ private:
   std::array<IntensityConfidence, 99> facial_action_units_;
 
   std::string _reference_frame;
-  tf2_ros::Buffer* _tf_buffer_ptr;
+  tf2::BufferCore &tf_buffer_;
 };
 
 typedef std::shared_ptr<Face> FacePtr;

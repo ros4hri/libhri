@@ -54,13 +54,13 @@ public:
   /* creates a new feature tracker (eg, a face, body or voice tracker).
    *
    * This constructor should not be called directly. Instead, use one of the
-   * specialisation: hri::Face, hri::Body, hri::Voice.
+   * specialization: hri::Face, hri::Body, hri::Voice.
    *
    * Note however that instances would normally be automatically created, and accessed via
    * the methods exposed by hri::HRIListener.
    *
    * Note that the resulting instance is non-copyable, as it includes
-   * non-trivial, and typically non-reentrant, logic to subscribe/unsubcribe
+   * non-trivial, and typically non-reentrant, logic to subscribe/unsubscribe
    * HRI-related topics.
    */
   FeatureTracker(ID id) : id_(id),ns_("")

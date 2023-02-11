@@ -52,7 +52,7 @@ public:
   Voice(
     ID id,
     rclcpp::Node::SharedPtr node,
-    tf2::BufferCore* tf_buffer_ptr,
+    tf2::BufferCore &tf_buffer,
     const std::string& reference_frame);
 
   virtual ~Voice();
@@ -78,7 +78,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
   
   std::string _reference_frame;
-  tf2_ros::Buffer* _tf_buffer_ptr;
+  tf2::BufferCore &tf_buffer_;
 };
 
 typedef std::shared_ptr<Voice> VoicePtr;

@@ -29,11 +29,9 @@
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include "hri/person.hpp"
-
 #include "hri/hri.hpp"
 #include "hri_msgs/msg/engagement_level.hpp"
 #include <std_msgs/msg/float32.hpp>
-
 
 namespace hri
 {
@@ -59,10 +57,9 @@ Person::Person(
 
 Person::~Person()
 {
-  std::cout << "[TEST] PERSON DYING" << std::endl;
-  executor_->cancel();
-  dedicated_listener_thread_->join();
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting person " << id_);
+  executor_->cancel();
+  dedicated_listener_thread_->join();  
 }
 
 void Person::init()
@@ -115,13 +112,7 @@ void Person::init()
 
 FaceWeakConstPtr Person::face() const
 {
-  std::cout << "[TEST] FACE ID INSIDE PERSON "  << face_id  << std::endl;
-  std::cout << "[TEST] FACE ID SIZE FROM LISTENER "  << listener_->getFaces().size()  << std::endl;
-  auto faces = listener_->getFaces();
-  std::cout << "[TEST] FACE ID FROM LISTENER"  << faces.begin()->first  << std::endl;
-
   if (listener_->getFaces().count(face_id) != 0) {
-    std::cout << "BEFORE RETURNING FACE "  << std::endl;
     return listener_->getFaces()[face_id];
   }
   else {
@@ -180,18 +171,14 @@ boost::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
 
   try
   {
-    std::cout << "[TEST] TRYING TO FIND TRANSFORM  FROM " << _reference_frame << " TO " << frame() << std::endl;
     auto transform = tf_buffer_.lookupTransform(_reference_frame, frame(),
                                                      tf2::TimePointZero);
-
     return transform;
   }
   catch (const tf2::TransformException & ex)
   {
-
-    std::cout << "[TEST] FAILED TO FOUND TRANSFORM "<< ex.what() << std::endl;
     RCLCPP_WARN_STREAM(node_->get_logger(), "failed to transform person frame " << frame()
-                                << " to " << _reference_frame << ". Are the frames published?");
+                                << " to " << _reference_frame << ex.what());
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
 }
