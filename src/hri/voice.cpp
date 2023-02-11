@@ -45,8 +45,8 @@ Voice::Voice(
 
 Voice::~Voice()
 {
-  executor_->cancel();
-  dedicated_listener_thread_->join();
+  // executor_->cancel();
+  // dedicated_listener_thread_->join();
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting voice " << id_);
 }
 

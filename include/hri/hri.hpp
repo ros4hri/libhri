@@ -67,7 +67,7 @@ namespace hri
  * }
  * ```
  */
-class HRIListener: public rclcpp::Node
+class HRIListener
 {
 public:
   HRIListener();
@@ -218,18 +218,21 @@ private:
 
 
   std::map<FeatureType, rclcpp::Subscription<hri_msgs::msg::IdsList>::SharedPtr> feature_subscribers_;
-
+  std::unique_ptr<std::thread> dedicated_listener_thread_ {nullptr};
+  rclcpp::Node::SharedPtr node_ {nullptr};
+  rclcpp::Executor::SharedPtr executor_ {nullptr}; 
+  rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
   std::map<ID, FaceConstPtr> faces;
-  std::vector<std::function<void(FaceConstPtr)>> face_callbacks;
+  std::vector<std::function<void(FaceWeakConstPtr)>> face_callbacks;
   std::vector<std::function<void(ID)>> face_lost_callbacks;
 
   std::map<ID, BodyConstPtr> bodies;
-  std::vector<std::function<void(BodyConstPtr)>> body_callbacks;
+  std::vector<std::function<void(BodyWeakConstPtr)>> body_callbacks;
   std::vector<std::function<void(ID)>> body_lost_callbacks;
 
   std::map<ID, VoiceConstPtr> voices;
-  std::vector<std::function<void(VoiceConstPtr)>> voice_callbacks;
+  std::vector<std::function<void(VoiceWeakConstPtr)>> voice_callbacks;
   std::vector<std::function<void(ID)>> voice_lost_callbacks;
 
   std::map<ID, PersonConstPtr> persons;

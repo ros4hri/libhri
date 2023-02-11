@@ -45,16 +45,20 @@
 namespace hri
 {
 
-HRIListener::HRIListener() : Node("HRIListener", ""), _reference_frame("base_link"), _tf_listener(_tf_buffer)
+HRIListener::HRIListener(): _reference_frame("base_link"),_tf_buffer(), _tf_listener(_tf_buffer) 
 {
   init();
 }
 
 HRIListener::~HRIListener()
 {
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "Closing the HRI Listener");
+  std::cout << "[TEST] LISTENER DYING" << std::endl;
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Closing the HRI Listener");
 
   faces.clear();
+  bodies.clear();
+  executor_->cancel();
+  dedicated_listener_thread_->join();
 //TODO implement unsub when available
   // for (auto& sub : feature_subscribers_)
   // {
@@ -71,11 +75,10 @@ std::map<ID, FaceWeakConstPtr> HRIListener::getFaces() const
 
   // creates a std::map of *weak* pointers from the internally managed list of
   // shared pointers
-  RCLCPP_INFO(this->get_logger(),"got face");
+  RCLCPP_INFO(node_->get_logger(),"got face");
   for (auto const& f : faces)
   {
     result[f.first] = f.second;
-    RCLCPP_INFO_ONCE(this->get_logger(),"Printing ID %s",f.first);
   }
   
 
@@ -129,7 +132,10 @@ std::map<ID, PersonWeakConstPtr> HRIListener::getPersons() const
       aliased.push_back(f.second);
     }
   }
-
+  for (auto& r : result)
+  {
+    std::cout << "[RESULTBEFORE]: " << r.first << std::endl;
+  }
   for (auto const& p : aliased)
   {
     if (result.count(p->alias()) != 0)
@@ -141,7 +147,10 @@ std::map<ID, PersonWeakConstPtr> HRIListener::getPersons() const
       assert(false);
     }
   }
-
+  for (auto& r : result)
+  {
+    std::cout << "[RESULTAFTER]: " << r.first << std::endl;
+  }
   return result;
 }
 
@@ -182,7 +191,26 @@ std::map<ID, PersonWeakConstPtr> HRIListener::getTrackedPersons() const
 
 void HRIListener::init()
 {
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "Initialising the HRI Listener");
+  // create a unique name for the node
+  // but specify its name in .arguments to override any __node passed on the command line.
+  // avoiding sstream because it's behavior can be overridden by external libraries.
+  // See this issue: https://github.com/ros2/geometry2/issues/540
+
+  rclcpp::NodeOptions node_options;
+  // node_options.arguments({"--ros-args", "-r", "__node:=", "HRIlistener"});
+  node_options.start_parameter_event_publisher(false);
+  node_options.start_parameter_services(false);
+  node_ = rclcpp::Node::make_shared("HRIlistener", node_options);
+
+  auto node_params = node_->get_node_parameters_interface();
+  auto node_topics = node_->get_node_topics_interface();
+  auto qos = rclcpp::SystemDefaultsQoS();
+
+  callback_group_ = node_->create_callback_group(
+    rclcpp::CallbackGroupType::MutuallyExclusive, true);
+  rclcpp::SubscriptionOptionsWithAllocator<std::allocator<void>> options;
+  options.callback_group = callback_group_;
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Initialising the HRI Listener");
   
 
  //https://github.com/ros2/rclcpp/issues/273
@@ -190,33 +218,37 @@ void HRIListener::init()
 //  std::function<void(const FeatureType::face::SharedPtr msg)> bound_callback_func =
 //   std::bind(&HRIListener::onTrackedFeature, std::placeholders::_1, topic_name);
 //map
-  feature_subscribers_[FeatureType::face] = this->create_subscription<hri_msgs::msg::IdsList>(
-      "/humans/faces/tracked", 1,[this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
+  feature_subscribers_[FeatureType::face] = rclcpp::create_subscription<hri_msgs::msg::IdsList>(
+      node_params, node_topics, "/humans/faces/tracked", qos,[this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
         HRIListener::onTrackedFeature(FeatureType::face,tracked);
-      }); 
+      }, options); 
 
-  feature_subscribers_[FeatureType::body] = this->create_subscription<hri_msgs::msg::IdsList>(
-      "/humans/bodies/tracked", 1,[this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
+  feature_subscribers_[FeatureType::body] = rclcpp::create_subscription<hri_msgs::msg::IdsList>(
+      node_params, node_topics, "/humans/bodies/tracked", qos,[this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
         HRIListener::onTrackedFeature(FeatureType::body,tracked);
-      }); 
+      }, options); 
 
-  feature_subscribers_[FeatureType::voice] = this->create_subscription<hri_msgs::msg::IdsList>(
-      "/humans/voices/tracked", 1,[this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
+  feature_subscribers_[FeatureType::voice] = rclcpp::create_subscription<hri_msgs::msg::IdsList>(
+      node_params, node_topics, "/humans/voices/tracked", qos,[this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
         HRIListener::onTrackedFeature(FeatureType::voice,tracked);
-      }); 
+      }, options); 
 
-  feature_subscribers_[FeatureType::tracked_person] = this->create_subscription<hri_msgs::msg::IdsList>(
-      "/humans/persons/tracked", 1,[this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
+  feature_subscribers_[FeatureType::tracked_person] = rclcpp::create_subscription<hri_msgs::msg::IdsList>(
+      node_params, node_topics, "/humans/persons/tracked", qos,[this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
         HRIListener::onTrackedFeature(FeatureType::tracked_person,tracked);
-      }); 
+      }, options); 
 
-  feature_subscribers_[FeatureType::person] = this->create_subscription<hri_msgs::msg::IdsList>(
-      "/humans/persons/known", 1,[this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
+  feature_subscribers_[FeatureType::person] = rclcpp::create_subscription<hri_msgs::msg::IdsList>(
+      node_params, node_topics, "/humans/persons/known", qos,[this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
         HRIListener::onTrackedFeature(FeatureType::person,tracked);
-    }); 
+    }, options);
+
+  executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+  executor_->add_callback_group(callback_group_, node_->get_node_base_interface());  
+  dedicated_listener_thread_ = std::make_unique<std::thread>([&]() {executor_->spin();}); 
 }
 
-void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::SharedPtr tracked)
+void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::SharedPtr tracked)
 {
   // update the current list of tracked feature (face, body...) with
   // what has just been received on the respective /tracked topic.
@@ -238,35 +270,35 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
   switch (feature)
   {
     case FeatureType::face:
-      RCLCPP_INFO(this->get_logger(),"got to face callback");
+      RCLCPP_INFO(node_->get_logger(),"got to face callback");
       for (auto const& kv : faces)
       {
         current_ids.insert(kv.first);
       }      
       break;
     case FeatureType::body:
-    RCLCPP_INFO(this->get_logger(),"got to body callback");
+    RCLCPP_INFO(node_->get_logger(),"got to body callback");
       for (auto const& kv : bodies)
       {
         current_ids.insert(kv.first);
       }
       break;
     case FeatureType::voice:
-    RCLCPP_INFO(this->get_logger(),"got to body callback");
+    RCLCPP_INFO(node_->get_logger(),"got to voice callback");
       for (auto const& kv : voices)
       {
         current_ids.insert(kv.first);
       }
       break;
     case FeatureType::person:
-    RCLCPP_INFO(this->get_logger(),"got to person callback");
+    RCLCPP_INFO(node_->get_logger(),"got to person callback");
       for (auto const& kv : persons)
       {
         current_ids.insert(kv.first);
       }
       break;
     case FeatureType::tracked_person:
-    RCLCPP_INFO(this->get_logger(),"got to tracked person callback");
+    RCLCPP_INFO(node_->get_logger(),"got to tracked person callback");
       for (auto const& kv : tracked_persons)
       {
         current_ids.insert(kv.first);
@@ -278,6 +310,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
 
   for (auto id : new_ids)
   {
+    RCLCPP_INFO(node_->get_logger(),"to add new ids:%s",id.c_str());
     if (current_ids.find(id) == current_ids.end())
     {
       to_add.insert(id);
@@ -286,8 +319,10 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
 
   for (auto id : current_ids)
   {
+    RCLCPP_INFO(node_->get_logger(),"to currents ids:%s",id.c_str());
     if (new_ids.find(id) == new_ids.end())
     {
+      RCLCPP_INFO(node_->get_logger(),"to remove id:%s",id.c_str());
       to_remove.insert(id);
     }
   }
@@ -303,6 +338,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
         for (auto& cb : face_lost_callbacks)
         {
           cb(id);
+          RCLCPP_INFO(node_->get_logger(),"lost callbacks invoked");
         }
       }
       break;
@@ -390,24 +426,25 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
       for (auto id  : to_add)
       {      
         
-        auto face = std::make_shared<Face>(id, shared_from_this(), &_tf_buffer, _reference_frame);
+        auto face = std::make_shared<Face>(id, node_, &_tf_buffer, _reference_frame);
       
         face->init();        
-        RCLCPP_INFO(this->get_logger(),"got to face adding switch, id:%s",id.c_str());
+        RCLCPP_INFO(node_->get_logger(),"got to face adding switch, id:%s",id.c_str());
         faces.insert({ id, face });
 
-         RCLCPP_INFO(this->get_logger(),"callbacks len :%d",face_callbacks.size());
+         RCLCPP_INFO(node_->get_logger(),"callbacks len :%d",face_callbacks.size());
         // invoke all the callbacks
         for (auto& cb : face_callbacks)
-        {
+        {          
           cb(face);
+          RCLCPP_INFO(node_->get_logger(),"face callback invoked");
         }
       }
       break;
     case FeatureType::body:
       for (auto id : to_add)
       {
-        auto body = std::make_shared<Body>(id, shared_from_this(), &_tf_buffer, _reference_frame);
+        auto body = std::make_shared<Body>(id, node_, &_tf_buffer, _reference_frame);
         body->init();
         bodies.insert({ id, body });
 
@@ -421,7 +458,7 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
     case FeatureType::voice:
       for (auto id : to_add)
       {
-        auto voice = std::make_shared<Voice>(id, shared_from_this(), &_tf_buffer, _reference_frame);
+        auto voice = std::make_shared<Voice>(id, node_, &_tf_buffer, _reference_frame);
         voice->init();
         voices.insert({ id, voice });
 
@@ -435,8 +472,9 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
     case FeatureType::person:
       for (auto id : to_add)
       {
-        auto person = std::make_shared<Person>(id, this, &_tf_buffer, _reference_frame);
+        auto person = std::make_shared<Person>(id, node_, this, _tf_buffer, _reference_frame);
         person->init();
+        RCLCPP_INFO(node_->get_logger(),"adding id to persons, id:%s",id.c_str());
         persons.insert({ id, person });
 
         // invoke all the callbacks
@@ -449,8 +487,9 @@ void HRIListener::onTrackedFeature(FeatureType feature,hri_msgs::msg::IdsList::S
     case FeatureType::tracked_person:
       for (auto id : to_add)
       {
-        auto person = std::make_shared<Person>(id, this, &_tf_buffer, _reference_frame);
+        auto person = std::make_shared<Person>(id, node_, this, _tf_buffer, _reference_frame);
         person->init();
+        RCLCPP_INFO(node_->get_logger(),"adding id to tracked_persons, id:%s",id.c_str());
         tracked_persons.insert({ id, person });
 
         // invoke all the callbacks

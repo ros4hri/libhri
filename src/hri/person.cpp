@@ -38,62 +38,95 @@
 namespace hri
 {
 
-Person::Person(ID id, const HRIListener* listener, tf2::BufferCore* tf_buffer_ptr,
-                const std::string& reference_frame)
+Person::Person(
+  ID id,
+  rclcpp::Node::SharedPtr node,
+  const HRIListener* listener,
+  tf2::BufferCore &tf_buffer,
+  const std::string& reference_frame)
   : FeatureTracker{ id }
   , listener_(listener)
   , _anonymous(false)
   , _engagement_status(nullptr)
   , _alias("")
   , _loc_confidence(0.)
-  , _tf_buffer_ptr()
+  , tf_buffer_(tf_buffer)
   , _reference_frame(reference_frame)
+  , node_(node)
 {
 }
 
 
 Person::~Person()
 {
-  RCLCPP_DEBUG_STREAM(default_node_->get_logger(), "Deleting person " << id_);
+  std::cout << "[TEST] PERSON DYING" << std::endl;
+  executor_->cancel();
+  dedicated_listener_thread_->join();
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting person " << id_);
 }
 
 void Person::init()
 {
+  rclcpp::NodeOptions node_options;
+
+  node_options.start_parameter_event_publisher(false);
+  node_options.start_parameter_services(false);
+  auto node_params = node_->get_node_parameters_interface();
+  auto node_topics = node_->get_node_topics_interface();
+  auto qos = rclcpp::SystemDefaultsQoS();
+
+  callback_group_ = node_->create_callback_group(
+    rclcpp::CallbackGroupType::MutuallyExclusive, true);
+  rclcpp::SubscriptionOptionsWithAllocator<std::allocator<void>> options;
+  options.callback_group = callback_group_;
+
   ns_ = "/humans/persons/" + id_;
-  RCLCPP_DEBUG_STREAM(default_node_->get_logger(), "New person detected: " << ns_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New person detected: " << ns_);
 
-  auto face_id_subscriber_ = default_node_->create_subscription<std_msgs::msg::String>(
-      ns_ + "/face_id", 1, [&](const std_msgs::msg::String::SharedPtr msg) { face_id = msg->data; });
+  face_id_subscriber_ = rclcpp::create_subscription<std_msgs::msg::String>(
+      node_params, node_topics, ns_ + "/face_id", qos, [&](const std_msgs::msg::String::SharedPtr msg) { face_id = msg->data; }, options);
 
-  auto body_id_subscriber_ = default_node_->create_subscription<std_msgs::msg::String>(
-      ns_ + "/body_id", 1, [&](const std_msgs::msg::String::SharedPtr msg) { body_id = msg->data; });
+  body_id_subscriber_ = rclcpp::create_subscription<std_msgs::msg::String>(
+      node_params, node_topics, ns_ + "/body_id", qos, [&](const std_msgs::msg::String::SharedPtr msg) { body_id = msg->data; }, options);
 
-  auto voice_id_subscriber_ = default_node_->create_subscription<std_msgs::msg::String>(
-      ns_ + "/voice_id", 1,
-      [&](const std_msgs::msg::String::SharedPtr msg) { voice_id = msg->data; });
+  voice_id_subscriber_ = rclcpp::create_subscription<std_msgs::msg::String>(
+      node_params, node_topics, ns_ + "/voice_id", qos,
+      [&](const std_msgs::msg::String::SharedPtr msg) { voice_id = msg->data; }, options);
 
-  auto anonymous_subscriber_ = default_node_->create_subscription<std_msgs::msg::Bool>(
-      ns_ + "/anonymous", 1,
-      [&](const std_msgs::msg::Bool::SharedPtr msg) { _anonymous = msg->data; });
+  anonymous_subscriber_ = rclcpp::create_subscription<std_msgs::msg::Bool>(
+      node_params, node_topics, ns_ + "/anonymous", qos,
+      [&](const std_msgs::msg::Bool::SharedPtr msg) { _anonymous = msg->data; }, options);
 
-  auto alias_subscriber_ = default_node_->create_subscription<std_msgs::msg::String>(
-      ns_ + "/alias", 1, [&](const std_msgs::msg::String::SharedPtr msg) { _alias = msg->data; });
+  alias_subscriber_ = rclcpp::create_subscription<std_msgs::msg::String>(
+      node_params, node_topics, ns_ + "/alias", qos, [&](const std_msgs::msg::String::SharedPtr msg) { _alias = msg->data; }, options);
 
-  auto engagement_subscriber_ = default_node_->create_subscription<hri_msgs::msg::EngagementLevel>(
-      ns_ + "/engagement_status", 1,
-      [&](const hri_msgs::msg::EngagementLevel::SharedPtr msg) { _engagement_status = msg; });
+  engagement_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::EngagementLevel>(
+      node_params, node_topics, ns_ + "/engagement_status", qos,
+      [&](const hri_msgs::msg::EngagementLevel::SharedPtr msg) { _engagement_status = msg; }, options);
 
-  auto loc_confidence_subscriber_ = default_node_->create_subscription<std_msgs::msg::Float32>(
-      ns_ + "/location_confidence", 1,
-      [&](const std_msgs::msg::Float32::SharedPtr msg) { _loc_confidence = msg->data; });
+  loc_confidence_subscriber_ = rclcpp::create_subscription<std_msgs::msg::Float32>(
+      node_params, node_topics, ns_ + "/location_confidence", qos,
+      [&](const std_msgs::msg::Float32::SharedPtr msg) { std::cout << "[TEST] CONFIDENCE "<< msg->data << std::endl;_loc_confidence = msg->data; }, options);
+
+  executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+  executor_->add_callback_group(callback_group_, node_->get_node_base_interface());  
+  dedicated_listener_thread_ = std::make_unique<std::thread>([&]() {executor_->spin();});
 }
 
 FaceWeakConstPtr Person::face() const
 {
-  if (listener_->getFaces().count(face_id) != 0)
+  std::cout << "[TEST] FACE ID INSIDE PERSON "  << face_id  << std::endl;
+  std::cout << "[TEST] FACE ID SIZE FROM LISTENER "  << listener_->getFaces().size()  << std::endl;
+  auto faces = listener_->getFaces();
+  std::cout << "[TEST] FACE ID FROM LISTENER"  << faces.begin()->first  << std::endl;
+
+  if (listener_->getFaces().count(face_id) != 0) {
+    std::cout << "BEFORE RETURNING FACE "  << std::endl;
     return listener_->getFaces()[face_id];
-  else
+  }
+  else {
     return FaceWeakConstPtr();
+  }
 }
 
 BodyWeakConstPtr Person::body() const
@@ -147,14 +180,17 @@ boost::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
 
   try
   {
-    auto transform = _tf_buffer_ptr->lookupTransform(_reference_frame, frame(),
-                                                     rclcpp::Time(0), PERSON_TF_TIMEOUT);
+    std::cout << "[TEST] TRYING TO FIND TRANSFORM  FROM " << _reference_frame << " TO " << frame() << std::endl;
+    auto transform = tf_buffer_.lookupTransform(_reference_frame, frame(),
+                                                     tf2::TimePointZero);
 
     return transform;
   }
-  catch (tf2::LookupException)
+  catch (const tf2::TransformException & ex)
   {
-    RCLCPP_WARN_STREAM(default_node_->get_logger(), "failed to transform person frame " << frame()
+
+    std::cout << "[TEST] FAILED TO FOUND TRANSFORM "<< ex.what() << std::endl;
+    RCLCPP_WARN_STREAM(node_->get_logger(), "failed to transform person frame " << frame()
                                 << " to " << _reference_frame << ". Are the frames published?");
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
