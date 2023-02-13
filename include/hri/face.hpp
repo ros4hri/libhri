@@ -1,46 +1,53 @@
-// Copyright 2021 PAL Robotics S.L.
+// Copyright 2022 PAL Robotics
+// All rights reserved.
+//
+// Software License Agreement (BSD License 2.0)
 //
 // Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
+// modification, are permitted provided that the following conditions
+// are met:
 //
-//    * Redistributions of source code must retain the above copyright
-//      notice, this list of conditions and the following disclaimer.
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//  * Neither the name of the PAL Robotics S.L. nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
 //
-//    * Redistributions in binary form must reproduce the above copyright
-//      notice, this list of conditions and the following disclaimer in the
-//      documentation and/or other materials provided with the distribution.
-//
-//    * Neither the name of the PAL Robotics S.L. nor the names of its
-//      contributors may be used to endorse or promote products derived from
-//      this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
 
 #ifndef HRI__FACE_HPP_
 #define HRI__FACE_HPP_
 
+#include <memory>
+#include <string>
+#include <boost/optional.hpp>
+
+#include <opencv2/core.hpp>
+
 #include <hri_msgs/msg/normalized_point_of_interest2_d.hpp>
 #include <hri_msgs/msg/facial_landmarks.hpp>
 #include <hri_msgs/msg/soft_biometrics.hpp>
+
 #include <sensor_msgs/msg/region_of_interest.hpp>
 #include <sensor_msgs/msg/image.hpp>
-#include <memory>
-#include <boost/optional.hpp>
 
 #include "FeatureTracker.hpp"
-
-#include <opencv2/core.hpp>
 
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
@@ -61,9 +68,9 @@ enum Gender
 };
 
 // the tf prefixes follow REP-155
-const static std::string FACE_TF_PREFIX("face_");
-const static std::string GAZE_TF_PREFIX("gaze_");
-const static rclcpp::Duration FACE_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.01));
+static const char FACE_TF_PREFIX[] = "face_";
+static const char GAZE_TF_PREFIX[] = "gaze_";
+static const rclcpp::Duration FACE_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.01));
 
 class Face : public FeatureTracker
 {
@@ -71,10 +78,8 @@ public:
   Face(
     ID id,
     rclcpp::Node::SharedPtr node,
-    tf2::BufferCore &tf_buffer,
-    const std::string& reference_frame);
-
- 
+    tf2::BufferCore & tf_buffer,
+    const std::string & reference_frame);
 
   virtual ~Face();
 
@@ -107,8 +112,8 @@ public:
    *     timer_ = create_wall_timer(
    *       500ms, std::bind(&ShowFaces::timer_callback, this));
    *   }
-   * 
-   * 
+   *
+   *
    *   void timer_callback()
    *   {
    *      auto faces = hri_listener_->getFaces();
@@ -119,7 +124,7 @@ public:
    *        cout << roi.width << "x" << roi.height << endl;
    *     }
    *   }
-   * 
+   *
    * private:
    *   std::shared_ptr<hri::HRIListener> hri_listener_{nullptr};
    *   rclcpp::TimerBase::SharedPtr timer_;
@@ -147,12 +152,13 @@ public:
   /** \brief the list of the 66 facial landmarks (2D points, expressed in normalized coordinates).
    *
    * The location of the landmarks is defined here:
-   * https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/output.md#face-output-format
+   * github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/output.md#face-output-format
    *
    * Constants defined in hri_msgs/FacialLandmarks.h can be used to access
    * specific points on the face.
    */
-  boost::optional<std::array<hri_msgs::msg::NormalizedPointOfInterest2D, 70>> facialLandmarks() const
+  boost::optional<std::array<hri_msgs::msg::NormalizedPointOfInterest2D, 70>>
+  facialLandmarks() const
   {
     return facial_landmarks_;
   }
@@ -202,7 +208,7 @@ private:
 
 
   rclcpp::Executor::SharedPtr executor_ {nullptr};
- 
+
   rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
   rclcpp::Subscription<sensor_msgs::msg::RegionOfInterest>::SharedPtr roi_subscriber_{nullptr};
@@ -221,7 +227,9 @@ private:
   void onLandmarks(hri_msgs::msg::FacialLandmarks::ConstSharedPtr landmarks);
   std::array<hri_msgs::msg::NormalizedPointOfInterest2D, 70> facial_landmarks_;
 
-  rclcpp::Subscription<hri_msgs::msg::SoftBiometrics>::SharedPtr softbiometrics_subscriber_{nullptr};
+  rclcpp::Subscription<hri_msgs::msg::SoftBiometrics>::SharedPtr softbiometrics_subscriber_
+  {nullptr};
+
   void onSoftBiometrics(hri_msgs::msg::SoftBiometrics::ConstSharedPtr biometrics);
   hri_msgs::msg::SoftBiometrics::ConstSharedPtr softbiometrics_;
 
@@ -229,7 +237,7 @@ private:
   std::array<IntensityConfidence, 99> facial_action_units_;
 
   std::string _reference_frame;
-  tf2::BufferCore &tf_buffer_;
+  tf2::BufferCore & tf_buffer_;
 };
 
 typedef std::shared_ptr<Face> FacePtr;
@@ -238,4 +246,4 @@ typedef std::weak_ptr<Face> FaceWeakPtr;
 typedef std::weak_ptr<const Face> FaceWeakConstPtr;
 
 }  // namespace hri
-#endif // HRI__FACE_HPP_
+#endif  // HRI__FACE_HPP_

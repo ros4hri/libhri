@@ -15,9 +15,8 @@ find_package(hri_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(cv_bridge REQUIRED)
-
 find_package(OpenCV REQUIRED)
-find_package(Boost REQUIRED) 
+find_package(Boost REQUIRED)
 
 set(dependencies
     rclcpp
@@ -29,7 +28,7 @@ set(dependencies
     tf2
     cv_bridge
     OpenCV
-  )
+)
 
 
 include_directories(include)
@@ -81,9 +80,8 @@ install(DIRECTORY include/
   DESTINATION include)
 
 install(TARGETS ${PROJECT_NAME}
-  EXPORT export_${PROJECT_NAME}  
+  EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
-
 
