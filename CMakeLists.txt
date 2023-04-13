@@ -1,86 +1,87 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(hri)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_TYPE Debug)
+
 ## ROS noetic officially supports c++14
-add_compile_options(-std=c++14)
-
-find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
-  hri_msgs
-  sensor_msgs
-  rosconsole
-  roscpp
-  std_msgs
-  tf2
-  tf2_ros
-  cv_bridge
-)
-
+# add_compile_options(-std=c++14)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(hri_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(Boost REQUIRED) # for boost::optional
+find_package(Boost REQUIRED)
 
-include_directories(
-    SYSTEM
-    ${OpenCV_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
-    ${catkin_INCLUDE_DIRS}
+set(dependencies
+    rclcpp
+    std_msgs
+    geometry_msgs
+    sensor_msgs
+    hri_msgs
+    tf2_ros
+    tf2
+    cv_bridge
+    OpenCV
 )
 
-include_directories(
-    include
+
+include_directories(include)
+
+
+add_library(${PROJECT_NAME} SHARED
+  src/hri/hri.cpp
+  src/hri/body.cpp
+  src/hri/face.cpp
+  src/hri/person.cpp
+  src/hri/voice.cpp
 )
+ament_target_dependencies(${PROJECT_NAME} ${dependencies})
 
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES hri
-  CATKIN_DEPENDS geometry_msgs hri_msgs rosconsole roscpp std_msgs tf2 cv_bridge
+
+
+add_executable(show_faces examples/show_faces.cpp)
+ament_target_dependencies(show_faces ${dependencies})
+target_link_libraries(show_faces ${PROJECT_NAME})
+
+
+install(TARGETS
+  show_faces
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
+install(DIRECTORY examples DESTINATION share/${PROJECT_NAME})
 
-add_library(${PROJECT_NAME}
-  src/hri.cpp
-  src/body.cpp
-  src/face.cpp
-  src/person.cpp
-  src/voice.cpp
-)
+###########################################################
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
 
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
 
-if(BUILD_EXAMPLES)
-add_executable(show_faces_example
-    examples/show_faces.cpp
-)
-target_link_libraries(show_faces_example ${PROJECT_NAME} ${catkin_LIBRARIES})
-
+  find_package(ament_cmake_gtest REQUIRED)
+  add_subdirectory(test)
 endif()
 
-###########################################################
-# Tests
-
-if(CATKIN_ENABLE_TESTING)
-
-find_package(rostest REQUIRED)
-
-add_rostest_gmock(test_hri test/test_hri.test test/test_hri.cpp)
-target_include_directories(test_hri PRIVATE ${rostest_INCLUDE_DIRS})
-target_link_libraries(test_hri ${PROJECT_NAME})
-
-endif() # CATKIN_ENABLE_TESTING
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+ament_export_dependencies(${dependencies})
+ament_package()
 
 
-###########################################################
-# Install
+install(DIRECTORY include/
+  DESTINATION include)
 
 install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
-)
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
 

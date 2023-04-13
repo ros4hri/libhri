@@ -1,48 +1,56 @@
-// Copyright 2022 PAL Robotics S.L.
+// Copyright 2022 PAL Robotics
+// All rights reserved.
+//
+// Software License Agreement (BSD License 2.0)
 //
 // Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
+// modification, are permitted provided that the following conditions
+// are met:
 //
-//    * Redistributions of source code must retain the above copyright
-//      notice, this list of conditions and the following disclaimer.
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//  * Neither the name of the PAL Robotics S.L. nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
 //
-//    * Redistributions in binary form must reproduce the above copyright
-//      notice, this list of conditions and the following disclaimer in the
-//      documentation and/or other materials provided with the distribution.
-//
-//    * Neither the name of the PAL Robotics S.L. nor the names of its
-//      contributors may be used to endorse or promote products derived from
-//      this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
 
-#ifndef HRI_HRI_H
-#define HRI_HRI_H
-
-#include <ros/ros.h>
-#include <hri_msgs/IdsList.h>
+#ifndef HRI__HRI_HPP_
+#define HRI__HRI_HPP_
 
 #include <functional>
 #include <map>
 #include <memory>
+#include <vector>
+#include <string>
 
-#include "base.h"
-#include "face.h"
-#include "body.h"
-#include "voice.h"
-#include "person.h"
-#include "ros/subscriber.h"
+#include "rclcpp/rclcpp.hpp"
+
+#include "tf2_ros/buffer.h"
+
+#include "hri_msgs/msg/ids_list.hpp"
+
+#include "FeatureTracker.hpp"
+#include "person.hpp"
+#include "face.hpp"
+#include "body.hpp"
+#include "voice.hpp"
 
 
 namespace hri
@@ -78,6 +86,7 @@ public:
    *
    * Faces are returned as constant std::weak_ptr as they may disappear at any point.
    */
+  // std::map<ID, FacePtr> getFaces() const;
   std::map<ID, FaceWeakConstPtr> getFaces() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new face
@@ -143,7 +152,6 @@ public:
   }
 
 
-
   /** \brief Returns the list of all known persons, whether or not they are
    * currently actively detected (eg, seen). The persons are mapped to their
    * IDs.
@@ -203,19 +211,22 @@ public:
    *
    * By default, `base_link`.
    */
-  void setReferenceFrame(const std::string& frame)
+  void setReferenceFrame(const std::string & frame)
   {
     _reference_frame = frame;
   }
 
 private:
-  ros::NodeHandle node_;
-
   void init();
 
-  void onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPtr tracked);
+  void onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::SharedPtr tracked);
 
-  std::map<FeatureType, ros::Subscriber> feature_subscribers_;
+  std::map<FeatureType,
+    rclcpp::Subscription<hri_msgs::msg::IdsList>::SharedPtr> feature_subscribers_;
+  std::unique_ptr<std::thread> dedicated_listener_thread_ {nullptr};
+  rclcpp::Node::SharedPtr node_ {nullptr};
+  rclcpp::Executor::SharedPtr executor_ {nullptr};
+  rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
   std::map<ID, FaceConstPtr> faces;
   std::vector<std::function<void(FaceWeakConstPtr)>> face_callbacks;
@@ -237,12 +248,11 @@ private:
   std::vector<std::function<void(ID)>> person_tracked_lost_callbacks;
 
   std::string _reference_frame;
-  tf2_ros::Buffer _tf_buffer;
+  tf2::BufferCore _tf_buffer;
   tf2_ros::TransformListener _tf_listener;
 };
 
 }  // namespace hri
 
 
-
-#endif  // HRI_HRI_H
+#endif  // HRI__HRI_HPP_

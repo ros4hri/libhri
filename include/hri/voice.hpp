@@ -30,56 +30,65 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <hri/hri.hpp>
-#include "rclcpp/rclcpp.hpp"
+#ifndef HRI__VOICE_HPP_
+#define HRI__VOICE_HPP_
 
-#include <opencv2/opencv.hpp>
+#include <memory>
+#include <string>
+#include <boost/optional.hpp>
 
+#include <geometry_msgs/msg/transform_stamped.hpp>
 
-using namespace std::chrono_literals;
-using std::placeholders::_1;
+#include "tf2_ros/transform_listener.h"
+#include "tf2_ros/buffer.h"
 
+#include "FeatureTracker.hpp"
 
-class ShowFaces : public rclcpp::Node
+namespace hri
+{
+// the tf prefix follows REP-155
+static const char VOICE_TF_PREFIX[] = "voice_";
+static const rclcpp::Duration VOICE_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.01));
+
+class Voice : public FeatureTracker
 {
 public:
-  ShowFaces()
-  : Node("show_faces")
+  Voice(
+    ID id,
+    rclcpp::Node::SharedPtr node,
+    tf2::BufferCore & tf_buffer,
+    const std::string & reference_frame);
+
+  virtual ~Voice();
+
+  /** \brief the name of the tf frame that correspond to this body
+   */
+  std::string frame() const
   {
-    hri_listener_ = std::make_shared<hri::HRIListener>();
-    timer_ = create_wall_timer(
-      500ms, std::bind(&ShowFaces::timer_callback, this));
+    return VOICE_TF_PREFIX + id_;
   }
 
+  /** \brief Returns the estimated (stamped) 3D transform of the voice (if
+   * available).
+   */
+  boost::optional<geometry_msgs::msg::TransformStamped> transform() const;
 
-  void timer_callback()
-  {
-    auto faces = hri_listener_->getFaces();
-    for (auto & f : faces) {
-      auto face_id = f.first;
-      auto face = f.second.lock();
-      if (face) {
-        if (!face->cropped().empty()) {
-          cv::imshow("Cropped face " + face_id, face->cropped());
-        }
-        if (!face->aligned().empty()) {
-          cv::imshow("Aligned face " + face_id, face->aligned());
-        }
-        cv::waitKey(10);
-      }
-    }
-  }
+  void init() override;
 
 private:
-  std::shared_ptr<hri::HRIListener> hri_listener_{nullptr};
-  rclcpp::TimerBase::SharedPtr timer_;
+  std::unique_ptr<std::thread> dedicated_listener_thread_ {nullptr};
+  rclcpp::Node::SharedPtr node_ {nullptr};
+  rclcpp::Executor::SharedPtr executor_ {nullptr};
+  rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
+
+  std::string _reference_frame;
+  tf2::BufferCore & tf_buffer_;
 };
 
-int main(int argc, char * argv[])
-{
-  rclcpp::init(argc, argv);
-  auto node = std::make_shared<ShowFaces>();
-  rclcpp::spin(node);
-  rclcpp::shutdown();
-  return 0;
-}
+typedef std::shared_ptr<Voice> VoicePtr;
+typedef std::shared_ptr<const Voice> VoiceConstPtr;
+typedef std::weak_ptr<Voice> VoiceWeakPtr;
+typedef std::weak_ptr<const Voice> VoiceWeakConstPtr;
+
+}  // namespace hri
+#endif  // HRI__VOICE_HPP_
