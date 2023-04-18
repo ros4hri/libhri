@@ -94,7 +94,7 @@ public:
    * detected (ie, the person is speaking).
    *
    * See also:
-   * * Voice::onSpeech and Voice::onIncrementatalSpeech to register a callback
+   * * Voice::onSpeech and Voice::onIncrementalSpeech to register a callback
    * ot get the actual recognised speech
    * * Voice::speech and Voice::incremental_speech for the last recognised speech
    */
@@ -102,12 +102,13 @@ public:
   {
     is_speaking_callbacks.push_back(callback);
   }
+  
 
   /** \brief Registers a callback function, to be invoked everytime speech is
    * recognised from this voice. Only *final* sentences are returned, eg for instance at
    * the end of a sentece.
    *
-   * See also: Voice::onIncrementatalSpeech for incremental feedback
+   * See also: Voice::onIncrementalSpeech for incremental feedback
    */
   void onSpeech(std::function<void(const std::string&)> callback)
   {
@@ -118,7 +119,7 @@ public:
    * recognised from this voice. The callback will be triggered every time the
    * speech recogniser returns a result, *even if it is not the final result*.
    */
-  void onIncrementatalSpeech(std::function<void(const std::string&)> callback)
+  void onIncrementalSpeech(std::function<void(const std::string&)> callback)
   {
     incremental_speech_callbacks.push_back(callback);
   }
