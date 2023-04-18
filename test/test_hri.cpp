@@ -993,7 +993,7 @@ TEST(libhri, SpeechCallbacks)
     auto voice = weak_voice.lock();
     voice->onSpeaking(is_speaking_callback.AsStdFunction());
     voice->onSpeech(speech_callback.AsStdFunction());
-    voice->onIncrementatalSpeech(incremental_speech_callback.AsStdFunction());
+    voice->onIncrementalSpeech(incremental_speech_callback.AsStdFunction());
   });
 
   // testing::MockFunction<void(ID)> voice_lost_callback;
