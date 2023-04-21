@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.2 (2023-04-21)
+------------------
 * anonymous field as optional
 * Contributors: lorenzoferrini
 
