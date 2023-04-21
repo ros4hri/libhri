@@ -43,7 +43,6 @@ Person::Person(ID id, const HRIListener* listener, ros::NodeHandle& nh,
                tf2_ros::Buffer* tf_buffer_ptr, const std::string& reference_frame)
   : FeatureTracker{ id, nh }
   , listener_(listener)
-  , _anonymous(false)
   , _engagement_status(nullptr)
   , _alias("")
   , _loc_confidence(0.)

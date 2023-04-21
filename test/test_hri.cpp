@@ -530,7 +530,7 @@ TEST(libhri, PersonAttributes)
 
   auto p1 = hri_listener.getTrackedPersons()["p1"].lock();
 
-  ASSERT_FALSE(p1->anonymous()) << "by default, persons are not supposed to be anonymous";
+  ASSERT_FALSE(p1->anonymous()) << "whether a person is anonymous or not has to be explicitely set";
 
   auto face0 = p1->face();
 
@@ -607,8 +607,10 @@ TEST(libhri, AnonymousPersonsAndAliases)
   {
     auto p2 = hri_listener.getTrackedPersons()["p2"].lock();
 
-    ASSERT_FALSE(p1->anonymous());
-    ASSERT_TRUE(p2->anonymous());
+    ASSERT_TRUE(p1->anonymous()); // the anonymous optional flag should have been set
+    ASSERT_TRUE(p2->anonymous()); // the anonymous optional flag should have been set
+    ASSERT_FALSE(*(p1->anonymous()));
+    ASSERT_TRUE(*(p2->anonymous()));
 
     // being anonymous or not should have no impact on face associations
     ASSERT_EQ(p1->face().lock()->id(), "f1");

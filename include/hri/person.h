@@ -32,6 +32,7 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <functional>
 #include <memory>
+#include <boost/optional.hpp>
 
 #include "base.h"
 #include "face.h"
@@ -96,7 +97,7 @@ public:
   VoiceWeakConstPtr voice() const;
 
 
-  bool anonymous() const
+  boost::optional<bool> anonymous() const
   {
     return _anonymous;
   }
@@ -138,7 +139,7 @@ protected:
   // pointers to the aliased person.
   ID _alias;
 
-  bool _anonymous;
+  boost::optional<bool> _anonymous;
 
   hri_msgs::EngagementLevelConstPtr _engagement_status;
 
