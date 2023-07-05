@@ -52,7 +52,8 @@ using namespace ros;
 using namespace hri;
 
 // waiting time for the libhri callback to process their inputs
-#define WAIT std::this_thread::sleep_for(std::chrono::milliseconds(30))
+#define WAIT std::this_thread::sleep_for(std::chrono::milliseconds(50))
+#define WAIT_LONG std::this_thread::sleep_for(std::chrono::milliseconds(100))
 #define WAIT_DEBUG                                                                       \
   {                                                                                      \
     WAIT;                                                                                \
@@ -728,63 +729,115 @@ TEST(libhri, Callbacks)
   auto person_tracked_pub = nh.advertise<hri_msgs::IdsList>("/humans/persons/tracked", 1);
 
 
-  EXPECT_CALL(face_callback, Call(testing::_)).Times(1);
-  EXPECT_CALL(face_lost_callback, Call(testing::_)).Times(0);
+  // uses a workaround to fake interleaving of EXPECT_CALL with function calls, see https://stackoverflow.com/a/60905880
+  uint32_t face_call_count = 0;
+  EXPECT_CALL(face_callback, Call(testing::_)).WillRepeatedly(
+    testing::InvokeWithoutArgs([&face_call_count](){ face_call_count++; }));
+
+  uint32_t face_lost_call_count = 0;
+  EXPECT_CALL(face_lost_callback, Call(testing::_)).WillRepeatedly(
+    testing::InvokeWithoutArgs([&face_lost_call_count](){ face_lost_call_count++; }));
+
+  uint32_t body_call_count = 0;
+  EXPECT_CALL(body_callback, Call(testing::_)).WillRepeatedly(
+    testing::InvokeWithoutArgs([&body_call_count](){ body_call_count++; }));
+
+  uint32_t body_lost_call_count = 0;
+  EXPECT_CALL(body_lost_callback, Call(testing::_)).WillRepeatedly(
+    testing::InvokeWithoutArgs([&body_lost_call_count](){ body_lost_call_count++; }));
+
+  uint32_t voice_call_count = 0;
+  EXPECT_CALL(voice_callback, Call(testing::_)).WillRepeatedly(
+    testing::InvokeWithoutArgs([&voice_call_count](){ voice_call_count++; }));
+
+  uint32_t voice_lost_call_count = 0;
+  EXPECT_CALL(voice_lost_callback, Call(testing::_)).WillRepeatedly(
+    testing::InvokeWithoutArgs([&voice_lost_call_count](){ voice_lost_call_count++; }));
+
+  uint32_t person_call_count = 0;
+  EXPECT_CALL(person_callback, Call(testing::_)).WillRepeatedly(
+    testing::InvokeWithoutArgs([&person_call_count](){ person_call_count++; }));
+
+  uint32_t person_tracked_call_count = 0;
+  EXPECT_CALL(person_tracked_callback, Call(testing::_)).WillRepeatedly(
+    testing::InvokeWithoutArgs([&person_tracked_call_count](){ person_tracked_call_count++; }));
+
+  uint32_t person_tracked_lost_call_count = 0;
+  EXPECT_CALL(person_tracked_lost_callback, Call(testing::_)).WillRepeatedly(
+    testing::InvokeWithoutArgs([&person_tracked_lost_call_count](){ person_tracked_lost_call_count++; }));
+
+
+  // start sequential testing
+  face_call_count = 0;
+  face_lost_call_count = 0;
   ids.ids = { "id1" };
   face_pub.publish(ids);
+  WAIT_LONG;
+  EXPECT_EQ(face_call_count, 1);
+  EXPECT_EQ(face_lost_call_count, 0);
 
-  WAIT;
 
-  EXPECT_CALL(face_callback, Call(testing::_)).Times(1);
-  EXPECT_CALL(face_lost_callback, Call(testing::_)).Times(0);
+  face_call_count = 0;
+  face_lost_call_count = 0;
   ids.ids = { "id1", "id2" };
   face_pub.publish(ids);
+  WAIT_LONG;
+  EXPECT_EQ(face_call_count, 1);
+  EXPECT_EQ(face_lost_call_count, 0);
 
-  WAIT;
-
-  EXPECT_CALL(face_callback, Call(testing::_)).Times(2);
-  EXPECT_CALL(face_lost_callback, Call(testing::_)).Times(2);
+  face_call_count = 0;
+  face_lost_call_count = 0;
   ids.ids = { "id3", "id4" };
   face_pub.publish(ids);
+  WAIT_LONG;
+  EXPECT_EQ(face_call_count, 2);
+  EXPECT_EQ(face_lost_call_count, 2);
 
-  WAIT;
-
-  EXPECT_CALL(body_callback, Call(testing::_)).Times(2);
-  EXPECT_CALL(body_lost_callback, Call(testing::_)).Times(0);
+  body_call_count = 0;
+  body_lost_call_count = 0;
   ids.ids = { "id1", "id2" };
   body_pub.publish(ids);
+  WAIT_LONG;
+  EXPECT_EQ(body_call_count, 2);
+  EXPECT_EQ(body_lost_call_count, 0);
 
-  WAIT;
-
-  EXPECT_CALL(face_callback, Call(testing::_)).Times(2);
-  EXPECT_CALL(face_lost_callback, Call(testing::_)).Times(1);
-  EXPECT_CALL(body_callback, Call(testing::_)).Times(1);
-  EXPECT_CALL(body_lost_callback, Call(testing::_)).Times(0);
+  face_call_count = 0;
+  face_lost_call_count = 0;
+  body_call_count = 0;
+  body_lost_call_count = 0;
   ids.ids = { "id1", "id2", "id3" };
   face_pub.publish(ids);
   body_pub.publish(ids);
+  WAIT_LONG;
+  EXPECT_EQ(face_call_count, 2);
+  EXPECT_EQ(face_lost_call_count, 1);
+  EXPECT_EQ(body_call_count, 1);
+  EXPECT_EQ(body_lost_call_count, 0);
 
-  WAIT;
-
-  EXPECT_CALL(face_callback, Call(testing::_)).Times(3);
-  EXPECT_CALL(face_lost_callback, Call(testing::_)).Times(3);
-  EXPECT_CALL(body_callback, Call(testing::_)).Times(3);
-  EXPECT_CALL(body_lost_callback, Call(testing::_)).Times(3);
+  face_call_count = 0;
+  face_lost_call_count = 0;
+  body_call_count = 0;
+  body_lost_call_count = 0;
   ids.ids = { "id5", "id6", "id7" };
   face_pub.publish(ids);
   body_pub.publish(ids);
+  WAIT_LONG;
+  EXPECT_EQ(face_call_count, 3);
+  EXPECT_EQ(face_lost_call_count, 3);
+  EXPECT_EQ(body_call_count, 3);
+  EXPECT_EQ(body_lost_call_count, 3);
 
-  WAIT;
-
-  EXPECT_CALL(voice_callback, Call(testing::_)).Times(2);
-  EXPECT_CALL(person_callback, Call(testing::_)).Times(2);
-  EXPECT_CALL(person_tracked_callback, Call(testing::_)).Times(2);
+  voice_call_count = 0;
+  person_call_count = 0;
+  person_tracked_call_count = 0;
   ids.ids = { "id1", "id2" };
   voice_pub.publish(ids);
   person_pub.publish(ids);
   person_tracked_pub.publish(ids);
-
-  WAIT;
+  WAIT_LONG;
+  EXPECT_EQ(voice_call_count, 2);
+  EXPECT_EQ(person_call_count, 2);
+  EXPECT_EQ(person_tracked_call_count, 2);
 
   spinner.stop();
 }
@@ -1009,49 +1062,74 @@ TEST(libhri, SpeechCallbacks)
   auto is_speaking_pub = nh.advertise<std_msgs::Bool>("/humans/voices/id1/is_speaking", 1);
   auto speech_pub = nh.advertise<hri_msgs::LiveSpeech>("/humans/voices/id1/speech", 1);
 
+
+  // uses a workaround to fake interleaving of EXPECT_CALL with function calls, see https://stackoverflow.com/a/60905880
+  uint32_t is_speaking_call_count = 0;
+  EXPECT_CALL(is_speaking_callback, Call(testing::_)).WillRepeatedly(
+    testing::InvokeWithoutArgs([&is_speaking_call_count](){ is_speaking_call_count++; }));
+
+  uint32_t speech_call_count = 0;
+  EXPECT_CALL(speech_callback, Call(testing::_)).WillRepeatedly(
+    testing::InvokeWithoutArgs([&speech_call_count](){ speech_call_count++; }));
+
+  uint32_t incremental_speech_call_count = 0;
+  EXPECT_CALL(incremental_speech_callback, Call(testing::_)).WillRepeatedly(
+    testing::InvokeWithoutArgs([&incremental_speech_call_count](){ incremental_speech_call_count++; }));
+
+
+  // start sequential testing
   ids.ids = { "id1" };
   voice_pub.publish(ids);
+  WAIT;
 
-  EXPECT_CALL(is_speaking_callback, Call(testing::_)).Times(1);
-  EXPECT_CALL(speech_callback, Call(testing::_)).Times(0);
-  EXPECT_CALL(incremental_speech_callback, Call(testing::_)).Times(0);
+  is_speaking_call_count = 0;
+  speech_call_count = 0;
+  incremental_speech_call_count = 0;
   is_speaking.data = true;
   is_speaking_pub.publish(is_speaking);
-
   WAIT;
+  EXPECT_EQ(is_speaking_call_count, 1);
+  EXPECT_EQ(speech_call_count, 0);
+  EXPECT_EQ(incremental_speech_call_count, 0);
 
-  EXPECT_CALL(is_speaking_callback, Call(testing::_)).Times(1);
+  is_speaking_call_count = 0;
   is_speaking.data = false;
   is_speaking_pub.publish(is_speaking);
-
   WAIT;
+  EXPECT_EQ(is_speaking_call_count, 1);
 
-  EXPECT_CALL(is_speaking_callback, Call(testing::_)).Times(0);
-  EXPECT_CALL(speech_callback, Call(testing::_)).Times(1);
-  EXPECT_CALL(incremental_speech_callback, Call(testing::_)).Times(0);
+  is_speaking_call_count = 0;
+  speech_call_count = 0;
+  incremental_speech_call_count = 0;
   speech.final = "final sentence";
   speech.incremental = "";
   speech_pub.publish(speech);
-
   WAIT;
+  EXPECT_EQ(is_speaking_call_count, 0);
+  EXPECT_EQ(speech_call_count, 1);
+  EXPECT_EQ(incremental_speech_call_count, 0);
 
-  EXPECT_CALL(is_speaking_callback, Call(testing::_)).Times(0);
-  EXPECT_CALL(speech_callback, Call(testing::_)).Times(0);
-  EXPECT_CALL(incremental_speech_callback, Call(testing::_)).Times(1);
+  is_speaking_call_count = 0;
+  speech_call_count = 0;
+  incremental_speech_call_count = 0;
   speech.final = "";
   speech.incremental = "incremental sentence";
   speech_pub.publish(speech);
-
   WAIT;
+  EXPECT_EQ(is_speaking_call_count, 0);
+  EXPECT_EQ(speech_call_count, 0);
+  EXPECT_EQ(incremental_speech_call_count, 1);
 
-  EXPECT_CALL(is_speaking_callback, Call(testing::_)).Times(0);
-  EXPECT_CALL(speech_callback, Call(testing::_)).Times(1);
-  EXPECT_CALL(incremental_speech_callback, Call(testing::_)).Times(1);
+  is_speaking_call_count = 0;
+  speech_call_count = 0;
+  incremental_speech_call_count = 0;
   speech.final = "final sentence";
   speech.incremental = "incremental sentence";
   speech_pub.publish(speech);
-
   WAIT;
+  EXPECT_EQ(is_speaking_call_count, 0);
+  EXPECT_EQ(speech_call_count, 1);
+  EXPECT_EQ(incremental_speech_call_count, 1);
 
   spinner.stop();
 }
