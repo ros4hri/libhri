@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.4 (2023-07-05)
+------------------
 * Fix Typo in voice.h
   re-apply patch from  juandpenan
   https://github.com/ros4hri/libhri/pull/3
