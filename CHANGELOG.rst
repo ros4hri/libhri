@@ -2,6 +2,12 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* change ROI message type to hri_msgs/NormalizedRegionOfInterest2D
+* fix tests use of EXPECT_CALL and timeouts
+* Contributors: Luka Juricic
+
 0.6.2 (2023-04-21)
 ------------------
 * anonymous field as optional
