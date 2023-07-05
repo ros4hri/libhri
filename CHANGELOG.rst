@@ -2,6 +2,14 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix Typo in voice.h
+  re-apply patch from  juandpenan
+  https://github.com/ros4hri/libhri/pull/3
+  (patch removed by mistake)
+* Contributors: juandpenan
+
 0.6.3 (2023-07-05)
 ------------------
 * change ROI message type to hri_msgs/NormalizedRegionOfInterest2D
