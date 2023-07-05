@@ -39,11 +39,11 @@
 #include "hri_msgs/EngagementLevel.h"
 #include "hri_msgs/IdsList.h"
 #include "hri_msgs/LiveSpeech.h"
+#include "hri_msgs/NormalizedRegionOfInterest2D.h"
 #include "hri_msgs/SoftBiometrics.h"
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Bool.h"
-#include "sensor_msgs/RegionOfInterest.h"
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 
@@ -144,8 +144,8 @@ TEST(libhri, GetFacesRoi)
 
   auto pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
 
-  auto pub_r1 = nh.advertise<sensor_msgs::RegionOfInterest>("/humans/faces/A/roi", 1, true);  // /roi topic is latched
-  auto pub_r2 = nh.advertise<sensor_msgs::RegionOfInterest>("/humans/faces/B/roi", 1, true);  // /roi topic is latched
+  auto pub_r1 = nh.advertise<hri_msgs::NormalizedRegionOfInterest2D>("/humans/faces/A/roi", 1, true);  // /roi topic is latched
+  auto pub_r2 = nh.advertise<hri_msgs::NormalizedRegionOfInterest2D>("/humans/faces/B/roi", 1, true);  // /roi topic is latched
 
   auto ids = hri_msgs::IdsList();
 
@@ -170,7 +170,7 @@ TEST(libhri, GetFacesRoi)
   auto faces = hri_listener.getFaces();
   ASSERT_FALSE(faces["B"].expired());  // face B still exists!
 
-  auto roi = sensor_msgs::RegionOfInterest();
+  auto roi = hri_msgs::NormalizedRegionOfInterest2D();
 
   {
     auto face = faces["B"].lock();
@@ -178,18 +178,18 @@ TEST(libhri, GetFacesRoi)
 
     EXPECT_EQ(face->ns(), "/humans/faces/B");
 
-    EXPECT_EQ(face->roi().width, 0);
+    EXPECT_FLOAT_EQ(face->roi().xmax, 0.);
 
 
-    roi.width = 10;
+    roi.xmax = 0.3;
     pub_r2.publish(roi);
     WAIT;
-    EXPECT_EQ(face->roi().width, 10);
+    EXPECT_FLOAT_EQ(face->roi().xmax, 0.3);
 
-    roi.width = 20;
+    roi.xmax = 0.6;
     pub_r2.publish(roi);
     WAIT;
-    EXPECT_EQ(face->roi().width, 20);
+    EXPECT_FLOAT_EQ(face->roi().xmax, 0.6);
   }
 
   // RoI of face A published *before* face A is published in /faces/tracked,
@@ -207,9 +207,9 @@ TEST(libhri, GetFacesRoi)
     ASSERT_FALSE(face_b == nullptr);
 
     EXPECT_EQ(face_a->ns(), "/humans/faces/A");
-    EXPECT_EQ(face_a->roi().width, 20);
+    EXPECT_FLOAT_EQ(face_a->roi().xmax, 0.6);
     EXPECT_EQ(face_b->ns(), "/humans/faces/B");
-    EXPECT_EQ(face_b->roi().width, 20);
+    EXPECT_FLOAT_EQ(face_b->roi().xmax, 0.6);
   }
 
   spinner.stop();

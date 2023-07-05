@@ -51,7 +51,7 @@ void Body::init()
   ns_ = "/humans/bodies/" + id_;
   ROS_DEBUG_STREAM("New body detected: " << ns_);
 
-  roi_subscriber_ = node_.subscribe<sensor_msgs::RegionOfInterest>(
+  roi_subscriber_ = node_.subscribe<hri_msgs::NormalizedRegionOfInterest2D>(
       ns_ + "/roi", 1, bind(&Body::onRoI, this, _1));
 
   cropped_subscriber_ = node_.subscribe<sensor_msgs::Image>(
@@ -61,12 +61,12 @@ void Body::init()
       ns_ + "/skeleton2d", 1, bind(&Body::onSkeleton, this, _1));
 }
 
-void Body::onRoI(sensor_msgs::RegionOfInterestConstPtr roi)
+void Body::onRoI(hri_msgs::NormalizedRegionOfInterest2DConstPtr roi)
 {
-  roi_ = cv::Rect(roi->x_offset, roi->y_offset, roi->width, roi->height);
+  roi_ = *roi;
 }
 
-cv::Rect Body::roi() const
+NormROI Body::roi() const
 {
   return roi_;
 }

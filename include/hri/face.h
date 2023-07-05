@@ -31,9 +31,9 @@
 #define HRI_FACE_H
 
 #include <hri_msgs/NormalizedPointOfInterest2D.h>
+#include <hri_msgs/NormalizedRegionOfInterest2D.h>
 #include <hri_msgs/FacialLandmarks.h>
 #include <hri_msgs/SoftBiometrics.h>
-#include <sensor_msgs/RegionOfInterest.h>
 #include <sensor_msgs/Image.h>
 #include <memory>
 #include <boost/optional.hpp>
@@ -44,6 +44,8 @@
 #include <opencv2/core.hpp>
 
 #include "tf2_ros/transform_listener.h"
+
+typedef hri_msgs::NormalizedRegionOfInterest2D NormROI;
 
 namespace hri
 {
@@ -88,7 +90,7 @@ public:
     return GAZE_TF_PREFIX + id_;
   }
 
-  /** \brief Returns the 2D region of interest (RoI) of the face.
+  /** \brief Returns the normalized 2D region of interest (RoI) of the face.
    *
    * Use example:
    *
@@ -100,15 +102,15 @@ public:
    * for (auto const& face : faces)
    * {
    *   auto roi = face.second.lock()->roi();
-   *   cout << "Size of face_" << face.first << ": ";
-   *   cout << roi.width << "x" << roi.height << endl;
+   *   cout << "Normalized size of face_" << face.first << ": ";
+   *   cout << (roi.xmax - roi.xmin) << "x" << (roi.ymax - roi.ymin) << endl;
    * }
    * ```
    *
    * The pixel coordinates are provided in the original camera's image coordinate
    * space.
    */
-  cv::Rect roi() const;
+  NormROI roi() const;
 
 
   /** \brief Returns the face image, if necessary scaled, centered and 0-padded
@@ -177,8 +179,8 @@ private:
   size_t nb_roi;
 
   ros::Subscriber roi_subscriber_;
-  void onRoI(sensor_msgs::RegionOfInterestConstPtr roi);
-  cv::Rect roi_;
+  void onRoI(hri_msgs::NormalizedRegionOfInterest2DConstPtr roi);
+  NormROI roi_;
 
   ros::Subscriber cropped_subscriber_;
   void onCropped(sensor_msgs::ImageConstPtr roi);

@@ -31,10 +31,10 @@
 #define HRI_BODY_H
 
 #include <geometry_msgs/TransformStamped.h>
-#include <sensor_msgs/RegionOfInterest.h>
 #include <sensor_msgs/Image.h>
 #include <hri_msgs/Skeleton2D.h>
 #include <hri_msgs/NormalizedPointOfInterest2D.h>
+#include <hri_msgs/NormalizedRegionOfInterest2D.h>
 #include <memory>
 #include <boost/optional.hpp>
 
@@ -45,6 +45,7 @@
 
 #include "tf2_ros/transform_listener.h"
 
+typedef hri_msgs::NormalizedRegionOfInterest2D NormROI;
 typedef hri_msgs::NormalizedPointOfInterest2D SkeletonPoint;
 
 namespace hri
@@ -68,7 +69,7 @@ public:
     return BODY_TF_PREFIX + id_;
   }
 
-  /** \brief If available, returns the 2D region of interest (RoI) of the body.
+  /** \brief If available, returns the normalized 2D region of interest (RoI) of the body.
    *
    * Use example:
    *
@@ -80,8 +81,8 @@ public:
    * for (auto const& body : bodies)
    * {
    *   auto roi = body.second.lock()->roi();
-   *   cout << "Size of body_" << body.first << ": ";
-   *   cout << roi.width << "x" << roi.height << endl;
+   *   cout << "Normalized size of body_" << body.first << ": ";
+   *   cout << (roi.xmax - roi.xmin) << "x" << (roi.ymax - roi.ymin) << endl;
    * }
    * ```
    *
@@ -91,7 +92,7 @@ public:
    * The header's timestamp is the same as a the timestamp of the original
    * image from which the body has been detected.
    */
-  cv::Rect roi() const;
+  NormROI roi() const;
 
   /** \brief Returns the body image, cropped from the source image.
    */
@@ -117,8 +118,8 @@ private:
   size_t nb_roi;
 
   ros::Subscriber roi_subscriber_;
-  void onRoI(sensor_msgs::RegionOfInterestConstPtr roi);
-  cv::Rect roi_;
+  void onRoI(hri_msgs::NormalizedRegionOfInterest2DConstPtr roi);
+  NormROI roi_;
 
   ros::Subscriber cropped_subscriber_;
   void onCropped(sensor_msgs::ImageConstPtr roi);

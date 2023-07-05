@@ -54,7 +54,7 @@ void Face::init()
   ns_ = "/humans/faces/" + id_;
   ROS_DEBUG_STREAM("New face detected: " << ns_);
 
-  roi_subscriber_ = node_.subscribe<sensor_msgs::RegionOfInterest>(
+  roi_subscriber_ = node_.subscribe<hri_msgs::NormalizedRegionOfInterest2D>(
       ns_ + "/roi", 1, bind(&Face::onRoI, this, _1));
 
   cropped_subscriber_ = node_.subscribe<sensor_msgs::Image>(
@@ -70,12 +70,12 @@ void Face::init()
       ns_ + "/softbiometrics", 1, bind(&Face::onSoftBiometrics, this, _1));
 }
 
-void Face::onRoI(sensor_msgs::RegionOfInterestConstPtr roi)
+void Face::onRoI(hri_msgs::NormalizedRegionOfInterest2DConstPtr roi)
 {
-  roi_ = cv::Rect(roi->x_offset, roi->y_offset, roi->width, roi->height);
+  roi_ = *roi;
 }
 
-cv::Rect Face::roi() const
+NormROI Face::roi() const
 {
   return roi_;
 }
