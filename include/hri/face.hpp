@@ -46,7 +46,7 @@
 #include <hri_msgs/msg/soft_biometrics.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
-#include "FeatureTracker.hpp"
+#include "feature_tracker.hpp"
 
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"

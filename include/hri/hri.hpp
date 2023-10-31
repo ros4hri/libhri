@@ -40,16 +40,14 @@
 #include <vector>
 #include <string>
 
+#include "hri_msgs/msg/ids_list.hpp"
 #include "rclcpp/rclcpp.hpp"
-
 #include "tf2_ros/buffer.h"
 
-#include "hri_msgs/msg/ids_list.hpp"
-
-#include "FeatureTracker.hpp"
-#include "person.hpp"
-#include "face.hpp"
 #include "body.hpp"
+#include "face.hpp"
+#include "feature_tracker.hpp"
+#include "person.hpp"
 #include "voice.hpp"
 
 

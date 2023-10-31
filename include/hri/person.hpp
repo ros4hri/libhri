@@ -53,7 +53,7 @@
 
 #include "message_filters/subscriber.h"
 
-#include "FeatureTracker.hpp"
+#include "feature_tracker.hpp"
 #include "face.hpp"
 #include "body.hpp"
 #include "voice.hpp"

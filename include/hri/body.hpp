@@ -53,7 +53,7 @@
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
 
-#include "FeatureTracker.hpp"
+#include "feature_tracker.hpp"
 
 
 namespace hri
