@@ -36,7 +36,7 @@
 
 #include <memory>
 #include <string>
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <opencv2/core.hpp>
 
@@ -158,7 +158,7 @@ public:
    * Constants defined in hri_msgs/FacialLandmarks.h can be used to access
    * specific points on the face.
    */
-  boost::optional<std::array<hri_msgs::msg::NormalizedPointOfInterest2D, 70>>
+  std::optional<std::array<hri_msgs::msg::NormalizedPointOfInterest2D, 70>>
   facialLandmarks() const
   {
     return facial_landmarks_;
@@ -176,7 +176,7 @@ public:
    * Constants defined in hri_msgs/FacialActionUnits.h can be used to access
    * specific action units by name.
    */
-  boost::optional<std::array<IntensityConfidence, 99>> facialActionUnits() const
+  std::optional<std::array<IntensityConfidence, 99>> facialActionUnits() const
   {
     return facial_action_units_;
   }
@@ -184,20 +184,20 @@ public:
   /* \brief estimated age of this face, if available (eg, the
    * '/softbiometrics' is published)
    */
-  boost::optional<float> age() const;
+  std::optional<float> age() const;
 
   /* \brief estimated gender of this face, if available (eg, the
    * '/softbiometrics' is published)
    */
-  boost::optional<Gender> gender() const;
+  std::optional<Gender> gender() const;
 
   /** \brief Returns the (stamped) 3D transform of the face (if available).
    */
-  boost::optional<geometry_msgs::msg::TransformStamped> transform() const;
+  std::optional<geometry_msgs::msg::TransformStamped> transform() const;
 
   /** \brief Returns the (stamped) 3D transform of the gaze (if available).
    */
-  boost::optional<geometry_msgs::msg::TransformStamped> gazeTransform() const;
+  std::optional<geometry_msgs::msg::TransformStamped> gazeTransform() const;
 
   void init() override;
 

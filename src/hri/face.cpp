@@ -156,28 +156,28 @@ void Face::onSoftBiometrics(const hri_msgs::msg::SoftBiometrics::ConstSharedPtr 
 }
 
 
-boost::optional<float> Face::age() const
+std::optional<float> Face::age() const
 {
   if (!softbiometrics_) {
-    return boost::optional<float>();
+    return std::optional<float>();
   }
 
   return softbiometrics_->age;
 }
 
-boost::optional<Gender> Face::gender() const
+std::optional<Gender> Face::gender() const
 {
   if (!softbiometrics_) {
-    return boost::optional<Gender>();
+    return std::optional<Gender>();
   }
   if (softbiometrics_->gender == 0) {  // UNDEFINED
-    return boost::optional<Gender>();
+    return std::optional<Gender>();
   }
 
   return static_cast<Gender>(softbiometrics_->gender);
 }
 
-boost::optional<geometry_msgs::msg::TransformStamped> Face::transform() const
+std::optional<geometry_msgs::msg::TransformStamped> Face::transform() const
 {
   try {
     auto transform = tf_buffer_.lookupTransform(
@@ -191,11 +191,11 @@ boost::optional<geometry_msgs::msg::TransformStamped> Face::transform() const
       "failed to transform person frame " << frame()
                                           << " to " << _reference_frame <<
         ex.what());
-    return boost::optional<geometry_msgs::msg::TransformStamped>();
+    return std::optional<geometry_msgs::msg::TransformStamped>();
   }
 }
 
-boost::optional<geometry_msgs::msg::TransformStamped> Face::gazeTransform() const
+std::optional<geometry_msgs::msg::TransformStamped> Face::gazeTransform() const
 {
   try {
     auto transform = tf_buffer_.lookupTransform(
@@ -208,7 +208,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> Face::gazeTransform() cons
       "failed to transform person frame " << gazeFrame()
                                           << " to " << _reference_frame <<
         ex.what());
-    return boost::optional<geometry_msgs::msg::TransformStamped>();
+    return std::optional<geometry_msgs::msg::TransformStamped>();
   }
 }
 

@@ -124,7 +124,7 @@ Body::SkeletonPoints Body::skeleton() const
   return skeleton_;
 }
 
-boost::optional<geometry_msgs::msg::TransformStamped> Body::transform() const
+std::optional<geometry_msgs::msg::TransformStamped> Body::transform() const
 {
   try {
     auto transform = tf_buffer_.lookupTransform(
@@ -138,7 +138,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> Body::transform() const
       "failed to transform person frame " << frame()
                                           << " to " << _reference_frame <<
         ex.what());
-    return boost::optional<geometry_msgs::msg::TransformStamped>();
+    return std::optional<geometry_msgs::msg::TransformStamped>();
   }
 }
 }  // namespace hri

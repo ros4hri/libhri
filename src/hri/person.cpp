@@ -147,15 +147,15 @@ VoiceWeakConstPtr Person::voice() const
   }
 }
 
-boost::optional<EngagementLevel> Person::engagement_status() const
+std::optional<EngagementLevel> Person::engagement_status() const
 {
   if (!_engagement_status) {
-    return boost::optional<EngagementLevel>();
+    return std::optional<EngagementLevel>();
   }
 
   switch (_engagement_status->level) {
     case hri_msgs::msg::EngagementLevel::UNKNOWN:
-      return boost::optional<EngagementLevel>();
+      return std::optional<EngagementLevel>();
     case hri_msgs::msg::EngagementLevel::ENGAGING:
       return EngagementLevel::ENGAGING;
     case hri_msgs::msg::EngagementLevel::ENGAGED:
@@ -167,14 +167,14 @@ boost::optional<EngagementLevel> Person::engagement_status() const
     default:
       // we should handle all the possible engagement values
       assert(false);
-      return boost::optional<EngagementLevel>();
+      return std::optional<EngagementLevel>();
   }
 }
 
-boost::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
+std::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
 {
   if (abs(_loc_confidence) < 1e-2) {
-    return boost::optional<geometry_msgs::msg::TransformStamped>();
+    return std::optional<geometry_msgs::msg::TransformStamped>();
   }
 
   try {
@@ -188,7 +188,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
       "failed to transform person frame " << frame()
                                           << " to " << _reference_frame << ". " <<
         ex.what());
-    return boost::optional<geometry_msgs::msg::TransformStamped>();
+    return std::optional<geometry_msgs::msg::TransformStamped>();
   }
 }
 

@@ -37,7 +37,7 @@
 #include <string>
 #include <vector>
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
@@ -77,7 +77,7 @@ public:
   /** \brief Returns the estimated (stamped) 3D transform of the voice (if
    * available).
    */
-  boost::optional<geometry_msgs::msg::TransformStamped> transform() const;
+  std::optional<geometry_msgs::msg::TransformStamped> transform() const;
 
   /** \brief returns speech is currently detected in this voice, ie, whether the person is
    * currently speaking.

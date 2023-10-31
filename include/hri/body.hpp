@@ -38,7 +38,7 @@
 #include <vector>
 #include <string>
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <opencv2/core.hpp>
 
@@ -124,7 +124,7 @@ public:
 
   /** \brief Returns the (stamped) 3D transform of the body (if available).
    */
-  boost::optional<geometry_msgs::msg::TransformStamped> transform() const;
+  std::optional<geometry_msgs::msg::TransformStamped> transform() const;
 
   void init() override;
 

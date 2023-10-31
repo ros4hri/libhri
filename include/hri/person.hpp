@@ -37,7 +37,7 @@
 #include <memory>
 #include <string>
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
@@ -112,7 +112,7 @@ public:
   VoiceWeakConstPtr voice() const;
 
 
-  boost::optional<bool> anonymous() const
+  std::optional<bool> anonymous() const
   {
     return _anonymous;
   }
@@ -122,14 +122,14 @@ public:
     return _alias;
   }
 
-  boost::optional<EngagementLevel> engagement_status() const;
+  std::optional<EngagementLevel> engagement_status() const;
 
   float location_confidence() const
   {
     return _loc_confidence;
   }
 
-  boost::optional<geometry_msgs::msg::TransformStamped> transform() const;
+  std::optional<geometry_msgs::msg::TransformStamped> transform() const;
 
   void init() override;
   ID face_id;
@@ -154,7 +154,7 @@ protected:
   // pointers to the aliased person.
   ID _alias;
 
-  boost::optional<bool> _anonymous;
+  std::optional<bool> _anonymous;
 
   hri_msgs::msg::EngagementLevel::SharedPtr _engagement_status;
 

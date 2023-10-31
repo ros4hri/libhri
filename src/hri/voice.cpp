@@ -104,7 +104,7 @@ void Voice::_onSpeech(const hri_msgs::msg::LiveSpeech::ConstSharedPtr msg)
   }
 }
 
-boost::optional<geometry_msgs::msg::TransformStamped> Voice::transform() const
+std::optional<geometry_msgs::msg::TransformStamped> Voice::transform() const
 {
   try {
     auto transform = tf_buffer_.lookupTransform(
@@ -118,7 +118,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> Voice::transform() const
       "failed to transform person frame " << frame()
                                           << " to " << _reference_frame <<
         ex.what());
-    return boost::optional<geometry_msgs::msg::TransformStamped>();
+    return std::optional<geometry_msgs::msg::TransformStamped>();
   }
 }
 }  // namespace hri
