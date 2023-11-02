@@ -57,7 +57,7 @@ public:
     auto faces = hri_listener_->getFaces();
     for (auto & f : faces) {
       auto face_id = f.first;
-      auto face = f.second.lock();
+      auto face = f.second;
       if (face) {
         if (!face->cropped().empty()) {
           cv::imshow("Cropped face " + face_id, face->cropped());

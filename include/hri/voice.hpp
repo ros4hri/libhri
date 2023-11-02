@@ -163,8 +163,6 @@ private:
 
 typedef std::shared_ptr<Voice> VoicePtr;
 typedef std::shared_ptr<const Voice> VoiceConstPtr;
-typedef std::weak_ptr<Voice> VoiceWeakPtr;
-typedef std::weak_ptr<const Voice> VoiceWeakConstPtr;
 
 }  // namespace hri
 #endif  // HRI__VOICE_HPP_

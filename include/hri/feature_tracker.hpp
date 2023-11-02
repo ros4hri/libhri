@@ -78,7 +78,7 @@ public:
   }
 
   // forbids copies of our 'feature trackers', as we need to internally manage
-  // if/when they disappear. Instead, access them via weak pointers (cf HRIListener API).
+  // if/when they disappear. Instead, access them via shared pointers (cf HRIListener API).
 
   // TODO(SLE): ask a C++ expert how to enable that while avoid compilation errors when
   // building/moving a FeatureTracker into a container (in HRIListener)

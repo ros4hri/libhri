@@ -96,20 +96,20 @@ public:
     return PERSON_TF_PREFIX + id_;
   }
 
-  /* returns a (weak, constant) pointer to the face of this person, or
+  /* returns a (shared, constant) pointer to the face of this person, or
    * a nullptr if this person is currently not associated to any detected face.
    */
-  FaceWeakConstPtr face() const;
+  FaceConstPtr face() const;
 
-  /* returns a (weak, constant) pointer to the body of this person, or
+  /* returns a (shared, constant) pointer to the body of this person, or
    * a nullptr if this person is currently not associated to any detected body.
    */
-  BodyWeakConstPtr body() const;
+  BodyConstPtr body() const;
 
-  /* returns a (weak, constant) pointer to the voice of this person, or
+  /* returns a (shared, constant) pointer to the voice of this person, or
    * a nullptr if this person is currently not associated to any detected voice.
    */
-  VoiceWeakConstPtr voice() const;
+  VoiceConstPtr voice() const;
 
 
   std::optional<bool> anonymous() const
@@ -180,8 +180,6 @@ protected:
 
 typedef std::shared_ptr<Person> PersonPtr;
 typedef std::shared_ptr<const Person> PersonConstPtr;
-typedef std::weak_ptr<Person> PersonWeakPtr;
-typedef std::weak_ptr<const Person> PersonWeakConstPtr;
 
 }  // namespace hri
 

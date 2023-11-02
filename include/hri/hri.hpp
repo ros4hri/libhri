@@ -82,15 +82,15 @@ public:
 
   /** \brief Returns the list of currently detected faces, mapped to their IDs
    *
-   * Faces are returned as constant std::weak_ptr as they may disappear at any point.
+   * Faces are returned as constant std::shared_ptr as they may disappear at any point.
    */
   // std::map<ID, FacePtr> getFaces() const;
-  std::map<ID, FaceWeakConstPtr> getFaces() const;
+  std::map<ID, FaceConstPtr> getFaces() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new face
    * is detected.
    */
-  void onFace(std::function<void(FaceWeakConstPtr)> callback)
+  void onFace(std::function<void(FaceConstPtr)> callback)
   {
     face_callbacks.push_back(callback);
   }
@@ -106,14 +106,14 @@ public:
 
   /** \brief Returns the list of currently detected bodies, mapped to their IDs
    *
-   * Bodies are returned as constant std::weak_ptr as they may disappear at any point.
+   * Bodies are returned as constant std::shared_ptr as they may disappear at any point.
    */
-  std::map<ID, BodyWeakConstPtr> getBodies() const;
+  std::map<ID, BodyConstPtr> getBodies() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new body
    * is detected.
    */
-  void onBody(std::function<void(BodyWeakConstPtr)> callback)
+  void onBody(std::function<void(BodyConstPtr)> callback)
   {
     body_callbacks.push_back(callback);
   }
@@ -129,14 +129,14 @@ public:
 
   /** \brief Returns the list of currently detected voices, mapped to their IDs
    *
-   * Voices are returned as constant std::weak_ptr as they may disappear at any point.
+   * Voices are returned as constant std::shared_ptr as they may disappear at any point.
    */
-  std::map<ID, VoiceWeakConstPtr> getVoices() const;
+  std::map<ID, VoiceConstPtr> getVoices() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new voice
    * is detected.
    */
-  void onVoice(std::function<void(VoiceWeakPtr)> callback)
+  void onVoice(std::function<void(VoicePtr)> callback)
   {
     voice_callbacks.push_back(callback);
   }
@@ -154,17 +154,17 @@ public:
    * currently actively detected (eg, seen). The persons are mapped to their
    * IDs.
    *
-   * Persons are returned as constant std::weak_ptr: while person do *not*
+   * Persons are returned as constant std::shared_ptr: while person do *not*
    * disappear in general, *anonymous* persons (created because, eg, a face has
    * been detected, and we can infer a yet-to-be-recognised person does exist)
    * can disappear.
    */
-  std::map<ID, PersonWeakConstPtr> getPersons() const;
+  std::map<ID, PersonConstPtr> getPersons() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new person
    * is detected.
    */
-  void onPerson(std::function<void(PersonWeakConstPtr)> callback)
+  void onPerson(std::function<void(PersonConstPtr)> callback)
   {
     person_callbacks.push_back(callback);
   }
@@ -180,17 +180,17 @@ public:
 
   /** \brief Returns the list of currently detected persons, mapped to their IDs
    *
-   * Persons are returned as constant std::weak_ptr: while person do *not* disappear in
+   * Persons are returned as constant std::shared_ptr: while person do *not* disappear in
    * general, *anonymous* persons (created because, eg, a face has been detected, and we
    * can infer a yet-to-be-recognised person does exist) can disappear.
    */
-  std::map<ID, PersonWeakConstPtr> getTrackedPersons() const;
+  std::map<ID, PersonConstPtr> getTrackedPersons() const;
 
 
   /** \brief Registers a callback function, to be invoked everytime a new person
    * is detected and actively tracked (eg, currently seen).
    */
-  void onTrackedPerson(std::function<void(PersonWeakConstPtr)> callback)
+  void onTrackedPerson(std::function<void(PersonConstPtr)> callback)
   {
     person_tracked_callbacks.push_back(callback);
   }
@@ -227,15 +227,15 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
   std::map<ID, FaceConstPtr> faces;
-  std::vector<std::function<void(FaceWeakConstPtr)>> face_callbacks;
+  std::vector<std::function<void(FaceConstPtr)>> face_callbacks;
   std::vector<std::function<void(ID)>> face_lost_callbacks;
 
   std::map<ID, BodyConstPtr> bodies;
-  std::vector<std::function<void(BodyWeakConstPtr)>> body_callbacks;
+  std::vector<std::function<void(BodyConstPtr)>> body_callbacks;
   std::vector<std::function<void(ID)>> body_lost_callbacks;
 
   std::map<ID, VoiceConstPtr> voices;
-  std::vector<std::function<void(VoiceWeakPtr)>> voice_callbacks;
+  std::vector<std::function<void(VoicePtr)>> voice_callbacks;
   std::vector<std::function<void(ID)>> voice_lost_callbacks;
 
   std::map<ID, PersonConstPtr> persons;

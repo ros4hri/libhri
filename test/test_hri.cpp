@@ -93,7 +93,7 @@ TEST(libhri_tests, GetFaces)
 
     EXPECT_EQ(faces.size(), 1U);
     ASSERT_TRUE(faces.find("A") != faces.end());
-    EXPECT_EQ(faces["A"].lock()->id(), "A");
+    EXPECT_EQ(faces["A"]->id(), "A");
 
     start = node->now();
     while (rclcpp::ok() && (node->now() - start) < 1s) {
@@ -148,8 +148,8 @@ TEST(libhri_tests, GetFaces)
     EXPECT_TRUE(faces.find("A") == faces.end());
     ASSERT_TRUE(faces.find("B") != faces.end());
 
-    std::weak_ptr<const hri::Face> face_b = faces["B"];
-    EXPECT_FALSE(face_b.expired());  // face B exists!
+    std::shared_ptr<const hri::Face> face_b = faces["B"];
+    int use_count_before_deletion = face_b.use_count();
 
     RCLCPP_INFO(node->get_logger(), "[]");
 
@@ -162,7 +162,8 @@ TEST(libhri_tests, GetFaces)
     }
 
     EXPECT_EQ(hri_listener->getFaces().size(), 0U);
-    EXPECT_TRUE(face_b.expired());  // face B does not exist anymore!
+    // check face B is not used anymore by hri_listener!
+    EXPECT_EQ(face_b.use_count(), --use_count_before_deletion);
 
     hri_listener.reset();
   }
@@ -218,12 +219,12 @@ TEST(libhri_tests, GetFacesRoi)
 
   auto faces = hri_listener->getFaces();
 
-  ASSERT_FALSE(faces["B"].expired());
+  ASSERT_TRUE(faces.find("B") != faces.end());
 
   auto roi = hri::Face::RegionOfInterest();
 
   {
-    auto face = faces["B"].lock();
+    auto face = faces["B"];
 
     EXPECT_FALSE(face == nullptr);
     EXPECT_EQ(face->ns(), "/humans/faces/B");
@@ -267,8 +268,8 @@ TEST(libhri_tests, GetFacesRoi)
 
   faces = hri_listener->getFaces();
   {
-    auto face_a = faces["A"].lock();
-    auto face_b = faces["B"].lock();
+    auto face_a = faces["A"];
+    auto face_b = faces["B"];
 
     ASSERT_FALSE(face_a == nullptr);
     ASSERT_FALSE(face_b == nullptr);
@@ -313,7 +314,7 @@ TEST(libhri_tests, GetBodies)
 
     EXPECT_EQ(bodies.size(), 1U);
     ASSERT_TRUE(bodies.find("A") != bodies.end());
-    EXPECT_EQ(bodies["A"].lock()->id(), "A");
+    EXPECT_EQ(bodies["A"]->id(), "A");
 
     RCLCPP_INFO(node->get_logger(), "[A]");
 
@@ -366,9 +367,8 @@ TEST(libhri_tests, GetBodies)
     EXPECT_EQ(bodies.find("A"), bodies.end());
     ASSERT_TRUE(bodies.find("B") != bodies.end());
 
-    std::weak_ptr<const hri::Body> body_b = bodies["B"];
-
-    EXPECT_FALSE(body_b.expired());  // body B exists!
+    std::shared_ptr<const hri::Body> body_b = bodies["B"];
+    int use_count_before_deletion = body_b.use_count();
 
     RCLCPP_INFO(node->get_logger(), "[]");
     ids.ids = {};
@@ -381,7 +381,8 @@ TEST(libhri_tests, GetBodies)
     }
 
     EXPECT_EQ(hri_listener->getBodies().size(), 0U);
-    EXPECT_TRUE(body_b.expired());  // body B does not exist anymore!
+    // check body B is not used anymore by hri_listener!
+    EXPECT_EQ(body_b.use_count(), --use_count_before_deletion);
 
     hri_listener.reset();
   }
@@ -420,7 +421,7 @@ TEST(libhri_tests, GetVoices)
     auto voices = hri_listener->getVoices();
     EXPECT_EQ(voices.size(), 1U);
     ASSERT_TRUE(voices.find("A") != voices.end());
-    EXPECT_EQ(voices["A"].lock()->id(), "A");
+    EXPECT_EQ(voices["A"]->id(), "A");
 
     RCLCPP_INFO(node->get_logger(), "[A]");
     start = node->now();
@@ -468,8 +469,8 @@ TEST(libhri_tests, GetVoices)
     EXPECT_TRUE(voices.find("A") == voices.end());
     ASSERT_TRUE(voices.find("B") != voices.end());
 
-    std::weak_ptr<const hri::Voice> voice_b = voices["B"];
-    EXPECT_FALSE(voice_b.expired());  // voice B exists!
+    std::shared_ptr<const hri::Voice> voice_b = voices["B"];
+    int use_count_before_deletion = voice_b.use_count();
 
     RCLCPP_INFO(node->get_logger(), "[]");
     ids.ids = {};
@@ -480,8 +481,8 @@ TEST(libhri_tests, GetVoices)
       rate.sleep();
     }
     EXPECT_EQ(hri_listener->getVoices().size(), 0U);
-
-    EXPECT_TRUE(voice_b.expired());  // voice B does not exist anymore!
+    // check voice B is not used anymore by hri_listener!
+    EXPECT_EQ(voice_b.use_count(), --use_count_before_deletion);
 
     hri_listener.reset();
   }
@@ -519,7 +520,7 @@ TEST(libhri_tests, GetKnownPersons)
     auto persons = hri_listener->getPersons();
     EXPECT_EQ(persons.size(), 1U);
     ASSERT_TRUE(persons.find("A") != persons.end());
-    EXPECT_EQ(persons["A"].lock()->id(), "A");
+    EXPECT_EQ(persons["A"]->id(), "A");
 
     RCLCPP_INFO(node->get_logger(), "[A]");
     start = node->now();
@@ -565,7 +566,7 @@ TEST(libhri_tests, GetKnownPersons)
     EXPECT_TRUE(persons.find("A") == persons.end());
     ASSERT_TRUE(persons.find("B") != persons.end());
 
-    std::shared_ptr<const hri::Person> person_b = persons["B"].lock();
+    std::shared_ptr<const hri::Person> person_b = persons["B"];
     EXPECT_TRUE(person_b != nullptr);  // person B exists!
 
     RCLCPP_INFO(node->get_logger(), "[]");
@@ -622,7 +623,7 @@ TEST(libhri_tests, GetTrackedPersons)
     auto persons = hri_listener->getTrackedPersons();
     EXPECT_EQ(persons.size(), 1U);
     ASSERT_TRUE(persons.find("A") != persons.end());
-    EXPECT_EQ(persons["A"].lock()->id(), "A");
+    EXPECT_EQ(persons["A"]->id(), "A");
 
     RCLCPP_INFO(node->get_logger(), "[A]");
     start = node->now();
@@ -668,7 +669,7 @@ TEST(libhri_tests, GetTrackedPersons)
     EXPECT_TRUE(persons.find("A") == persons.end());
     ASSERT_TRUE(persons.find("B") != persons.end());
 
-    std::shared_ptr<const hri::Person> person_b = persons["B"].lock();
+    std::shared_ptr<const hri::Person> person_b = persons["B"];
     EXPECT_TRUE(person_b != nullptr);  // person B exists!
 
     RCLCPP_INFO(node->get_logger(), "[]");
@@ -726,14 +727,13 @@ TEST(libhri_tests, PersonAttributes)
     rate.sleep();
   }
 
-  auto p1 = hri_listener->getTrackedPersons()["p1"].lock();
+  auto p1 = hri_listener->getTrackedPersons()["p1"];
 
   ASSERT_FALSE(p1->anonymous());
 
   auto face0 = p1->face();
 
-  ASSERT_EQ(face0.lock(), nullptr);
-  ASSERT_TRUE(face0.expired());
+  ASSERT_EQ(face0, nullptr);
 
   auto face_id = std_msgs::msg::String();
   face_id.data = "f1";
@@ -744,11 +744,10 @@ TEST(libhri_tests, PersonAttributes)
     executor.spin_some();
     rate.sleep();
   }
-  auto face1 = hri_listener->getTrackedPersons()["p1"].lock()->face();
+  auto face1 = hri_listener->getTrackedPersons()["p1"]->face();
 
-  ASSERT_NE(face1.lock(), nullptr);
-  ASSERT_FALSE(face1.expired());
-  ASSERT_EQ(face1.lock()->id(), "f1");
+  ASSERT_NE(face1, nullptr);
+  ASSERT_EQ(face1->id(), "f1");
 
   hri_listener.reset();
   executor.remove_node(node);
@@ -836,10 +835,10 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
 
   ASSERT_EQ(hri_listener->getTrackedPersons().size(), 2U);
 
-  auto p1 = hri_listener->getTrackedPersons()["p1"].lock();
+  auto p1 = hri_listener->getTrackedPersons()["p1"];
 
   {
-    auto p2 = hri_listener->getTrackedPersons()["p2"].lock();
+    auto p2 = hri_listener->getTrackedPersons()["p2"];
 
     ASSERT_TRUE(p1->anonymous());  // the anonymous optional flag should have been set
     ASSERT_TRUE(p2->anonymous());  // the anonymous optional flag should have been set
@@ -847,8 +846,8 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
     ASSERT_TRUE(*(p2->anonymous()));
 
     // being anonymous or not should have no impact on face associations
-    ASSERT_EQ(p1->face().lock()->id(), "f1");
-    ASSERT_EQ(p2->face().lock()->id(), "f2");
+    ASSERT_EQ(p1->face()->id(), "f1");
+    ASSERT_EQ(p2->face()->id(), "f2");
   }
 
   ///////////// ALIASES ///////////////////////////
@@ -868,11 +867,11 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
   ASSERT_EQ(hri_listener->getTrackedPersons().size(), 2U);
 
   {
-    auto p2 = hri_listener->getTrackedPersons()["p2"].lock();
+    auto p2 = hri_listener->getTrackedPersons()["p2"];
 
     ASSERT_EQ(p1, p2) << "p2 should now point to the same person as p1";
 
-    ASSERT_EQ(p2->face().lock()->id(), "f1") << "p2's face now points to f1";
+    ASSERT_EQ(p2->face()->id(), "f1") << "p2's face now points to f1";
   }
   // remove the alias
   alias_id.data = "";
@@ -885,11 +884,11 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
   }
 
   {
-    auto p2 = hri_listener->getTrackedPersons()["p2"].lock();
+    auto p2 = hri_listener->getTrackedPersons()["p2"];
 
     ASSERT_NE(p1, p2) << "p2 is not anymore the same person as p1";
 
-    ASSERT_EQ(p2->face().lock()->id(), "f2")
+    ASSERT_EQ(p2->face()->id(), "f2")
       << "p2's face should still points to its former f2 face";
   }
 
@@ -903,7 +902,7 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
     rate.sleep();
   }
 
-  auto p2 = hri_listener->getTrackedPersons()["p2"].lock();
+  auto p2 = hri_listener->getTrackedPersons()["p2"];
 
   ASSERT_EQ(p1, p2) << "p2 is again the same person as p1";
 
@@ -973,7 +972,7 @@ TEST(libhri_tests, SoftBiometrics)
     rate.sleep();
   }
 
-  auto face = hri_listener->getTrackedPersons()["p1"].lock()->face().lock();
+  auto face = hri_listener->getTrackedPersons()["p1"]->face();
 
   ASSERT_EQ(face->id(), "f1");
 
@@ -1042,7 +1041,7 @@ TEST(libhri_tests, EngagementLevel)
   }
 
 
-  auto p = hri_listener->getTrackedPersons()["p1"].lock();
+  auto p = hri_listener->getTrackedPersons()["p1"];
   ASSERT_TRUE(p->engagement_status());
   ASSERT_EQ(*(p->engagement_status()), hri::DISENGAGED);
 
@@ -1097,7 +1096,7 @@ TEST(libhri_tests, Callback)
   int ontracked_lost_person_callbacks_invoked = 0;
 
   hri_listener->onFace(
-    [&]([[maybe_unused]] hri::FaceWeakConstPtr face) {
+    [&]([[maybe_unused]] hri::FaceConstPtr face) {
       face_callbacks_invoked++;
     });
 
@@ -1107,7 +1106,7 @@ TEST(libhri_tests, Callback)
     });
 
   hri_listener->onBody(
-    [&]([[maybe_unused]] hri::BodyWeakConstPtr body) {
+    [&]([[maybe_unused]] hri::BodyConstPtr body) {
       body_callbacks_invoked++;
     });
 
@@ -1117,7 +1116,7 @@ TEST(libhri_tests, Callback)
     });
 
   hri_listener->onVoice(
-    [&]([[maybe_unused]] hri::VoiceWeakConstPtr voice) {
+    [&]([[maybe_unused]] hri::VoiceConstPtr voice) {
       voice_callbacks_invoked++;
     });
 
@@ -1127,12 +1126,12 @@ TEST(libhri_tests, Callback)
     });
 
   hri_listener->onPerson(
-    [&]([[maybe_unused]] hri::PersonWeakConstPtr person) {
+    [&]([[maybe_unused]] hri::PersonConstPtr person) {
       person_callbacks_invoked++;
     });
 
   hri_listener->onTrackedPerson(
-    [&]([[maybe_unused]] hri::PersonWeakConstPtr tracked_person) {
+    [&]([[maybe_unused]] hri::PersonConstPtr tracked_person) {
       ontracked_person_callbacks_invoked++;
     });
 
@@ -1306,7 +1305,7 @@ TEST(libhri_tests, PeopleLocation)
     rate.sleep();
   }
 
-  auto p = hri_listener->getTrackedPersons()["p1"].lock();
+  auto p = hri_listener->getTrackedPersons()["p1"];
 
   auto msg = std_msgs::msg::Float32();
   msg.data = 0.;

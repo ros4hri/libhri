@@ -68,11 +68,11 @@ HRIListener::~HRIListener()
 }
 
 
-std::map<ID, FaceWeakConstPtr> HRIListener::getFaces() const
+std::map<ID, FaceConstPtr> HRIListener::getFaces() const
 {
-  std::map<ID, FaceWeakConstPtr> result;
+  std::map<ID, FaceConstPtr> result;
 
-  // creates a std::map of *weak* pointers from the internally managed list of
+  // creates a std::map of *shared* pointers from the internally managed list of
   // shared pointers
   for (auto const & f : faces) {
     result[f.first] = f.second;
@@ -82,11 +82,11 @@ std::map<ID, FaceWeakConstPtr> HRIListener::getFaces() const
   return result;
 }
 
-std::map<ID, BodyWeakConstPtr> HRIListener::getBodies() const
+std::map<ID, BodyConstPtr> HRIListener::getBodies() const
 {
-  std::map<ID, BodyWeakConstPtr> result;
+  std::map<ID, BodyConstPtr> result;
 
-  // creates a std::map of *weak* pointers from the internally managed list of
+  // creates a std::map of *shared* pointers from the internally managed list of
   // shared pointers
   for (auto const & f : bodies) {
     result[f.first] = f.second;
@@ -95,11 +95,11 @@ std::map<ID, BodyWeakConstPtr> HRIListener::getBodies() const
   return result;
 }
 
-std::map<ID, VoiceWeakConstPtr> HRIListener::getVoices() const
+std::map<ID, VoiceConstPtr> HRIListener::getVoices() const
 {
-  std::map<ID, VoiceWeakConstPtr> result;
+  std::map<ID, VoiceConstPtr> result;
 
-  // creates a std::map of *weak* pointers from the internally managed list of
+  // creates a std::map of *shared* pointers from the internally managed list of
   // shared pointers
   for (auto const & f : voices) {
     result[f.first] = f.second;
@@ -108,13 +108,13 @@ std::map<ID, VoiceWeakConstPtr> HRIListener::getVoices() const
   return result;
 }
 
-std::map<ID, PersonWeakConstPtr> HRIListener::getPersons() const
+std::map<ID, PersonConstPtr> HRIListener::getPersons() const
 {
-  std::map<ID, PersonWeakConstPtr> result;
+  std::map<ID, PersonConstPtr> result;
 
   std::vector<PersonConstPtr> aliased;
 
-  // creates a map of *weak* pointers from the internally managed list of
+  // creates a map of *shared* pointers from the internally managed list of
   // shared pointers
   for (auto const & f : persons) {
     if (f.second->alias().empty()) {
@@ -134,13 +134,13 @@ std::map<ID, PersonWeakConstPtr> HRIListener::getPersons() const
   return result;
 }
 
-std::map<ID, PersonWeakConstPtr> HRIListener::getTrackedPersons() const
+std::map<ID, PersonConstPtr> HRIListener::getTrackedPersons() const
 {
-  std::map<ID, PersonWeakConstPtr> result;
+  std::map<ID, PersonConstPtr> result;
 
   std::vector<PersonConstPtr> aliased;
 
-  // creates a map of *weak* pointers from the internally managed list of
+  // creates a map of *shared* pointers from the internally managed list of
   // shared pointers
   for (auto const & f : tracked_persons) {
     if (f.second->alias().empty()) {
