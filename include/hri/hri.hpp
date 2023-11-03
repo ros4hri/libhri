@@ -66,12 +66,12 @@ public:
    * Faces are returned as constant std::shared_ptr as they may disappear at any point.
    */
   // std::map<ID, FacePtr> getFaces() const;
-  std::map<ID, FaceConstPtr> getFaces() const;
+  std::map<ID, FacePtr> getFaces() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new face
    * is detected.
    */
-  void onFace(std::function<void(FaceConstPtr)> callback)
+  void onFace(std::function<void(FacePtr)> callback)
   {
     face_callbacks.push_back(callback);
   }
@@ -89,12 +89,12 @@ public:
    *
    * Bodies are returned as constant std::shared_ptr as they may disappear at any point.
    */
-  std::map<ID, BodyConstPtr> getBodies() const;
+  std::map<ID, BodyPtr> getBodies() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new body
    * is detected.
    */
-  void onBody(std::function<void(BodyConstPtr)> callback)
+  void onBody(std::function<void(BodyPtr)> callback)
   {
     body_callbacks.push_back(callback);
   }
@@ -112,7 +112,7 @@ public:
    *
    * Voices are returned as constant std::shared_ptr as they may disappear at any point.
    */
-  std::map<ID, VoiceConstPtr> getVoices() const;
+  std::map<ID, VoicePtr> getVoices() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new voice
    * is detected.
@@ -140,12 +140,12 @@ public:
    * been detected, and we can infer a yet-to-be-recognised person does exist)
    * can disappear.
    */
-  std::map<ID, PersonConstPtr> getPersons() const;
+  std::map<ID, PersonPtr> getPersons() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new person
    * is detected.
    */
-  void onPerson(std::function<void(PersonConstPtr)> callback)
+  void onPerson(std::function<void(PersonPtr)> callback)
   {
     person_callbacks.push_back(callback);
   }
@@ -165,13 +165,13 @@ public:
    * general, *anonymous* persons (created because, eg, a face has been detected, and we
    * can infer a yet-to-be-recognised person does exist) can disappear.
    */
-  std::map<ID, PersonConstPtr> getTrackedPersons() const;
+  std::map<ID, PersonPtr> getTrackedPersons() const;
 
 
   /** \brief Registers a callback function, to be invoked everytime a new person
    * is detected and actively tracked (eg, currently seen).
    */
-  void onTrackedPerson(std::function<void(PersonConstPtr)> callback)
+  void onTrackedPerson(std::function<void(PersonPtr)> callback)
   {
     person_tracked_callbacks.push_back(callback);
   }
@@ -207,23 +207,23 @@ private:
   rclcpp::Executor::SharedPtr executor_ {nullptr};
   rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
-  std::map<ID, FaceConstPtr> faces;
-  std::vector<std::function<void(FaceConstPtr)>> face_callbacks;
+  std::map<ID, FacePtr> faces;
+  std::vector<std::function<void(FacePtr)>> face_callbacks;
   std::vector<std::function<void(ID)>> face_lost_callbacks;
 
-  std::map<ID, BodyConstPtr> bodies;
-  std::vector<std::function<void(BodyConstPtr)>> body_callbacks;
+  std::map<ID, BodyPtr> bodies;
+  std::vector<std::function<void(BodyPtr)>> body_callbacks;
   std::vector<std::function<void(ID)>> body_lost_callbacks;
 
-  std::map<ID, VoiceConstPtr> voices;
+  std::map<ID, VoicePtr> voices;
   std::vector<std::function<void(VoicePtr)>> voice_callbacks;
   std::vector<std::function<void(ID)>> voice_lost_callbacks;
 
-  std::map<ID, PersonConstPtr> persons;
-  std::vector<std::function<void(PersonConstPtr)>> person_callbacks;
+  std::map<ID, PersonPtr> persons;
+  std::vector<std::function<void(PersonPtr)>> person_callbacks;
   std::vector<std::function<void(ID)>> person_lost_callbacks;
-  std::map<ID, PersonConstPtr> tracked_persons;
-  std::vector<std::function<void(PersonConstPtr)>> person_tracked_callbacks;
+  std::map<ID, PersonPtr> tracked_persons;
+  std::vector<std::function<void(PersonPtr)>> person_tracked_callbacks;
   std::vector<std::function<void(ID)>> person_tracked_lost_callbacks;
 
   std::string _reference_frame;

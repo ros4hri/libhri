@@ -78,20 +78,20 @@ public:
     return PERSON_TF_PREFIX + id_;
   }
 
-  /* returns a (shared, constant) pointer to the face of this person, or
+  /* returns a shared pointer to the face of this person, or
    * a nullptr if this person is currently not associated to any detected face.
    */
-  FaceConstPtr face() const;
+  FacePtr face() const;
 
-  /* returns a (shared, constant) pointer to the body of this person, or
+  /* returns a shared pointer to the body of this person, or
    * a nullptr if this person is currently not associated to any detected body.
    */
-  BodyConstPtr body() const;
+  BodyPtr body() const;
 
-  /* returns a (shared, constant) pointer to the voice of this person, or
+  /* returns a shared pointer to the voice of this person, or
    * a nullptr if this person is currently not associated to any detected voice.
    */
-  VoiceConstPtr voice() const;
+  VoicePtr voice() const;
 
 
   std::optional<bool> anonymous() const
@@ -161,7 +161,6 @@ protected:
 };
 
 typedef std::shared_ptr<Person> PersonPtr;
-typedef std::shared_ptr<const Person> PersonConstPtr;
 
 }  // namespace hri
 

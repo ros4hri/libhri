@@ -49,9 +49,9 @@ HRIListener::~HRIListener()
 }
 
 
-std::map<ID, FaceConstPtr> HRIListener::getFaces() const
+std::map<ID, FacePtr> HRIListener::getFaces() const
 {
-  std::map<ID, FaceConstPtr> result;
+  std::map<ID, FacePtr> result;
 
   // creates a std::map of *shared* pointers from the internally managed list of
   // shared pointers
@@ -63,9 +63,9 @@ std::map<ID, FaceConstPtr> HRIListener::getFaces() const
   return result;
 }
 
-std::map<ID, BodyConstPtr> HRIListener::getBodies() const
+std::map<ID, BodyPtr> HRIListener::getBodies() const
 {
-  std::map<ID, BodyConstPtr> result;
+  std::map<ID, BodyPtr> result;
 
   // creates a std::map of *shared* pointers from the internally managed list of
   // shared pointers
@@ -76,9 +76,9 @@ std::map<ID, BodyConstPtr> HRIListener::getBodies() const
   return result;
 }
 
-std::map<ID, VoiceConstPtr> HRIListener::getVoices() const
+std::map<ID, VoicePtr> HRIListener::getVoices() const
 {
-  std::map<ID, VoiceConstPtr> result;
+  std::map<ID, VoicePtr> result;
 
   // creates a std::map of *shared* pointers from the internally managed list of
   // shared pointers
@@ -89,11 +89,11 @@ std::map<ID, VoiceConstPtr> HRIListener::getVoices() const
   return result;
 }
 
-std::map<ID, PersonConstPtr> HRIListener::getPersons() const
+std::map<ID, PersonPtr> HRIListener::getPersons() const
 {
-  std::map<ID, PersonConstPtr> result;
+  std::map<ID, PersonPtr> result;
 
-  std::vector<PersonConstPtr> aliased;
+  std::vector<PersonPtr> aliased;
 
   // creates a map of *shared* pointers from the internally managed list of
   // shared pointers
@@ -115,11 +115,11 @@ std::map<ID, PersonConstPtr> HRIListener::getPersons() const
   return result;
 }
 
-std::map<ID, PersonConstPtr> HRIListener::getTrackedPersons() const
+std::map<ID, PersonPtr> HRIListener::getTrackedPersons() const
 {
-  std::map<ID, PersonConstPtr> result;
+  std::map<ID, PersonPtr> result;
 
-  std::vector<PersonConstPtr> aliased;
+  std::vector<PersonPtr> aliased;
 
   // creates a map of *shared* pointers from the internally managed list of
   // shared pointers

@@ -144,7 +144,6 @@ private:
 };
 
 typedef std::shared_ptr<Voice> VoicePtr;
-typedef std::shared_ptr<const Voice> VoiceConstPtr;
 
 }  // namespace hri
 #endif  // HRI__VOICE_HPP_
