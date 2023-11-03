@@ -5,7 +5,7 @@
   <version>0.6.4</version>
   <description>A wrapper library around the ROS4HRI ROS topics</description>
   <maintainer email="severin.lemaignan@pal-robotics.com">Séverin Lemaignan</maintainer>
-  <license>BSD</license>
+  <license>Apache License 2.0</license>
   <url type="website">http://wiki.ros.org/hri</url>
   <author email="severin.lemaignan@pal-robotics.com">Séverin Lemaignan</author>
 
