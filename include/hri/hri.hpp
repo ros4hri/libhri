@@ -35,29 +35,17 @@
 namespace hri
 {
 /** \brief Main entry point to libhri. This is most likely what you want to use.
- * Use example:
  *
- * ```cpp
- * ros::init(argc, argv, "test_libhri");
- * ros::NodeHandle nh;
- *
- * HRIListener hri_listener;
- *
- * while (ros::ok()) {
- *
- *   auto faces = hri_listener.getFaces();
- *
- *   for (auto const& face : faces)
- *   {
- *     cout << "Face " << face.first << " seen!";
- *   }
- * }
- * ```
+ * See src/node_show_faces.cpp for a minimal usage example
  */
 class HRIListener
 {
 public:
-  HRIListener();
+  /** \brief Initializes the libhri main class.
+   *
+   * The class can subscribe to topics and print logs, using the node argument.
+   */
+  explicit HRIListener(rclcpp::Node::SharedPtr node);
 
   ~HRIListener();
 
@@ -65,7 +53,6 @@ public:
    *
    * Faces are returned as constant std::shared_ptr as they may disappear at any point.
    */
-  // std::map<ID, FacePtr> getFaces() const;
   std::map<ID, FacePtr> getFaces() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new face
@@ -202,9 +189,7 @@ private:
 
   std::map<FeatureType,
     rclcpp::Subscription<hri_msgs::msg::IdsList>::SharedPtr> feature_subscribers_;
-  std::unique_ptr<std::thread> dedicated_listener_thread_ {nullptr};
-  rclcpp::Node::SharedPtr node_ {nullptr};
-  rclcpp::Executor::SharedPtr executor_ {nullptr};
+  rclcpp::Node::SharedPtr node_{nullptr};
   rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
   std::map<ID, FacePtr> faces;

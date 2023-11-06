@@ -24,16 +24,16 @@ namespace hri
 Person::Person(
   ID id,
   rclcpp::Node::SharedPtr node,
+  rclcpp::CallbackGroup::SharedPtr callback_group,
   const HRIListener * listener,
   tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
-: FeatureTracker{id}
+: FeatureTracker{id, "/humans/persons", node, callback_group}
   , listener_(listener)
   , _alias("")
   , _engagement_status(nullptr)
   , _loc_confidence(0.)
   , _reference_frame(reference_frame)
-  , node_(node)
   , tf_buffer_(tf_buffer)
 {
 }
@@ -42,64 +42,43 @@ Person::Person(
 Person::~Person()
 {
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting person " << id_);
-  executor_->cancel();
-  dedicated_listener_thread_->join();
 }
 
 void Person::init()
 {
-  rclcpp::NodeOptions node_options;
-
-  node_options.start_parameter_event_publisher(false);
-  node_options.start_parameter_services(false);
-  auto node_params = node_->get_node_parameters_interface();
-  auto node_topics = node_->get_node_topics_interface();
-  auto qos = rclcpp::SystemDefaultsQoS();
-
-  callback_group_ = node_->create_callback_group(
-    rclcpp::CallbackGroupType::MutuallyExclusive, true);
-  rclcpp::SubscriptionOptionsWithAllocator<std::allocator<void>> options;
-  options.callback_group = callback_group_;
-
-  ns_ = "/humans/persons/" + id_;
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "New person detected: " << ns_);
 
-  face_id_subscriber_ = rclcpp::create_subscription<std_msgs::msg::String>(
-    node_params, node_topics, ns_ + "/face_id", qos, [&](
-      const std_msgs::msg::String::SharedPtr msg) {
-      face_id = msg->data;
-    }, options);
+  rclcpp::SubscriptionOptions options;
+  options.callback_group = callback_group_;
+  auto qos = rclcpp::SystemDefaultsQoS();
 
-  body_id_subscriber_ = rclcpp::create_subscription<std_msgs::msg::String>(
-    node_params, node_topics, ns_ + "/body_id", qos, [&](
-      const std_msgs::msg::String::SharedPtr msg) {
-      body_id = msg->data;
-    }, options);
+  face_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
+    ns_ + "/face_id", qos,
+    [&](const std_msgs::msg::String::SharedPtr msg) {face_id = msg->data;}, options);
 
-  voice_id_subscriber_ = rclcpp::create_subscription<std_msgs::msg::String>(
-    node_params, node_topics, ns_ + "/voice_id", qos,
+  body_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
+    ns_ + "/body_id", qos,
+    [&](const std_msgs::msg::String::SharedPtr msg) {body_id = msg->data;}, options);
+
+  voice_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
+    ns_ + "/voice_id", qos,
     [&](const std_msgs::msg::String::SharedPtr msg) {voice_id = msg->data;}, options);
 
-  anonymous_subscriber_ = rclcpp::create_subscription<std_msgs::msg::Bool>(
-    node_params, node_topics, ns_ + "/anonymous", qos,
+  anonymous_subscriber_ = node_->create_subscription<std_msgs::msg::Bool>(
+    ns_ + "/anonymous", qos,
     [&](const std_msgs::msg::Bool::SharedPtr msg) {_anonymous = msg->data;}, options);
 
-  alias_subscriber_ = rclcpp::create_subscription<std_msgs::msg::String>(
-    node_params, node_topics, ns_ + "/alias", qos, [&](const std_msgs::msg::String::SharedPtr msg) {
-      _alias = msg->data;
-    }, options);
+  alias_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
+    ns_ + "/alias", qos,
+    [&](const std_msgs::msg::String::SharedPtr msg) {_alias = msg->data;}, options);
 
-  engagement_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::EngagementLevel>(
-    node_params, node_topics, ns_ + "/engagement_status", qos,
+  engagement_subscriber_ = node_->create_subscription<hri_msgs::msg::EngagementLevel>(
+    ns_ + "/engagement_status", qos,
     [&](const hri_msgs::msg::EngagementLevel::SharedPtr msg) {_engagement_status = msg;}, options);
 
-  loc_confidence_subscriber_ = rclcpp::create_subscription<std_msgs::msg::Float32>(
-    node_params, node_topics, ns_ + "/location_confidence", qos,
+  loc_confidence_subscriber_ = node_->create_subscription<std_msgs::msg::Float32>(
+    ns_ + "/location_confidence", qos,
     [&](const std_msgs::msg::Float32::SharedPtr msg) {_loc_confidence = msg->data;}, options);
-
-  executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-  executor_->add_callback_group(callback_group_, node_->get_node_base_interface());
-  dedicated_listener_thread_ = std::make_unique<std::thread>([&]() {executor_->spin();});
 }
 
 FacePtr Person::face() const

@@ -43,29 +43,29 @@ using namespace std::chrono_literals;
 
 TEST(libhri_tests, GetFaces)
 {
-  auto node = rclcpp::Node::make_shared("test_node");
+  rclcpp::executors::MultiThreadedExecutor executor;
+  auto tester_node = rclcpp::Node::make_shared("tester_node");
+  executor.add_node(tester_node);
+  auto hri_node = rclcpp::Node::make_shared("hri_node");
+  executor.add_node(hri_node);
 
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
-
-
-  auto publisher = node->create_publisher<hri_msgs::msg::IdsList>(
+  auto publisher = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/faces/tracked", 1);
 
   {
-    auto hri_listener = std::make_shared<hri::HRIListener>();
+    auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
 
     ASSERT_EQ(publisher->get_subscription_count(), 1U);
     ASSERT_EQ(hri_listener->getFaces().size(), 0U);
 
     auto ids = hri_msgs::msg::IdsList();
 
-    RCLCPP_INFO(node->get_logger(), "[A]");
+    RCLCPP_INFO(tester_node->get_logger(), "[A]");
     ids.ids = {"A"};
 
     rclcpp::Rate rate(30);
-    auto start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    auto start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       publisher->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -77,8 +77,8 @@ TEST(libhri_tests, GetFaces)
     ASSERT_TRUE(faces.find("A") != faces.end());
     EXPECT_EQ(faces["A"]->id(), "A");
 
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       publisher->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -86,11 +86,11 @@ TEST(libhri_tests, GetFaces)
 
     EXPECT_EQ(hri_listener->getFaces().size(), 1U);
 
-    RCLCPP_INFO(node->get_logger(), "[A,B]");
+    RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
     ids.ids = {"A", "B"};
 
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       publisher->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -102,10 +102,10 @@ TEST(libhri_tests, GetFaces)
     EXPECT_TRUE(faces.find("A") != faces.end());
     EXPECT_TRUE(faces.find("B") != faces.end());
 
-    RCLCPP_INFO(node->get_logger(), "[A,B]");
+    RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
 
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       publisher->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -113,12 +113,12 @@ TEST(libhri_tests, GetFaces)
 
     EXPECT_EQ(hri_listener->getFaces().size(), 2U);
 
-    RCLCPP_INFO(node->get_logger(), "[B]");
+    RCLCPP_INFO(tester_node->get_logger(), "[B]");
 
     ids.ids = {"B"};
 
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       publisher->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -133,11 +133,11 @@ TEST(libhri_tests, GetFaces)
     std::shared_ptr<const hri::Face> face_b = faces["B"];
     int use_count_before_deletion = face_b.use_count();
 
-    RCLCPP_INFO(node->get_logger(), "[]");
+    RCLCPP_INFO(tester_node->get_logger(), "[]");
 
     ids.ids = {};
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       publisher->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -151,35 +151,35 @@ TEST(libhri_tests, GetFaces)
   }
 
   EXPECT_EQ(publisher->get_subscription_count(), 0U);
-  executor.remove_node(node);
-  executor.cancel();
 }
 
 TEST(libhri_tests, GetFacesRoi)
 {
-  auto node = rclcpp::Node::make_shared("test_node");
-  auto hri_listener = std::make_shared<hri::HRIListener>();
+  rclcpp::executors::MultiThreadedExecutor executor;
+  auto tester_node = rclcpp::Node::make_shared("tester_node");
+  executor.add_node(tester_node);
+  auto hri_node = rclcpp::Node::make_shared("hri_node");
+  executor.add_node(hri_node);
+
+  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
 
   rclcpp::Rate rate(30);
 
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
-
-  auto pub = node->create_publisher<hri_msgs::msg::IdsList>(
+  auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/faces/tracked", 1);
 
   // roi topic is transient local
-  auto pub_r1 = node->create_publisher<hri::Face::RegionOfInterest>(
+  auto pub_r1 = tester_node->create_publisher<hri::Face::RegionOfInterest>(
     "/humans/faces/A/roi", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
   // roi topic is transient local
-  auto pub_r2 = node->create_publisher<hri::Face::RegionOfInterest>(
+  auto pub_r2 = tester_node->create_publisher<hri::Face::RegionOfInterest>(
     "/humans/faces/B/roi", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
 
   auto ids = hri_msgs::msg::IdsList();
   ids.ids = {"A"};
 
-  auto start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  auto start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     pub->publish(ids);
     executor.spin_some();
     rate.sleep();
@@ -189,8 +189,8 @@ TEST(libhri_tests, GetFacesRoi)
 
   ids.ids = {"B"};
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     pub->publish(ids);
     executor.spin_some();
     rate.sleep();
@@ -214,8 +214,8 @@ TEST(libhri_tests, GetFacesRoi)
 
     roi.xmin = 0.1;
 
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub_r2->publish(roi);
       executor.spin_some();
       rate.sleep();
@@ -225,8 +225,8 @@ TEST(libhri_tests, GetFacesRoi)
 
     roi.xmin = 0.2;
 
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub_r2->publish(roi);
       executor.spin_some();
       rate.sleep();
@@ -240,8 +240,8 @@ TEST(libhri_tests, GetFacesRoi)
 
   ids.ids = {"B", "A"};
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     pub->publish(ids);
     pub_r1->publish(roi);
     executor.spin_some();
@@ -261,33 +261,32 @@ TEST(libhri_tests, GetFacesRoi)
     EXPECT_EQ(face_b->ns(), "/humans/faces/B");
     EXPECT_FLOAT_EQ(face_b->roi().xmin, 0.2f);
   }
-
-  executor.remove_node(node);
-  executor.cancel();
-  hri_listener.reset();
 }
 
 
 TEST(libhri_tests, GetBodies)
 {
-  auto node = rclcpp::Node::make_shared("test_node");
-  rclcpp::Rate rate(30);
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
+  rclcpp::executors::MultiThreadedExecutor executor;
+  auto tester_node = rclcpp::Node::make_shared("tester_node");
+  executor.add_node(tester_node);
+  auto hri_node = rclcpp::Node::make_shared("hri_node");
+  executor.add_node(hri_node);
 
-  auto pub = node->create_publisher<hri_msgs::msg::IdsList>(
+  rclcpp::Rate rate(30);
+
+  auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/bodies/tracked", 1);
 
   {
-    auto hri_listener = std::make_shared<hri::HRIListener>();
+    auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
     ASSERT_EQ(pub->get_subscription_count(), 1U);
 
     auto ids = hri_msgs::msg::IdsList();
-    RCLCPP_INFO(node->get_logger(), "[A]");
+    RCLCPP_INFO(tester_node->get_logger(), "[A]");
     ids.ids = {"A"};
 
-    auto start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    auto start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -298,21 +297,21 @@ TEST(libhri_tests, GetBodies)
     ASSERT_TRUE(bodies.find("A") != bodies.end());
     EXPECT_EQ(bodies["A"]->id(), "A");
 
-    RCLCPP_INFO(node->get_logger(), "[A]");
+    RCLCPP_INFO(tester_node->get_logger(), "[A]");
 
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
     }
     EXPECT_EQ(hri_listener->getBodies().size(), 1U);
 
-    RCLCPP_INFO(node->get_logger(), "[A,B]");
+    RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
     ids.ids = {"A", "B"};
 
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -323,9 +322,9 @@ TEST(libhri_tests, GetBodies)
     EXPECT_TRUE(bodies.find("A") != bodies.end());
     EXPECT_TRUE(bodies.find("B") != bodies.end());
 
-    RCLCPP_INFO(node->get_logger(), "[A,B]");
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -333,11 +332,11 @@ TEST(libhri_tests, GetBodies)
 
     EXPECT_EQ(hri_listener->getBodies().size(), 2U);
 
-    RCLCPP_INFO(node->get_logger(), "[B]");
+    RCLCPP_INFO(tester_node->get_logger(), "[B]");
     ids.ids = {"B"};
 
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -352,11 +351,11 @@ TEST(libhri_tests, GetBodies)
     std::shared_ptr<const hri::Body> body_b = bodies["B"];
     int use_count_before_deletion = body_b.use_count();
 
-    RCLCPP_INFO(node->get_logger(), "[]");
+    RCLCPP_INFO(tester_node->get_logger(), "[]");
     ids.ids = {};
 
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -370,32 +369,31 @@ TEST(libhri_tests, GetBodies)
   }
 
   EXPECT_EQ(pub->get_subscription_count(), 0U);
-
-  executor.remove_node(node);
-  executor.cancel();
 }
 
 TEST(libhri_tests, GetVoices)
 {
-  auto node = rclcpp::Node::make_shared("test_node");
+  rclcpp::executors::MultiThreadedExecutor executor;
+  auto tester_node = rclcpp::Node::make_shared("tester_node");
+  executor.add_node(tester_node);
+  auto hri_node = rclcpp::Node::make_shared("hri_node");
+  executor.add_node(hri_node);
+
   rclcpp::Rate rate(30);
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
 
-
-  auto pub = node->create_publisher<hri_msgs::msg::IdsList>(
+  auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/voices/tracked", 1);
 
   {
-    auto hri_listener = std::make_shared<hri::HRIListener>();
+    auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
     ASSERT_EQ(pub->get_subscription_count(), 1U);
 
     auto ids = hri_msgs::msg::IdsList();
 
-    RCLCPP_INFO(node->get_logger(), "[A]");
+    RCLCPP_INFO(tester_node->get_logger(), "[A]");
     ids.ids = {"A"};
-    auto start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    auto start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -405,9 +403,9 @@ TEST(libhri_tests, GetVoices)
     ASSERT_TRUE(voices.find("A") != voices.end());
     EXPECT_EQ(voices["A"]->id(), "A");
 
-    RCLCPP_INFO(node->get_logger(), "[A]");
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    RCLCPP_INFO(tester_node->get_logger(), "[A]");
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -415,10 +413,10 @@ TEST(libhri_tests, GetVoices)
     EXPECT_EQ(hri_listener->getVoices().size(), 1U);
 
 
-    RCLCPP_INFO(node->get_logger(), "[A,B]");
+    RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
     ids.ids = {"A", "B"};
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -428,9 +426,9 @@ TEST(libhri_tests, GetVoices)
     EXPECT_TRUE(voices.find("A") != voices.end());
     EXPECT_TRUE(voices.find("B") != voices.end());
 
-    RCLCPP_INFO(node->get_logger(), "[A,B]");
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -438,10 +436,10 @@ TEST(libhri_tests, GetVoices)
     EXPECT_EQ(hri_listener->getVoices().size(), 2U);
 
 
-    RCLCPP_INFO(node->get_logger(), "[B]");
+    RCLCPP_INFO(tester_node->get_logger(), "[B]");
     ids.ids = {"B"};
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -454,10 +452,10 @@ TEST(libhri_tests, GetVoices)
     std::shared_ptr<const hri::Voice> voice_b = voices["B"];
     int use_count_before_deletion = voice_b.use_count();
 
-    RCLCPP_INFO(node->get_logger(), "[]");
+    RCLCPP_INFO(tester_node->get_logger(), "[]");
     ids.ids = {};
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -470,55 +468,63 @@ TEST(libhri_tests, GetVoices)
   }
 
   EXPECT_EQ(pub->get_subscription_count(), 0U);
-  executor.remove_node(node);
-  executor.cancel();
 }
 
 TEST(libhri_tests, GetKnownPersons)
 {
-  auto node = rclcpp::Node::make_shared("test_node");
+  rclcpp::executors::SingleThreadedExecutor tester_executor;
+  auto tester_node = rclcpp::Node::make_shared("tester_node");
+  tester_executor.add_node(tester_node);
+  rclcpp::executors::SingleThreadedExecutor hri_executor;
+  auto hri_node = rclcpp::Node::make_shared("hri_node");
+  hri_executor.add_node(hri_node);
+
   rclcpp::Rate rate(30);
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
 
-
-  auto pub = node->create_publisher<hri_msgs::msg::IdsList>(
+  auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/known", 1);
 
   {
-    auto hri_listener = std::make_shared<hri::HRIListener>();
+    auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
     ASSERT_EQ(pub->get_subscription_count(), 1U);
 
     auto ids = hri_msgs::msg::IdsList();
 
-    RCLCPP_INFO(node->get_logger(), "[A]");
+    RCLCPP_INFO(tester_node->get_logger(), "[A]");
     ids.ids = {"A"};
-    auto start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    auto start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
+      // RCLCPP_INFO(tester_node->get_logger(), "this is a test");
       pub->publish(ids);
-      executor.spin_some();
+      // RCLCPP_INFO(tester_node->get_logger(), "this is another test");
+      tester_executor.spin_some();
+      // RCLCPP_INFO(tester_node->get_logger(), "this is yet another test");
+      hri_executor.spin_some();
       rate.sleep();
     }
+    RCLCPP_INFO(tester_node->get_logger(), "final test?");
     auto persons = hri_listener->getPersons();
     EXPECT_EQ(persons.size(), 1U);
     ASSERT_TRUE(persons.find("A") != persons.end());
     EXPECT_EQ(persons["A"]->id(), "A");
 
-    RCLCPP_INFO(node->get_logger(), "[A]");
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    RCLCPP_INFO(tester_node->get_logger(), "[A]");
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
-      executor.spin_some();
+      tester_executor.spin_some();
+      hri_executor.spin_some();
       rate.sleep();
     }
     EXPECT_EQ(hri_listener->getPersons().size(), 1U);
 
-    RCLCPP_INFO(node->get_logger(), "[A,B]");
+    RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
     ids.ids = {"A", "B"};
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
-      executor.spin_some();
+      tester_executor.spin_some();
+      hri_executor.spin_some();
       rate.sleep();
     }
     persons = hri_listener->getPersons();
@@ -526,21 +532,23 @@ TEST(libhri_tests, GetKnownPersons)
     EXPECT_TRUE(persons.find("A") != persons.end());
     EXPECT_TRUE(persons.find("B") != persons.end());
 
-    RCLCPP_INFO(node->get_logger(), "[A,B]");
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
-      executor.spin_some();
+      tester_executor.spin_some();
+      hri_executor.spin_some();
       rate.sleep();
     }
     EXPECT_EQ(hri_listener->getPersons().size(), 2U);
 
-    RCLCPP_INFO(node->get_logger(), "[B]");
+    RCLCPP_INFO(tester_node->get_logger(), "[B]");
     ids.ids = {"B"};
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 300ms) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 300ms) {
       pub->publish(ids);
-      executor.spin_some();
+      tester_executor.spin_some();
+      hri_executor.spin_some();
       rate.sleep();
     }
     persons = hri_listener->getPersons();
@@ -551,12 +559,13 @@ TEST(libhri_tests, GetKnownPersons)
     std::shared_ptr<const hri::Person> person_b = persons["B"];
     EXPECT_TRUE(person_b != nullptr);  // person B exists!
 
-    RCLCPP_INFO(node->get_logger(), "[]");
+    RCLCPP_INFO(tester_node->get_logger(), "[]");
     ids.ids = {};
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
-      executor.spin_some();
+      tester_executor.spin_some();
+      hri_executor.spin_some();
       rate.sleep();
     }
     EXPECT_EQ(hri_listener->getPersons().size(), 0U);
@@ -567,23 +576,23 @@ TEST(libhri_tests, GetKnownPersons)
   }
 
   EXPECT_EQ(pub->get_subscription_count(), 0U);
-  executor.remove_node(node);
-  executor.cancel();
 }
 
 TEST(libhri_tests, GetTrackedPersons)
 {
-  auto node = rclcpp::Node::make_shared("test_node");
+  rclcpp::executors::MultiThreadedExecutor executor;
+  auto tester_node = rclcpp::Node::make_shared("tester_node");
+  executor.add_node(tester_node);
+  auto hri_node = rclcpp::Node::make_shared("hri_node");
+  executor.add_node(hri_node);
+
   rclcpp::Rate rate(30);
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
 
-
-  auto pub = node->create_publisher<hri_msgs::msg::IdsList>(
+  auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/tracked", 1);
 
   {
-    auto hri_listener = std::make_shared<hri::HRIListener>();
+    auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
 
 
     ASSERT_EQ(pub->get_subscription_count(), 1U);
@@ -591,10 +600,10 @@ TEST(libhri_tests, GetTrackedPersons)
 
     auto ids = hri_msgs::msg::IdsList();
 
-    RCLCPP_INFO(node->get_logger(), "[A]");
+    RCLCPP_INFO(tester_node->get_logger(), "[A]");
     ids.ids = {"A"};
-    auto start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    auto start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -607,19 +616,19 @@ TEST(libhri_tests, GetTrackedPersons)
     ASSERT_TRUE(persons.find("A") != persons.end());
     EXPECT_EQ(persons["A"]->id(), "A");
 
-    RCLCPP_INFO(node->get_logger(), "[A]");
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    RCLCPP_INFO(tester_node->get_logger(), "[A]");
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
     }
     EXPECT_EQ(hri_listener->getTrackedPersons().size(), 1U);
 
-    RCLCPP_INFO(node->get_logger(), "[A,B]");
+    RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
     ids.ids = {"A", "B"};
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -629,19 +638,19 @@ TEST(libhri_tests, GetTrackedPersons)
     EXPECT_TRUE(persons.find("A") != persons.end());
     EXPECT_TRUE(persons.find("B") != persons.end());
 
-    RCLCPP_INFO(node->get_logger(), "[A,B]");
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
     }
     EXPECT_EQ(hri_listener->getTrackedPersons().size(), 2U);
 
-    RCLCPP_INFO(node->get_logger(), "[B]");
+    RCLCPP_INFO(tester_node->get_logger(), "[B]");
     ids.ids = {"B"};
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -654,10 +663,10 @@ TEST(libhri_tests, GetTrackedPersons)
     std::shared_ptr<const hri::Person> person_b = persons["B"];
     EXPECT_TRUE(person_b != nullptr);  // person B exists!
 
-    RCLCPP_INFO(node->get_logger(), "[]");
+    RCLCPP_INFO(tester_node->get_logger(), "[]");
     ids.ids = {};
-    start = node->now();
-    while (rclcpp::ok() && (node->now() - start) < 1s) {
+    start = tester_node->now();
+    while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
       pub->publish(ids);
       executor.spin_some();
       rate.sleep();
@@ -670,30 +679,31 @@ TEST(libhri_tests, GetTrackedPersons)
   }
 
   EXPECT_EQ(pub->get_subscription_count(), 0U);
-  executor.remove_node(node);
-  executor.cancel();
 }
 
 TEST(libhri_tests, PersonAttributes)
 {
-  auto node = rclcpp::Node::make_shared("test_node");
+  rclcpp::executors::MultiThreadedExecutor executor;
+  auto tester_node = rclcpp::Node::make_shared("tester_node");
+  executor.add_node(tester_node);
+  auto hri_node = rclcpp::Node::make_shared("hri_node");
+  executor.add_node(hri_node);
+
   rclcpp::Rate rate(30);
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>();
+  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
 
-  auto person_pub = node->create_publisher<hri_msgs::msg::IdsList>(
+  auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/tracked", 1);
-  auto face_pub = node->create_publisher<hri_msgs::msg::IdsList>(
+  auto face_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/faces/tracked", 1);
-  auto person_face_pub = node->create_publisher<std_msgs::msg::String>(
+  auto person_face_pub = tester_node->create_publisher<std_msgs::msg::String>(
     "/humans/persons/p1/face_id", 1);
 
   auto person_ids = hri_msgs::msg::IdsList();
   person_ids.ids = {"p1"};
-  auto start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  auto start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     person_pub->publish(person_ids);
     executor.spin_some();
     rate.sleep();
@@ -702,8 +712,8 @@ TEST(libhri_tests, PersonAttributes)
   auto face_ids = hri_msgs::msg::IdsList();
   face_ids.ids = {"f1", "f2"};
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     face_pub->publish(face_ids);
     executor.spin_some();
     rate.sleep();
@@ -720,8 +730,8 @@ TEST(libhri_tests, PersonAttributes)
   auto face_id = std_msgs::msg::String();
   face_id.data = "f1";
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     person_face_pub->publish(face_id);
     executor.spin_some();
     rate.sleep();
@@ -732,34 +742,42 @@ TEST(libhri_tests, PersonAttributes)
   ASSERT_EQ(face1->id(), "f1");
 
   hri_listener.reset();
-  executor.remove_node(node);
-  executor.cancel();
 }
 
 TEST(libhri_tests, AnonymousPersonsAndAliases)
 {
-  auto node = rclcpp::Node::make_shared("test_node");
+  rclcpp::executors::MultiThreadedExecutor executor;
+  auto tester_node = rclcpp::Node::make_shared("tester_node");
+  executor.add_node(tester_node);
+  auto hri_node = rclcpp::Node::make_shared("hri_node");
+  executor.add_node(hri_node);
+
   rclcpp::Rate rate(30);
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>();
+  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
 
-  auto person_pub = node->create_publisher<hri_msgs::msg::IdsList>("humans/persons/tracked", 1);
-  auto p1_anon_pub = node->create_publisher<std_msgs::msg::Bool>("/humans/persons/p1/anonymous", 1);
-  auto p2_anon_pub = node->create_publisher<std_msgs::msg::Bool>("/humans/persons/p2/anonymous", 1);
+  auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+    "humans/persons/tracked", 1);
+  auto p1_anon_pub = tester_node->create_publisher<std_msgs::msg::Bool>(
+    "/humans/persons/p1/anonymous", 1);
+  auto p2_anon_pub = tester_node->create_publisher<std_msgs::msg::Bool>(
+    "/humans/persons/p2/anonymous", 1);
 
-  auto face_pub = node->create_publisher<hri_msgs::msg::IdsList>("/humans/faces/tracked", 1);
-  auto p1_face_pub = node->create_publisher<std_msgs::msg::String>("/humans/persons/p1/face_id", 1);
-  auto p2_face_pub = node->create_publisher<std_msgs::msg::String>("/humans/persons/p2/face_id", 1);
+  auto face_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/faces/tracked", 1);
+  auto p1_face_pub = tester_node->create_publisher<std_msgs::msg::String>(
+    "/humans/persons/p1/face_id", 1);
+  auto p2_face_pub = tester_node->create_publisher<std_msgs::msg::String>(
+    "/humans/persons/p2/face_id", 1);
 
-  auto p2_alias_pub = node->create_publisher<std_msgs::msg::String>("/humans/persons/p2/alias", 1);
+  auto p2_alias_pub = tester_node->create_publisher<std_msgs::msg::String>(
+    "/humans/persons/p2/alias", 1);
 
   auto person_ids = hri_msgs::msg::IdsList();
   person_ids.ids = {"p1", "p2"};
 
-  auto start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  auto start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     person_pub->publish(person_ids);
     executor.spin_some();
     rate.sleep();
@@ -768,8 +786,8 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
   auto face_ids = hri_msgs::msg::IdsList();
   face_ids.ids = {"f1", "f2"};
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     face_pub->publish(face_ids);
     executor.spin_some();
     rate.sleep();
@@ -779,8 +797,8 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
   auto face_id = std_msgs::msg::String();
   face_id.data = "f1";
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     p1_face_pub->publish(face_id);
     executor.spin_some();
     rate.sleep();
@@ -788,8 +806,8 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
 
   face_id.data = "f2";
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     p2_face_pub->publish(face_id);
     executor.spin_some();
     rate.sleep();
@@ -798,8 +816,8 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
   std_msgs::msg::Bool msg;
   msg.data = false;
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     p1_anon_pub->publish(msg);
     executor.spin_some();
     rate.sleep();
@@ -807,8 +825,8 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
 
   msg.data = true;
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     p2_anon_pub->publish(msg);
     executor.spin_some();
     rate.sleep();
@@ -838,8 +856,8 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
   auto alias_id = std_msgs::msg::String();
   alias_id.data = "p1";
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     p2_alias_pub->publish(alias_id);
     executor.spin_some();
     rate.sleep();
@@ -858,8 +876,8 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
   // remove the alias
   alias_id.data = "";
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     p2_alias_pub->publish(alias_id);
     executor.spin_some();
     rate.sleep();
@@ -877,8 +895,8 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
   // republish the alias
   alias_id.data = "p1";
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     p2_alias_pub->publish(alias_id);
     executor.spin_some();
     rate.sleep();
@@ -891,8 +909,8 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
   // delete p1 -> p2 should be deleted as well
 
   person_ids.ids = {"p2"};
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     person_pub->publish(person_ids);
     executor.spin_some();
     rate.sleep();
@@ -902,25 +920,27 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
   //     << "the aliased person should have been deleted with its alias";
 
   hri_listener.reset();
-  executor.remove_node(node);
-  executor.cancel();
 }
 
 TEST(libhri_tests, SoftBiometrics)
 {
-  auto node = rclcpp::Node::make_shared("test_node");
+  rclcpp::executors::MultiThreadedExecutor executor;
+  auto tester_node = rclcpp::Node::make_shared("tester_node");
+  executor.add_node(tester_node);
+  auto hri_node = rclcpp::Node::make_shared("hri_node");
+  executor.add_node(hri_node);
+
   rclcpp::Rate rate(30);
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>();
+  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
 
-  auto person_pub = node->create_publisher<hri_msgs::msg::IdsList>("/humans/persons/tracked", 1);
-  auto face_pub = node->create_publisher<hri_msgs::msg::IdsList>("/humans/faces/tracked", 1);
-  auto person_face_pub = node->create_publisher<std_msgs::msg::String>(
-    "/humans/persons/p1/face_id",
-    1);
-  auto softbiometrics_pub = node->create_publisher<hri_msgs::msg::SoftBiometrics>(
+  auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/persons/tracked", 1);
+  auto face_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/faces/tracked", 1);
+  auto person_face_pub = tester_node->create_publisher<std_msgs::msg::String>(
+    "/humans/persons/p1/face_id", 1);
+  auto softbiometrics_pub = tester_node->create_publisher<hri_msgs::msg::SoftBiometrics>(
     "/humans/faces/f1/softbiometrics", 1);
 
   auto person_ids = hri_msgs::msg::IdsList();
@@ -929,8 +949,8 @@ TEST(libhri_tests, SoftBiometrics)
   auto face_ids = hri_msgs::msg::IdsList();
   face_ids.ids = {"f1"};
 
-  auto start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  auto start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     person_pub->publish(person_ids);
     face_pub->publish(face_ids);
     executor.spin_some();
@@ -946,8 +966,8 @@ TEST(libhri_tests, SoftBiometrics)
   auto face_id = std_msgs::msg::String();
   face_id.data = "f1";
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     softbiometrics_pub->publish(softbiometrics_msg);
     person_face_pub->publish(face_id);
     executor.spin_some();
@@ -964,8 +984,8 @@ TEST(libhri_tests, SoftBiometrics)
   ASSERT_EQ(*(face->gender()), hri::FEMALE);
 
   softbiometrics_msg.gender = hri_msgs::msg::SoftBiometrics::OTHER;
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     softbiometrics_pub->publish(softbiometrics_msg);
     executor.spin_some();
     rate.sleep();
@@ -976,8 +996,8 @@ TEST(libhri_tests, SoftBiometrics)
 
   softbiometrics_msg.gender = hri_msgs::msg::SoftBiometrics::UNDEFINED;
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     softbiometrics_pub->publish(softbiometrics_msg);
     executor.spin_some();
     rate.sleep();
@@ -987,24 +1007,26 @@ TEST(libhri_tests, SoftBiometrics)
 
 
   hri_listener.reset();
-  executor.remove_node(node);
-  executor.cancel();
 }
 
 TEST(libhri_tests, EngagementLevel)
 {
-  auto node = rclcpp::Node::make_shared("test_node");
+  rclcpp::executors::MultiThreadedExecutor executor;
+  auto tester_node = rclcpp::Node::make_shared("tester_node");
+  executor.add_node(tester_node);
+  auto hri_node = rclcpp::Node::make_shared("hri_node");
+  executor.add_node(hri_node);
+
   rclcpp::Rate rate(30);
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>();
+  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
 
 
-  auto person_pub = node->create_publisher<hri_msgs::msg::IdsList>("/humans/persons/tracked", 1);
+  auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/persons/tracked", 1);
 
   auto engagement_pub =
-    node->create_publisher<hri_msgs::msg::EngagementLevel>(
+    tester_node->create_publisher<hri_msgs::msg::EngagementLevel>(
     "/humans/persons/p1/engagement_status",
     1);
 
@@ -1014,8 +1036,8 @@ TEST(libhri_tests, EngagementLevel)
   auto msg = hri_msgs::msg::EngagementLevel();
   msg.level = hri_msgs::msg::EngagementLevel::DISENGAGED;
 
-  auto start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  auto start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     person_pub->publish(person_ids);
     engagement_pub->publish(msg);
     executor.spin_some();
@@ -1029,8 +1051,8 @@ TEST(libhri_tests, EngagementLevel)
 
   msg.level = hri_msgs::msg::EngagementLevel::ENGAGED;
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 300ms) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 300ms) {
     engagement_pub->publish(msg);
     executor.spin_some();
     rate.sleep();
@@ -1040,8 +1062,8 @@ TEST(libhri_tests, EngagementLevel)
 
   msg.level = hri_msgs::msg::EngagementLevel::UNKNOWN;
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 300ms) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 300ms) {
     engagement_pub->publish(msg);
     executor.spin_some();
     rate.sleep();
@@ -1050,18 +1072,19 @@ TEST(libhri_tests, EngagementLevel)
   ASSERT_FALSE(p->engagement_status());
 
   hri_listener.reset();
-  executor.remove_node(node);
-  executor.cancel();
 }
 
 TEST(libhri_tests, Callback)
 {
-  auto node = rclcpp::Node::make_shared("test_node");
-  rclcpp::Rate rate(30);
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
+  rclcpp::executors::MultiThreadedExecutor executor;
+  auto tester_node = rclcpp::Node::make_shared("tester_node");
+  executor.add_node(tester_node);
+  auto hri_node = rclcpp::Node::make_shared("hri_node");
+  executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>();
+  rclcpp::Rate rate(30);
+
+  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
 
   int face_callbacks_invoked = 0;
   int lost_face_callbacks_invoked = 0;
@@ -1124,11 +1147,15 @@ TEST(libhri_tests, Callback)
 
   auto ids = hri_msgs::msg::IdsList();
 
-  auto face_pub = node->create_publisher<hri_msgs::msg::IdsList>("/humans/faces/tracked", 1);
-  auto body_pub = node->create_publisher<hri_msgs::msg::IdsList>("/humans/bodies/tracked", 1);
-  auto voice_pub = node->create_publisher<hri_msgs::msg::IdsList>("/humans/voices/tracked", 1);
-  auto person_pub = node->create_publisher<hri_msgs::msg::IdsList>("/humans/persons/known", 1);
-  auto person_tracked_pub = node->create_publisher<hri_msgs::msg::IdsList>(
+  auto face_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/faces/tracked", 1);
+  auto body_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/bodies/tracked", 1);
+  auto voice_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/voices/tracked", 1);
+  auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/persons/known", 1);
+  auto person_tracked_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/tracked", 1);
 
   EXPECT_EQ(face_callbacks_invoked, 0);
@@ -1136,8 +1163,8 @@ TEST(libhri_tests, Callback)
 
   ids.ids = {"id1"};
 
-  auto start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 300ms) {
+  auto start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 300ms) {
     face_pub->publish(ids);
     executor.spin_some();
     rate.sleep();
@@ -1148,8 +1175,8 @@ TEST(libhri_tests, Callback)
 
   ids.ids = {"id1", "id2"};
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 300ms) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 300ms) {
     face_pub->publish(ids);
     executor.spin_some();
     rate.sleep();
@@ -1160,8 +1187,8 @@ TEST(libhri_tests, Callback)
 
   ids.ids = {"id3", "id4"};
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 300ms) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 300ms) {
     face_pub->publish(ids);
     executor.spin_some();
     rate.sleep();
@@ -1171,8 +1198,8 @@ TEST(libhri_tests, Callback)
 
   ids.ids = {"id1", "id2"};
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 300ms) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 300ms) {
     body_pub->publish(ids);
     executor.spin_some();
     rate.sleep();
@@ -1183,8 +1210,8 @@ TEST(libhri_tests, Callback)
 
   ids.ids = {"id1", "id2", "id3"};
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 300ms) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 300ms) {
     face_pub->publish(ids);
     body_pub->publish(ids);
     executor.spin_some();
@@ -1198,8 +1225,8 @@ TEST(libhri_tests, Callback)
 
   ids.ids = {"id5", "id6", "id7"};
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 300ms) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 300ms) {
     face_pub->publish(ids);
     body_pub->publish(ids);
     executor.spin_some();
@@ -1214,8 +1241,8 @@ TEST(libhri_tests, Callback)
 
   ids.ids = {"id1", "id2"};
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 300ms) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 300ms) {
     voice_pub->publish(ids);
     person_pub->publish(ids);
     person_tracked_pub->publish(ids);
@@ -1230,21 +1257,23 @@ TEST(libhri_tests, Callback)
 
 
   hri_listener.reset();
-  executor.remove_node(node);
-  executor.cancel();
 }
 
 TEST(libhri_tests, PeopleLocation)
 {
-  auto node = rclcpp::Node::make_shared("test_node");
-  rclcpp::Rate rate(30);
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
-  auto now = node->now();
-  geometry_msgs::msg::TransformStamped t;
-  auto static_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node);
+  rclcpp::executors::MultiThreadedExecutor executor;
+  auto tester_node = rclcpp::Node::make_shared("tester_node");
+  executor.add_node(tester_node);
+  auto hri_node = rclcpp::Node::make_shared("hri_node");
+  executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>();
+  rclcpp::Rate rate(30);
+
+  auto now = tester_node->now();
+  geometry_msgs::msg::TransformStamped t;
+  auto static_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(tester_node);
+
+  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
   hri_listener->setReferenceFrame("base_link");
 
 
@@ -1257,8 +1286,8 @@ TEST(libhri_tests, PeopleLocation)
   world_transform.transform.translation.z = 0.0;
   world_transform.transform.rotation.w = 1.0;
 
-  auto start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  auto start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     static_broadcaster->sendTransform(world_transform);
     executor.spin_some();
     rate.sleep();
@@ -1273,15 +1302,16 @@ TEST(libhri_tests, PeopleLocation)
   p1_transform.transform.translation.z = 0.0;
   p1_transform.transform.rotation.w = 1.0;
 
-  auto person_pub = node->create_publisher<hri_msgs::msg::IdsList>("/humans/persons/tracked", 1);
-  auto loc_confidence_pub =
-    node->create_publisher<std_msgs::msg::Float32>("/humans/persons/p1/location_confidence", 1);
+  auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/persons/tracked", 1);
+  auto loc_confidence_pub = tester_node->create_publisher<std_msgs::msg::Float32>(
+    "/humans/persons/p1/location_confidence", 1);
 
   auto person_ids = hri_msgs::msg::IdsList();
   person_ids.ids = {"p1"};
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     person_pub->publish(person_ids);
     executor.spin_some();
     rate.sleep();
@@ -1292,8 +1322,8 @@ TEST(libhri_tests, PeopleLocation)
   auto msg = std_msgs::msg::Float32();
   msg.data = 0.;
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     loc_confidence_pub->publish(msg);
     executor.spin_some();
     rate.sleep();
@@ -1304,8 +1334,8 @@ TEST(libhri_tests, PeopleLocation)
 
   msg.data = 0.5;
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     loc_confidence_pub->publish(msg);
     executor.spin_some();
     rate.sleep();
@@ -1316,8 +1346,8 @@ TEST(libhri_tests, PeopleLocation)
   p->transform();
   ASSERT_FALSE(p->transform());
 
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     static_broadcaster->sendTransform(p1_transform);
     executor.spin_some();
     rate.sleep();
@@ -1332,8 +1362,8 @@ TEST(libhri_tests, PeopleLocation)
   ASSERT_FLOAT_EQ(t.transform.translation.x, 2.0f);
 
   msg.data = 1.0;
-  start = node->now();
-  while (rclcpp::ok() && (node->now() - start) < 1s) {
+  start = tester_node->now();
+  while (rclcpp::ok() && (tester_node->now() - start) < 1s) {
     loc_confidence_pub->publish(msg);
     executor.spin_some();
     rate.sleep();
@@ -1343,8 +1373,6 @@ TEST(libhri_tests, PeopleLocation)
   ASSERT_TRUE(p->transform()) << "location confidence > 0 => a transform should be available";
 
   hri_listener.reset();
-  executor.remove_node(node);
-  executor.cancel();
 }
 
 int main(int argc, char ** argv)

@@ -49,14 +49,13 @@ public:
    * non-trivial, and typically non-reentrant, logic to subscribe/unsubscribe
    * HRI-related topics.
    */
-  explicit FeatureTracker(ID id)
-  : id_(id), ns_("")
-  {
-  }
+  explicit FeatureTracker(
+    ID id,
+    std::string feature_ns,
+    rclcpp::Node::SharedPtr node,
+    rclcpp::CallbackGroup::SharedPtr callback_group);
 
-  virtual ~FeatureTracker()
-  {
-  }
+  virtual ~FeatureTracker() = default;
 
   // forbids copies of our 'feature trackers', as we need to internally manage
   // if/when they disappear. Instead, access them via shared pointers (cf HRIListener API).
@@ -102,6 +101,9 @@ protected:
   ID id_;
   // topic namespace under which this feature is advertised
   std::string ns_;
+
+  rclcpp::Node::SharedPtr node_{nullptr};
+  rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 };
 
 }  // namespace hri

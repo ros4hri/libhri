@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
 #include <hri/hri.hpp>
 #include "rclcpp/rclcpp.hpp"
 
@@ -28,7 +30,7 @@ public:
   ShowFaces()
   : Node("show_faces")
   {
-    hri_listener_ = std::make_shared<hri::HRIListener>();
+    hri_listener_ = std::make_shared<hri::HRIListener>(this->shared_from_this());
     timer_ = create_wall_timer(
       500ms, std::bind(&ShowFaces::timer_callback, this));
   }

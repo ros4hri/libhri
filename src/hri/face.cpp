@@ -24,10 +24,10 @@ namespace hri
 Face::Face(
   ID id,
   rclcpp::Node::SharedPtr node,
+  rclcpp::CallbackGroup::SharedPtr callback_group,
   tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
-: FeatureTracker{id}
-  , node_(node)
+: FeatureTracker{id, "/humans/faces", node, callback_group}
   , softbiometrics_(nullptr)
   , _reference_frame(reference_frame)
   , tf_buffer_(tf_buffer)
@@ -36,55 +36,37 @@ Face::Face(
 
 Face::~Face()
 {
-  executor_->cancel();
-  dedicated_listener_thread_->join();
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting face " << id_);
-  // roi_subscriber_.shutdown();
 }
 
 void Face::init()
 {
-  rclcpp::NodeOptions node_options;
-
-  node_options.start_parameter_event_publisher(false);
-  node_options.start_parameter_services(false);
-  auto node_params = node_->get_node_parameters_interface();
-  auto node_topics = node_->get_node_topics_interface();
-  auto qos = rclcpp::SystemDefaultsQoS();
-
-  callback_group_ = node_->create_callback_group(
-    rclcpp::CallbackGroupType::MutuallyExclusive, true);
-  rclcpp::SubscriptionOptionsWithAllocator<std::allocator<void>> options;
-  options.callback_group = callback_group_;
-
-  ns_ = "/humans/faces/" + id_;
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "New face detected: " << ns_);
 
-  roi_subscriber_ = rclcpp::create_subscription<RegionOfInterest>(
-    node_params, node_topics, ns_ + "/roi", qos, bind(
-      &Face::onRoI, this,
-      std::placeholders::_1), options);
+  rclcpp::SubscriptionOptions options;
+  options.callback_group = callback_group_;
+  auto qos = rclcpp::SystemDefaultsQoS();
 
-  cropped_subscriber_ = rclcpp::create_subscription<sensor_msgs::msg::Image>(
-    node_params, node_topics, ns_ + "/cropped", qos,
+  roi_subscriber_ = node_->create_subscription<RegionOfInterest>(
+    ns_ + "/roi", qos,
+    bind(&Face::onRoI, this, std::placeholders::_1), options);
+
+  cropped_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
+    ns_ + "/cropped", qos,
     bind(&Face::onCropped, this, std::placeholders::_1), options);
 
 
-  aligned_subscriber_ = rclcpp::create_subscription<sensor_msgs::msg::Image>(
-    node_params, node_topics, ns_ + "/aligned", qos,
+  aligned_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
+    ns_ + "/aligned", qos,
     bind(&Face::onAligned, this, std::placeholders::_1), options);
 
-  landmarks_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::FacialLandmarks>(
-    node_params, node_topics, ns_ + "/landmarks", qos,
+  landmarks_subscriber_ = node_->create_subscription<hri_msgs::msg::FacialLandmarks>(
+    ns_ + "/landmarks", qos,
     bind(&Face::onLandmarks, this, std::placeholders::_1), options);
 
-  softbiometrics_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::SoftBiometrics>(
-    node_params, node_topics, ns_ + "/softbiometrics", qos,
+  softbiometrics_subscriber_ = node_->create_subscription<hri_msgs::msg::SoftBiometrics>(
+    ns_ + "/softbiometrics", qos,
     bind(&Face::onSoftBiometrics, this, std::placeholders::_1), options);
-
-  executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-  executor_->add_callback_group(callback_group_, node_->get_node_base_interface());
-  dedicated_listener_thread_ = std::make_unique<std::thread>([&]() {executor_->spin();});
 }
 
 

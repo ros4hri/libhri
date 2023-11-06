@@ -67,6 +67,7 @@ public:
   Person(
     ID id,
     rclcpp::Node::SharedPtr node,
+    rclcpp::CallbackGroup::SharedPtr callback_group,
     const HRIListener * listener,
     tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);
@@ -143,11 +144,6 @@ protected:
   float _loc_confidence;
 
   std::string _reference_frame;
-
-  std::unique_ptr<std::thread> dedicated_listener_thread_ {nullptr};
-  rclcpp::Node::SharedPtr node_ {nullptr};
-  rclcpp::Executor::SharedPtr executor_ {nullptr};
-  rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr face_id_subscriber_ {nullptr};
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr body_id_subscriber_ {nullptr};

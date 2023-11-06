@@ -21,10 +21,10 @@ namespace hri
 Voice::Voice(
   ID id,
   rclcpp::Node::SharedPtr node,
+  rclcpp::CallbackGroup::SharedPtr callback_group,
   tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
-: FeatureTracker{id}
-  , node_(node)
+: FeatureTracker{id, "/humans/voices", node, callback_group}
   , _reference_frame(reference_frame)
   , tf_buffer_(tf_buffer)
 {
@@ -39,24 +39,14 @@ Voice::~Voice()
 
 void Voice::init()
 {
-  rclcpp::NodeOptions node_options;
-
-  node_options.start_parameter_event_publisher(false);
-  node_options.start_parameter_services(false);
-  auto node_params = node_->get_node_parameters_interface();
-  auto node_topics = node_->get_node_topics_interface();
-  auto qos = rclcpp::SystemDefaultsQoS();
-
-  callback_group_ = node_->create_callback_group(
-    rclcpp::CallbackGroupType::MutuallyExclusive, true);
-  rclcpp::SubscriptionOptionsWithAllocator<std::allocator<void>> options;
-  options.callback_group = callback_group_;
-
-  ns_ = "/humans/voices/" + id_;
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "New voice detected: " << ns_);
 
-  is_speaking_subscriber_ = rclcpp::create_subscription<std_msgs::msg::Bool>(
-    node_params, node_topics, ns_ + "/is_speaking", qos,
+  rclcpp::SubscriptionOptions options;
+  options.callback_group = callback_group_;
+  auto qos = rclcpp::SystemDefaultsQoS();
+
+  is_speaking_subscriber_ = node_->create_subscription<std_msgs::msg::Bool>(
+    ns_ + "/is_speaking", qos,
     [&](std_msgs::msg::Bool::SharedPtr msg) {
       _is_speaking = msg->data;
       for (auto & cb : is_speaking_callbacks) {
@@ -64,9 +54,8 @@ void Voice::init()
       }
     });
 
-  speech_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::LiveSpeech>(
-    node_params, node_topics, ns_ + "/speech", qos,
-    bind(&Voice::_onSpeech, this, std::placeholders::_1));
+  speech_subscriber_ = node_->create_subscription<hri_msgs::msg::LiveSpeech>(
+    ns_ + "/speech", qos, bind(&Voice::_onSpeech, this, std::placeholders::_1));
 }
 
 void Voice::_onSpeech(const hri_msgs::msg::LiveSpeech::ConstSharedPtr msg)

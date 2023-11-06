@@ -54,6 +54,7 @@ add_library(${PROJECT_NAME} SHARED
   src/hri/hri.cpp
   src/hri/body.cpp
   src/hri/face.cpp
+  src/hri/feature_tracker.cpp
   src/hri/person.cpp
   src/hri/voice.cpp
 )

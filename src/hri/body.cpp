@@ -23,10 +23,10 @@ namespace hri
 Body::Body(
   ID id,
   rclcpp::Node::SharedPtr node,
+  rclcpp::CallbackGroup::SharedPtr callback_group,
   tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
-: FeatureTracker{id}
-  , node_(node)
+: FeatureTracker{id, "/humans/bodies", node, callback_group}
   , _reference_frame(reference_frame)
   , tf_buffer_(tf_buffer)
 {
@@ -36,44 +36,24 @@ Body::Body(
 Body::~Body()
 {
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting body " << id_);
-  executor_->cancel();
-  dedicated_listener_thread_->join();
 }
 
 void Body::init()
 {
-  rclcpp::NodeOptions node_options;
-
-  node_options.start_parameter_event_publisher(false);
-  node_options.start_parameter_services(false);
-  auto node_params = node_->get_node_parameters_interface();
-  auto node_topics = node_->get_node_topics_interface();
-  auto qos = rclcpp::SystemDefaultsQoS();
-
-  callback_group_ = node_->create_callback_group(
-    rclcpp::CallbackGroupType::MutuallyExclusive, true);
-  rclcpp::SubscriptionOptionsWithAllocator<std::allocator<void>> options;
-  options.callback_group = callback_group_;
-
-  ns_ = "/humans/bodies/" + id_;
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "New body detected: " << ns_);
 
-  roi_subscriber_ = rclcpp::create_subscription<RegionOfInterest>(
-    node_params, node_topics, ns_ + "/roi", qos, bind(
-      &Body::onRoI, this,
-      std::placeholders::_1), options);
+  rclcpp::SubscriptionOptions options;
+  options.callback_group = callback_group_;
+  auto qos = rclcpp::SystemDefaultsQoS();
 
-  cropped_subscriber_ = rclcpp::create_subscription<sensor_msgs::msg::Image>(
-    node_params, node_topics, ns_ + "/cropped", qos,
-    bind(&Body::onCropped, this, std::placeholders::_1), options);
+  roi_subscriber_ = node_->create_subscription<RegionOfInterest>(
+    ns_ + "/roi", qos, bind(&Body::onRoI, this, std::placeholders::_1), options);
 
-  skeleton_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::Skeleton2D>(
-    node_params, node_topics, ns_ + "/skeleton2d", qos,
-    bind(&Body::onSkeleton, this, std::placeholders::_1), options);
+  cropped_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
+    ns_ + "/cropped", qos, bind(&Body::onCropped, this, std::placeholders::_1), options);
 
-  executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-  executor_->add_callback_group(callback_group_, node_->get_node_base_interface());
-  dedicated_listener_thread_ = std::make_unique<std::thread>([&]() {executor_->spin();});
+  skeleton_subscriber_ = node_->create_subscription<hri_msgs::msg::Skeleton2D>(
+    ns_ + "/skeleton2d", qos, bind(&Body::onSkeleton, this, std::placeholders::_1), options);
 }
 
 void Body::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr roi)

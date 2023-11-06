@@ -52,6 +52,7 @@ public:
   Body(
     ID id,
     rclcpp::Node::SharedPtr node,
+    rclcpp::CallbackGroup::SharedPtr callback_group,
     tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);
 
@@ -111,11 +112,6 @@ public:
 
 private:
   size_t nb_roi;
-
-  std::unique_ptr<std::thread> dedicated_listener_thread_ {nullptr};
-  rclcpp::Node::SharedPtr node_ {nullptr};
-  rclcpp::Executor::SharedPtr executor_ {nullptr};
-  rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
   rclcpp::Subscription<RegionOfInterest>::SharedPtr roi_subscriber_ {nullptr};
   void onRoI(RegionOfInterest::ConstSharedPtr roi);
