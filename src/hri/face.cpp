@@ -27,10 +27,8 @@ Face::Face(
   rclcpp::CallbackGroup::SharedPtr callback_group,
   tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
-: FeatureTracker{id, "/humans/faces", node, callback_group}
-  , softbiometrics_(nullptr)
-  , _reference_frame(reference_frame)
-  , tf_buffer_(tf_buffer)
+: FeatureTracker{id, "/humans/faces", "face_", node, callback_group, tf_buffer, reference_frame},
+  gaze_frame_("gaze_" + id_)
 {
 }
 
@@ -141,39 +139,9 @@ std::optional<Gender> Face::gender() const
   return static_cast<Gender>(softbiometrics_->gender);
 }
 
-std::optional<geometry_msgs::msg::TransformStamped> Face::transform() const
-{
-  try {
-    auto transform = tf_buffer_.lookupTransform(
-      _reference_frame, frame(),
-      tf2::TimePointZero);
-
-    return transform;
-  } catch (const tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(
-      node_->get_logger(),
-      "failed to transform person frame " << frame()
-                                          << " to " << _reference_frame <<
-        ex.what());
-    return std::optional<geometry_msgs::msg::TransformStamped>();
-  }
-}
-
 std::optional<geometry_msgs::msg::TransformStamped> Face::gazeTransform() const
 {
-  try {
-    auto transform = tf_buffer_.lookupTransform(
-      _reference_frame, gazeFrame(),
-      tf2::TimePointZero);
-    return transform;
-  } catch (const tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(
-      node_->get_logger(),
-      "failed to transform person frame " << gazeFrame()
-                                          << " to " << _reference_frame <<
-        ex.what());
-    return std::optional<geometry_msgs::msg::TransformStamped>();
-  }
+  return transform(gazeFrame());
 }
 
 }  // namespace hri

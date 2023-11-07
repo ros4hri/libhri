@@ -58,13 +58,6 @@ public:
 
   virtual ~Body();
 
-  /** \brief the name of the tf frame that correspond to this body
-   */
-  std::string frame() const
-  {
-    return BODY_TF_PREFIX + id_;
-  }
-
   /** \brief If available, returns the normalized 2D region of interest (RoI) of the body.
    *
    * Use example:
@@ -104,10 +97,6 @@ public:
    */
   SkeletonPoints skeleton() const;
 
-  /** \brief Returns the (stamped) 3D transform of the body (if available).
-   */
-  std::optional<geometry_msgs::msg::TransformStamped> transform() const;
-
   void init() override;
 
 private:
@@ -124,9 +113,6 @@ private:
   rclcpp::Subscription<hri_msgs::msg::Skeleton2D>::SharedPtr skeleton_subscriber_ {nullptr};
   void onSkeleton(hri_msgs::msg::Skeleton2D::ConstSharedPtr skeleton);
   SkeletonPoints skeleton_;
-
-  std::string _reference_frame;
-  tf2::BufferCore & tf_buffer_;
 };
 
 typedef std::shared_ptr<Body> BodyPtr;

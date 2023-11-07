@@ -42,9 +42,6 @@
 
 namespace hri
 {
-static const char PERSON_TF_PREFIX[] = "person_";
-static const rclcpp::Duration PERSON_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.01));
-
 enum EngagementLevel
 {
   // disengaged: the human has not looked in the direction of the robot
@@ -68,16 +65,11 @@ public:
     ID id,
     rclcpp::Node::SharedPtr node,
     rclcpp::CallbackGroup::SharedPtr callback_group,
-    const HRIListener * listener,
+    HRIListener * const listener,
     tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);
 
   virtual ~Person();
-
-  std::string frame() const
-  {
-    return PERSON_TF_PREFIX + id_;
-  }
 
   /* returns a shared pointer to the face of this person, or
    * a nullptr if this person is currently not associated to any detected face.
@@ -112,12 +104,12 @@ public:
     return _loc_confidence;
   }
 
-  std::optional<geometry_msgs::msg::TransformStamped> transform() const;
-
   void init() override;
   ID face_id;
   ID body_id;
   ID voice_id;
+
+  std::optional<geometry_msgs::msg::TransformStamped> transform() const override;
 
 protected:
   // we use a raw pointer here. `this` is owned by the pointed HRIListener, so
@@ -143,8 +135,6 @@ protected:
 
   float _loc_confidence;
 
-  std::string _reference_frame;
-
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr face_id_subscriber_ {nullptr};
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr body_id_subscriber_ {nullptr};
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr voice_id_subscriber_ {nullptr};
@@ -152,8 +142,6 @@ protected:
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr alias_subscriber_ {nullptr};
   rclcpp::Subscription<hri_msgs::msg::EngagementLevel>::SharedPtr engagement_subscriber_ {nullptr};
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr loc_confidence_subscriber_ {nullptr};
-
-  tf2::BufferCore & tf_buffer_;
 };
 
 typedef std::shared_ptr<Person> PersonPtr;

@@ -29,9 +29,6 @@
 
 #include "feature_tracker.hpp"
 
-#include "tf2_ros/transform_listener.h"
-#include "tf2_ros/buffer.h"
-
 namespace hri
 {
 struct IntensityConfidence
@@ -47,11 +44,6 @@ enum Gender
   OTHER = 3
 };
 
-// the tf prefixes follow REP-155
-static const char FACE_TF_PREFIX[] = "face_";
-static const char GAZE_TF_PREFIX[] = "gaze_";
-static const rclcpp::Duration FACE_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.01));
-
 class Face : public FeatureTracker
 {
 public:
@@ -66,19 +58,12 @@ public:
 
   virtual ~Face();
 
-  /** \brief the name of the tf frame that correspond to this face
-   */
-  std::string frame() const
-  {
-    return FACE_TF_PREFIX + id_;
-  }
-
-  /** \brief the name of the tf frame that correspond to the gaze direction and
-   * orientation of the face
+  /** \brief The name of the tf frame that correspond to the gaze direction and
+   * orientation of the face.
    */
   std::string gazeFrame() const
   {
-    return GAZE_TF_PREFIX + id_;
+    return gaze_frame_;
   }
 
   /** \brief Returns the normalized 2D region of interest (RoI) of the face.
@@ -173,10 +158,6 @@ public:
    */
   std::optional<Gender> gender() const;
 
-  /** \brief Returns the (stamped) 3D transform of the face (if available).
-   */
-  std::optional<geometry_msgs::msg::TransformStamped> transform() const;
-
   /** \brief Returns the (stamped) 3D transform of the gaze (if available).
    */
   std::optional<geometry_msgs::msg::TransformStamped> gazeTransform() const;
@@ -184,6 +165,7 @@ public:
   void init() override;
 
 private:
+  const std::string gaze_frame_;
   size_t nb_roi;
 
   rclcpp::Subscription<RegionOfInterest>::SharedPtr roi_subscriber_{nullptr};
@@ -210,9 +192,6 @@ private:
 
 
   std::array<IntensityConfidence, 99> facial_action_units_;
-
-  std::string _reference_frame;
-  tf2::BufferCore & tf_buffer_;
 };
 
 typedef std::shared_ptr<Face> FacePtr;

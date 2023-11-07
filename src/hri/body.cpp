@@ -26,12 +26,9 @@ Body::Body(
   rclcpp::CallbackGroup::SharedPtr callback_group,
   tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
-: FeatureTracker{id, "/humans/bodies", node, callback_group}
-  , _reference_frame(reference_frame)
-  , tf_buffer_(tf_buffer)
+: FeatureTracker{id, "/humans/bodies", "body_", node, callback_group, tf_buffer, reference_frame}
 {
 }
-
 
 Body::~Body()
 {
@@ -86,21 +83,4 @@ Body::SkeletonPoints Body::skeleton() const
   return skeleton_;
 }
 
-std::optional<geometry_msgs::msg::TransformStamped> Body::transform() const
-{
-  try {
-    auto transform = tf_buffer_.lookupTransform(
-      _reference_frame, frame(),
-      tf2::TimePointZero);
-
-    return transform;
-  } catch (const tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(
-      node_->get_logger(),
-      "failed to transform person frame " << frame()
-                                          << " to " << _reference_frame <<
-        ex.what());
-    return std::optional<geometry_msgs::msg::TransformStamped>();
-  }
-}
 }  // namespace hri

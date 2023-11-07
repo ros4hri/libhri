@@ -34,11 +34,9 @@
 
 namespace hri
 {
-// the tf prefix follows REP-155
-static const char VOICE_TF_PREFIX[] = "voice_";
-static const rclcpp::Duration VOICE_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.01));
 
 class Voice : public FeatureTracker
+// TODO(LJU): possibly subscribe also to the /audio and the /features sub-topics
 {
 public:
   Voice(
@@ -49,18 +47,6 @@ public:
     const std::string & reference_frame);
 
   virtual ~Voice();
-
-  /** \brief the name of the tf frame that correspond to this body
-   */
-  std::string frame() const
-  {
-    return VOICE_TF_PREFIX + id_;
-  }
-
-  /** \brief Returns the estimated (stamped) 3D transform of the voice (if
-   * available).
-   */
-  std::optional<geometry_msgs::msg::TransformStamped> transform() const;
 
   /** \brief returns speech is currently detected in this voice, ie, whether the person is
    * currently speaking.
@@ -122,9 +108,6 @@ public:
   void init() override;
 
 private:
-  std::string _reference_frame;
-  tf2::BufferCore & tf_buffer_;
-
   bool _is_speaking;
   std::string _speech;
   std::string _incremental_speech;

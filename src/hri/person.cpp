@@ -25,19 +25,16 @@ Person::Person(
   ID id,
   rclcpp::Node::SharedPtr node,
   rclcpp::CallbackGroup::SharedPtr callback_group,
-  const HRIListener * listener,
+  HRIListener * const listener,
   tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
-: FeatureTracker{id, "/humans/persons", node, callback_group}
+: FeatureTracker{id, "/humans/persons", "person_", node, callback_group, tf_buffer, reference_frame}
   , listener_(listener)
   , _alias("")
   , _engagement_status(nullptr)
   , _loc_confidence(0.)
-  , _reference_frame(reference_frame)
-  , tf_buffer_(tf_buffer)
 {
 }
-
 
 Person::~Person()
 {
@@ -138,19 +135,7 @@ std::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
     return std::optional<geometry_msgs::msg::TransformStamped>();
   }
 
-  try {
-    auto transform = tf_buffer_.lookupTransform(
-      _reference_frame, frame(),
-      tf2::TimePointZero);
-    return transform;
-  } catch (const tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(
-      node_->get_logger(),
-      "failed to transform person frame " << frame()
-                                          << " to " << _reference_frame << ". " <<
-        ex.what());
-    return std::optional<geometry_msgs::msg::TransformStamped>();
-  }
+  return FeatureTracker::transform();
 }
 
 }  // namespace hri
