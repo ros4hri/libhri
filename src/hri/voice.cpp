@@ -41,10 +41,10 @@ void Voice::init()
 
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
-  auto qos = rclcpp::SystemDefaultsQoS();
+  auto default_qos = rclcpp::SystemDefaultsQoS();
 
   is_speaking_subscriber_ = node_->create_subscription<std_msgs::msg::Bool>(
-    ns_ + "/is_speaking", qos,
+    ns_ + "/is_speaking", default_qos,
     [&](std_msgs::msg::Bool::SharedPtr msg) {
       _is_speaking = msg->data;
       for (auto & cb : is_speaking_callbacks) {
@@ -53,7 +53,7 @@ void Voice::init()
     });
 
   speech_subscriber_ = node_->create_subscription<hri_msgs::msg::LiveSpeech>(
-    ns_ + "/speech", qos, bind(&Voice::_onSpeech, this, std::placeholders::_1));
+    ns_ + "/speech", default_qos, bind(&Voice::_onSpeech, this, std::placeholders::_1));
 }
 
 void Voice::_onSpeech(const hri_msgs::msg::LiveSpeech::ConstSharedPtr msg)

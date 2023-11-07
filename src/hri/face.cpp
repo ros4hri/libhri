@@ -43,27 +43,26 @@ void Face::init()
 
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
-  auto qos = rclcpp::SystemDefaultsQoS();
+  auto default_qos = rclcpp::SystemDefaultsQoS();
 
   roi_subscriber_ = node_->create_subscription<RegionOfInterest>(
-    ns_ + "/roi", qos,
+    ns_ + "/roi", default_qos,
     bind(&Face::onRoI, this, std::placeholders::_1), options);
 
   cropped_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
-    ns_ + "/cropped", qos,
+    ns_ + "/cropped", default_qos,
     bind(&Face::onCropped, this, std::placeholders::_1), options);
 
-
   aligned_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
-    ns_ + "/aligned", qos,
+    ns_ + "/aligned", default_qos,
     bind(&Face::onAligned, this, std::placeholders::_1), options);
 
   landmarks_subscriber_ = node_->create_subscription<hri_msgs::msg::FacialLandmarks>(
-    ns_ + "/landmarks", qos,
+    ns_ + "/landmarks", default_qos,
     bind(&Face::onLandmarks, this, std::placeholders::_1), options);
 
   softbiometrics_subscriber_ = node_->create_subscription<hri_msgs::msg::SoftBiometrics>(
-    ns_ + "/softbiometrics", qos,
+    ns_ + "/softbiometrics", default_qos,
     bind(&Face::onSoftBiometrics, this, std::placeholders::_1), options);
 }
 

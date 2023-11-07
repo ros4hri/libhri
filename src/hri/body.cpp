@@ -41,16 +41,20 @@ void Body::init()
 
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
-  auto qos = rclcpp::SystemDefaultsQoS();
+  auto default_qos = rclcpp::SystemDefaultsQoS();
+  auto latched_qos = rclcpp::SystemDefaultsQoS().transient_local().reliable();
 
   roi_subscriber_ = node_->create_subscription<RegionOfInterest>(
-    ns_ + "/roi", qos, bind(&Body::onRoI, this, std::placeholders::_1), options);
+    ns_ + "/roi", latched_qos,
+    bind(&Body::onRoI, this, std::placeholders::_1), options);
 
   cropped_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
-    ns_ + "/cropped", qos, bind(&Body::onCropped, this, std::placeholders::_1), options);
+    ns_ + "/cropped", latched_qos,
+    bind(&Body::onCropped, this, std::placeholders::_1), options);
 
   skeleton_subscriber_ = node_->create_subscription<hri_msgs::msg::Skeleton2D>(
-    ns_ + "/skeleton2d", qos, bind(&Body::onSkeleton, this, std::placeholders::_1), options);
+    ns_ + "/skeleton2d", default_qos,
+    bind(&Body::onSkeleton, this, std::placeholders::_1), options);
 }
 
 void Body::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr roi)

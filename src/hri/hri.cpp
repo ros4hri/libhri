@@ -147,35 +147,35 @@ void HRIListener::init()
   callback_group_ = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
-  auto qos = rclcpp::SystemDefaultsQoS();
+  auto default_qos = rclcpp::SystemDefaultsQoS();
 
   feature_subscribers_[FeatureType::face] = node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/faces/tracked", qos,
+    "/humans/faces/tracked", default_qos,
     [this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
       HRIListener::onTrackedFeature(FeatureType::face, tracked);
     }, options);
 
   feature_subscribers_[FeatureType::body] = node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/bodies/tracked", qos,
+    "/humans/bodies/tracked", default_qos,
     [this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
       HRIListener::onTrackedFeature(FeatureType::body, tracked);
     }, options);
 
   feature_subscribers_[FeatureType::voice] = node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/voices/tracked", qos,
+    "/humans/voices/tracked", default_qos,
     [this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
       HRIListener::onTrackedFeature(FeatureType::voice, tracked);
     }, options);
 
   feature_subscribers_[FeatureType::tracked_person] =
     node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/persons/tracked", qos,
+    "/humans/persons/tracked", default_qos,
     [this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
       HRIListener::onTrackedFeature(FeatureType::tracked_person, tracked);
     }, options);
 
   feature_subscribers_[FeatureType::person] = node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/persons/known", qos,
+    "/humans/persons/known", default_qos,
     [this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
       HRIListener::onTrackedFeature(FeatureType::person, tracked);
     }, options);

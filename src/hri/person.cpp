@@ -47,34 +47,35 @@ void Person::init()
 
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
-  auto qos = rclcpp::SystemDefaultsQoS();
+  auto default_qos = rclcpp::SystemDefaultsQoS();
+  auto latched_qos = rclcpp::SystemDefaultsQoS().transient_local().reliable();
 
   face_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    ns_ + "/face_id", qos,
+    ns_ + "/face_id", default_qos,
     [&](const std_msgs::msg::String::SharedPtr msg) {face_id = msg->data;}, options);
 
   body_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    ns_ + "/body_id", qos,
+    ns_ + "/body_id", default_qos,
     [&](const std_msgs::msg::String::SharedPtr msg) {body_id = msg->data;}, options);
 
   voice_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    ns_ + "/voice_id", qos,
+    ns_ + "/voice_id", default_qos,
     [&](const std_msgs::msg::String::SharedPtr msg) {voice_id = msg->data;}, options);
 
   anonymous_subscriber_ = node_->create_subscription<std_msgs::msg::Bool>(
-    ns_ + "/anonymous", qos,
+    ns_ + "/anonymous", latched_qos,
     [&](const std_msgs::msg::Bool::SharedPtr msg) {_anonymous = msg->data;}, options);
 
   alias_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    ns_ + "/alias", qos,
+    ns_ + "/alias", default_qos,
     [&](const std_msgs::msg::String::SharedPtr msg) {_alias = msg->data;}, options);
 
   engagement_subscriber_ = node_->create_subscription<hri_msgs::msg::EngagementLevel>(
-    ns_ + "/engagement_status", qos,
+    ns_ + "/engagement_status", default_qos,
     [&](const hri_msgs::msg::EngagementLevel::SharedPtr msg) {_engagement_status = msg;}, options);
 
   loc_confidence_subscriber_ = node_->create_subscription<std_msgs::msg::Float32>(
-    ns_ + "/location_confidence", qos,
+    ns_ + "/location_confidence", default_qos,
     [&](const std_msgs::msg::Float32::SharedPtr msg) {_loc_confidence = msg->data;}, options);
 }
 
