@@ -16,64 +16,33 @@
 #define HRI__BODY_HPP_
 
 #include <memory>
-#include <vector>
+#include <optional>
 #include <string>
 
-#include <optional>
-
-#include <opencv2/core.hpp>
-
-#include <geometry_msgs/msg/transform_stamped.hpp>
-
-#include <sensor_msgs/msg/image.hpp>
-
-#include <hri_msgs/msg/skeleton2_d.hpp>
-#include <hri_msgs/msg/normalized_point_of_interest2_d.hpp>
-#include <hri_msgs/msg/normalized_region_of_interest2_d.hpp>
-
-#include "tf2_ros/transform_listener.h"
+#include "hri/feature_tracker.hpp"
+#include "hri/types.hpp"
+#include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
+#include "hri_msgs/msg/skeleton2_d.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "sensor_msgs/msg/image.hpp"
 #include "tf2_ros/buffer.h"
-
-#include "feature_tracker.hpp"
-
 
 namespace hri
 {
-// the tf prefix follows REP-155
-static const char BODY_TF_PREFIX[] = "body_";
-static const rclcpp::Duration BODY_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.01));
-
+// TODO(LJU): possibly subscribe also to the /joint_states, gesture and /posture sub-topics
 class Body : public FeatureTracker
 {
 public:
-  typedef std::array<hri_msgs::msg::NormalizedPointOfInterest2D, 18> SkeletonPoints;
-  typedef hri_msgs::msg::NormalizedRegionOfInterest2D RegionOfInterest;
-
   Body(
     ID id,
     rclcpp::Node::SharedPtr node,
     rclcpp::CallbackGroup::SharedPtr callback_group,
-    tf2::BufferCore & tf_buffer,
+    const tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);
 
   virtual ~Body();
 
   /** \brief If available, returns the normalized 2D region of interest (RoI) of the body.
-   *
-   * Use example:
-   *
-   * ```cpp
-   * HRIListener hri_listener;
-   *
-   * auto bodies = hri_listener.getBodies();
-   *
-   * for (auto const& body : bodies)
-   * {
-   *   auto roi = body.second.lock()->roi();
-   *   cout << "Normalized size of body_" << body.first << ": ";
-   *   cout << (roi.xmax - roi.xmin) << "x" << (roi.ymax - roi.ymin) << endl;
-   * }
-   * ```
    *
    * The coordinates are provided in the original camera's image coordinate
    * space.
@@ -81,11 +50,11 @@ public:
    * The header's timestamp is the same as a the timestamp of the original
    * image from which the body has been detected.
    */
-  RegionOfInterest roi() const;
+  std::optional<RegionOfInterest> roi() const {return roi_;}
 
   /** \brief Returns the body image, cropped from the source image.
    */
-  cv::Mat cropped() const;
+  std::optional<Image> cropped() const {return cropped_;}
 
   /** \brief Returns the 2D skeleton keypoints.
    *
@@ -95,27 +64,26 @@ public:
    * The skeleton joints indices follow those defined in
    * http://docs.ros.org/en/api/hri_msgs/html/msg/Skeleton2D.html
    */
-  SkeletonPoints skeleton() const;
+  std::optional<SkeletonPoints> skeleton() const {return skeleton_;}
 
   void init() override;
 
 private:
-  size_t nb_roi;
+  void onRoI(hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr msg);
+  void onCropped(sensor_msgs::msg::Image::ConstSharedPtr msg);
+  void onSkeleton(hri_msgs::msg::Skeleton2D::ConstSharedPtr msg);
 
-  rclcpp::Subscription<RegionOfInterest>::SharedPtr roi_subscriber_ {nullptr};
-  void onRoI(RegionOfInterest::ConstSharedPtr roi);
-  RegionOfInterest roi_;
+  std::optional<RegionOfInterest> roi_;
+  std::optional<Image> cropped_;
+  std::optional<SkeletonPoints> skeleton_;
 
-  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr cropped_subscriber_ {nullptr};
-  void onCropped(sensor_msgs::msg::Image::ConstSharedPtr roi);
-  cv::Mat cropped_;
-
-  rclcpp::Subscription<hri_msgs::msg::Skeleton2D>::SharedPtr skeleton_subscriber_ {nullptr};
-  void onSkeleton(hri_msgs::msg::Skeleton2D::ConstSharedPtr skeleton);
-  SkeletonPoints skeleton_;
+  rclcpp::Subscription<hri_msgs::msg::NormalizedRegionOfInterest2D>::SharedPtr roi_subscriber_;
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr cropped_subscriber_;
+  rclcpp::Subscription<hri_msgs::msg::Skeleton2D>::SharedPtr skeleton_subscriber_;
 };
 
 typedef std::shared_ptr<Body> BodyPtr;
 
 }  // namespace hri
+
 #endif  // HRI__BODY_HPP_

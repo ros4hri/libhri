@@ -12,29 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "hri/hri.hpp"
+
 #include <functional>
 #include <memory>
-#include <algorithm>
-#include <iterator>
-#include <tuple>
-#include <utility>
-#include <string>
-#include <iostream>
+#include <set>
 
-#include <opencv2/opencv.hpp>
-
-#include "hri_msgs/msg/ids_list.hpp"
-
-#include "hri/hri.hpp"
-#include "hri/person.hpp"
-#include "hri/face.hpp"
 #include "hri/body.hpp"
+#include "hri/face.hpp"
+#include "hri/person.hpp"
+#include "hri/voice.hpp"
+#include "hri/types.hpp"
+#include "hri_msgs/msg/ids_list.hpp"
 
 namespace hri
 {
 
 HRIListener::HRIListener(rclcpp::Node::SharedPtr node)
-: node_(node), _reference_frame("base_link"), _tf_listener(_tf_buffer)
+: node_(node), reference_frame_("base_link"), tf_listener_(tf_buffer_)
 {
   init();
 }
@@ -42,61 +37,50 @@ HRIListener::HRIListener(rclcpp::Node::SharedPtr node)
 HRIListener::~HRIListener()
 {
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "Closing the HRI Listener");
-  faces.clear();
-  bodies.clear();
 }
-
 
 std::map<ID, FacePtr> HRIListener::getFaces() const
 {
   std::map<ID, FacePtr> result;
-
   // creates a std::map of *shared* pointers from the internally managed list of
   // shared pointers
-  for (auto const & f : faces) {
+  for (auto const & f : faces_) {
     result[f.first] = f.second;
   }
-
-
   return result;
 }
 
 std::map<ID, BodyPtr> HRIListener::getBodies() const
 {
   std::map<ID, BodyPtr> result;
-
   // creates a std::map of *shared* pointers from the internally managed list of
   // shared pointers
-  for (auto const & f : bodies) {
+  for (auto const & f : bodies_) {
     result[f.first] = f.second;
   }
-
   return result;
 }
 
 std::map<ID, VoicePtr> HRIListener::getVoices() const
 {
   std::map<ID, VoicePtr> result;
-
   // creates a std::map of *shared* pointers from the internally managed list of
   // shared pointers
-  for (auto const & f : voices) {
+  for (auto const & f : voices_) {
     result[f.first] = f.second;
   }
-
   return result;
 }
 
 std::map<ID, PersonPtr> HRIListener::getPersons() const
 {
   std::map<ID, PersonPtr> result;
-
   std::vector<PersonPtr> aliased;
 
   // creates a map of *shared* pointers from the internally managed list of
   // shared pointers
-  for (auto const & f : persons) {
-    if (f.second->alias().empty()) {
+  for (auto const & f : persons_) {
+    if (!f.second->alias()) {
       result[f.first] = f.second;
     } else {
       aliased.push_back(f.second);
@@ -104,25 +88,27 @@ std::map<ID, PersonPtr> HRIListener::getPersons() const
   }
 
   for (auto const & p : aliased) {
-    if (result.count(p->alias()) != 0) {
-      result[p->id()] = result[p->alias()];
+    if (result.find(p->alias().value()) != result.end()) {
+      result[p->id()] = result[p->alias().value()];
     } else {  // ouch! the person points to an inexistant alias! this should not happen
-      assert(false);
+      RCLCPP_ERROR_STREAM(
+        node_->get_logger(),
+        "Person " << p->id() << " has inexistant alias " << p->alias().value());
     }
   }
+
   return result;
 }
 
 std::map<ID, PersonPtr> HRIListener::getTrackedPersons() const
 {
   std::map<ID, PersonPtr> result;
-
   std::vector<PersonPtr> aliased;
 
   // creates a map of *shared* pointers from the internally managed list of
   // shared pointers
-  for (auto const & f : tracked_persons) {
-    if (f.second->alias().empty()) {
+  for (auto const & f : tracked_persons_) {
+    if (!f.second->alias()) {
       result[f.first] = f.second;
     } else {
       aliased.push_back(f.second);
@@ -130,10 +116,12 @@ std::map<ID, PersonPtr> HRIListener::getTrackedPersons() const
   }
 
   for (auto const & p : aliased) {
-    if (result.count(p->alias()) != 0) {
-      result[p->id()] = result[p->alias()];
+    if (result.find(p->alias().value()) != result.end()) {
+      result[p->id()] = result[p->alias().value()];
     } else {  // ouch! the person points to an inexistant alias! this should not happen.
-      assert(false);
+      RCLCPP_ERROR_STREAM(
+        node_->get_logger(),
+        "Person " << p->id() << " has inexistant alias " << p->alias().value());
     }
   }
 
@@ -148,97 +136,88 @@ void HRIListener::init()
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
   auto default_qos = rclcpp::SystemDefaultsQoS();
+  // There is a pending issue with binding functions with extra non-msg arguments, see
+  // https://github.com/ros2/rclcpp/issues/766
+  std::function<void(hri_msgs::msg::IdsList::ConstSharedPtr)> callback;
 
-  feature_subscribers_[FeatureType::face] = node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/faces/tracked", default_qos,
-    [this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
-      HRIListener::onTrackedFeature(FeatureType::face, tracked);
-    }, options);
+  callback = bind(&HRIListener::onTrackedFeature, this, FeatureType::kFace, std::placeholders::_1);
+  feature_subscribers_[FeatureType::kFace] = node_->create_subscription<hri_msgs::msg::IdsList>(
+    "/humans/faces/tracked", default_qos, callback, options);
 
-  feature_subscribers_[FeatureType::body] = node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/bodies/tracked", default_qos,
-    [this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
-      HRIListener::onTrackedFeature(FeatureType::body, tracked);
-    }, options);
+  callback = bind(&HRIListener::onTrackedFeature, this, FeatureType::kBody, std::placeholders::_1);
+  feature_subscribers_[FeatureType::kBody] = node_->create_subscription<hri_msgs::msg::IdsList>(
+    "/humans/bodies/tracked", default_qos, callback, options);
 
-  feature_subscribers_[FeatureType::voice] = node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/voices/tracked", default_qos,
-    [this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
-      HRIListener::onTrackedFeature(FeatureType::voice, tracked);
-    }, options);
+  callback = bind(&HRIListener::onTrackedFeature, this, FeatureType::kVoice, std::placeholders::_1);
+  feature_subscribers_[FeatureType::kVoice] = node_->create_subscription<hri_msgs::msg::IdsList>(
+    "/humans/voices/tracked", default_qos, callback, options);
 
-  feature_subscribers_[FeatureType::tracked_person] =
+  callback = bind(
+    &HRIListener::onTrackedFeature, this, FeatureType::kTrackedPerson, std::placeholders::_1);
+  feature_subscribers_[FeatureType::kTrackedPerson] =
     node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/persons/tracked", default_qos,
-    [this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
-      HRIListener::onTrackedFeature(FeatureType::tracked_person, tracked);
-    }, options);
+    "/humans/persons/tracked", default_qos, callback, options);
 
-  feature_subscribers_[FeatureType::person] = node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/persons/known", default_qos,
-    [this](const hri_msgs::msg::IdsList::SharedPtr tracked) {
-      HRIListener::onTrackedFeature(FeatureType::person, tracked);
-    }, options);
+  callback = bind(
+    &HRIListener::onTrackedFeature, this, FeatureType::kPerson, std::placeholders::_1);
+  feature_subscribers_[FeatureType::kPerson] = node_->create_subscription<hri_msgs::msg::IdsList>(
+    "/humans/persons/known", default_qos, callback, options);
 }
 
-void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::SharedPtr tracked)
+void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::ConstSharedPtr msg)
 {
   // update the current list of tracked feature (face, body...) with
   // what has just been received on the respective /tracked topic.
-  if (feature == FeatureType::invalid) {
+  if (feature == FeatureType::kInvalid) {
     RCLCPP_DEBUG_STREAM(node_->get_logger(), "Received invalid tracked FeatureType");
     return;
   }
 
   std::set<ID> new_ids;
-  for (auto const & id : tracked->ids) {
+  for (auto const & id : msg->ids) {
     new_ids.insert(ID(id));
   }
 
-
-  std::set<ID> to_remove;
-  std::set<ID> to_add;
-
   std::set<ID> current_ids;
-
   switch (feature) {
-    case FeatureType::face:
-      for (auto const & kv : faces) {
+    case FeatureType::kFace:
+      for (auto const & kv : faces_) {
         current_ids.insert(kv.first);
       }
       break;
-    case FeatureType::body:
-      for (auto const & kv : bodies) {
+    case FeatureType::kBody:
+      for (auto const & kv : bodies_) {
         current_ids.insert(kv.first);
       }
       break;
-    case FeatureType::voice:
-      for (auto const & kv : voices) {
+    case FeatureType::kVoice:
+      for (auto const & kv : voices_) {
         current_ids.insert(kv.first);
       }
       break;
-    case FeatureType::person:
-      for (auto const & kv : persons) {
+    case FeatureType::kPerson:
+      for (auto const & kv : persons_) {
         current_ids.insert(kv.first);
       }
       break;
-    case FeatureType::tracked_person:
-      for (auto const & kv : tracked_persons) {
+    case FeatureType::kTrackedPerson:
+      for (auto const & kv : tracked_persons_) {
         current_ids.insert(kv.first);
       }
       break;
-    case FeatureType::invalid:
+    case FeatureType::kInvalid:
       std::abort();  // unreachable
       break;
   }
 
-
+  std::set<ID> to_add;
   for (auto id : new_ids) {
     if (current_ids.find(id) == current_ids.end()) {
       to_add.insert(id);
     }
   }
 
+  std::set<ID> to_remove;
   for (auto id : current_ids) {
     if (new_ids.find(id) == new_ids.end()) {
       to_remove.insert(id);
@@ -246,151 +225,149 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
   }
 
   switch (feature) {
-    case FeatureType::face:
+    case FeatureType::kFace:
       for (auto id : to_remove) {
-        faces.erase(id);
+        faces_.erase(id);
 
         // invoke all the callbacks
-        for (auto & cb : face_lost_callbacks) {
+        for (auto & cb : face_lost_callbacks_) {
           cb(id);
         }
       }
       break;
-    case FeatureType::body:
+    case FeatureType::kBody:
       for (auto id : to_remove) {
-        bodies.erase(id);
+        bodies_.erase(id);
 
         // invoke all the callbacks
-        for (auto & cb : body_lost_callbacks) {
+        for (auto & cb : body_lost_callbacks_) {
           cb(id);
         }
       }
       break;
-    case FeatureType::voice:
+    case FeatureType::kVoice:
       for (auto id : to_remove) {
-        voices.erase(id);
+        voices_.erase(id);
 
         // invoke all the callbacks
-        for (auto & cb : voice_lost_callbacks) {
+        for (auto & cb : voice_lost_callbacks_) {
           cb(id);
         }
       }
       break;
-    case FeatureType::tracked_person:
+    case FeatureType::kTrackedPerson:
       for (auto id : to_remove) {
-        tracked_persons.erase(id);
+        tracked_persons_.erase(id);
 
         // also erase the *aliases* of this ID
         std::vector<ID> aliases;
-        for (const auto & p : tracked_persons) {
+        for (const auto & p : tracked_persons_) {
           if (p.second->alias() == id) {
             aliases.push_back(p.first);
           }
         }
         for (auto alias : aliases) {
-          tracked_persons.erase(alias);
+          tracked_persons_.erase(alias);
         }
 
         // invoke all the callbacks
-        for (auto & cb : person_tracked_lost_callbacks) {
+        for (auto & cb : person_tracked_lost_callbacks_) {
           cb(id);
         }
       }
       break;
-    case FeatureType::person:
+    case FeatureType::kPerson:
       for (auto id : to_remove) {
-        persons.erase(id);
+        persons_.erase(id);
 
         // also erase the *aliases* of this ID
         std::vector<ID> aliases;
-        for (const auto & p : persons) {
+        for (const auto & p : persons_) {
           if (p.second->alias() == id) {
             aliases.push_back(p.first);
           }
         }
         for (auto alias : aliases) {
-          persons.erase(alias);
+          persons_.erase(alias);
         }
 
         // invoke all the callbacks
-        for (auto & cb : person_lost_callbacks) {
+        for (auto & cb : person_lost_callbacks_) {
           cb(id);
         }
       }
       break;
-    case FeatureType::invalid:
+    case FeatureType::kInvalid:
       std::abort();  // unreachable
       break;
   }
 
   switch (feature) {
-    case FeatureType::face:
+    case FeatureType::kFace:
       for (auto id  : to_add) {
         auto face =
-          std::make_shared<Face>(id, node_, callback_group_, _tf_buffer, _reference_frame);
-
+          std::make_shared<Face>(id, node_, callback_group_, tf_buffer_, reference_frame_);
         face->init();
-        faces.insert({id, face});
-
+        faces_.insert({id, face});
         // invoke all the callbacks
-        for (auto & cb : face_callbacks) {
+        for (auto & cb : face_callbacks_) {
           cb(face);
         }
       }
       break;
-    case FeatureType::body:
+    case FeatureType::kBody:
       for (auto id : to_add) {
         auto body =
-          std::make_shared<Body>(id, node_, callback_group_, _tf_buffer, _reference_frame);
+          std::make_shared<Body>(id, node_, callback_group_, tf_buffer_, reference_frame_);
         body->init();
-        bodies.insert({id, body});
+        bodies_.insert({id, body});
 
         // invoke all the callbacks
-        for (auto & cb : body_callbacks) {
+        for (auto & cb : body_callbacks_) {
           cb(body);
         }
       }
       break;
-    case FeatureType::voice:
+    case FeatureType::kVoice:
       for (auto id : to_add) {
         auto voice =
-          std::make_shared<Voice>(id, node_, callback_group_, _tf_buffer, _reference_frame);
+          std::make_shared<Voice>(id, node_, callback_group_, tf_buffer_, reference_frame_);
         voice->init();
-        voices.insert({id, voice});
+        voices_.insert({id, voice});
 
         // invoke all the callbacks
-        for (auto & cb : voice_callbacks) {
+        for (auto & cb : voice_callbacks_) {
           cb(voice);
         }
       }
       break;
-    case FeatureType::person:
+    case FeatureType::kPerson:
       for (auto id : to_add) {
         auto person =
-          std::make_shared<Person>(id, node_, callback_group_, this, _tf_buffer, _reference_frame);
+          std::make_shared<Person>(id, node_, callback_group_, this, tf_buffer_, reference_frame_);
         person->init();
-        persons.insert({id, person});
+        persons_.insert({id, person});
 
         // invoke all the callbacks
-        for (auto & cb : person_callbacks) {
+        for (auto & cb : person_callbacks_) {
           cb(person);
         }
       }
       break;
-    case FeatureType::tracked_person:
+    case FeatureType::kTrackedPerson:
       for (auto id : to_add) {
         auto person =
-          std::make_shared<Person>(id, node_, callback_group_, this, _tf_buffer, _reference_frame);
+          std::make_shared<Person>(id, node_, callback_group_, this, tf_buffer_, reference_frame_);
         person->init();
-        tracked_persons.insert({id, person});
+        tracked_persons_.insert({id, person});
 
         // invoke all the callbacks
-        for (auto & cb : person_tracked_callbacks) {
+        for (auto & cb : person_tracked_callbacks_) {
           cb(person);
         }
       }
       break;
-    case FeatureType::invalid:
+    case FeatureType::kInvalid:
       std::abort();  // unreachable
       break;
   }

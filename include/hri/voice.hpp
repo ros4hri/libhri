@@ -16,25 +16,18 @@
 #define HRI__VOICE_HPP_
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
-#include <optional>
-
-#include <geometry_msgs/msg/transform_stamped.hpp>
-
+#include "hri/feature_tracker.hpp"
+#include "hri/types.hpp"
 #include "hri_msgs/msg/live_speech.hpp"
-
 #include "std_msgs/msg/bool.hpp"
-
-#include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
-
-#include "feature_tracker.hpp"
 
 namespace hri
 {
-
 class Voice : public FeatureTracker
 // TODO(LJU): possibly subscribe also to the /audio and the /features sub-topics
 {
@@ -43,34 +36,25 @@ public:
     ID id,
     rclcpp::Node::SharedPtr node,
     rclcpp::CallbackGroup::SharedPtr callback_group,
-    tf2::BufferCore & tf_buffer,
+    const tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);
 
   virtual ~Voice();
 
-  /** \brief returns speech is currently detected in this voice, ie, whether the person is
+  /** \brief Returns speech is currently detected in this voice, ie, whether the person is
    * currently speaking.
    */
-  bool is_speaking() const
-  {
-    return _is_speaking;
-  }
+  std::optional<bool> is_speaking() const {return is_speaking_;}
 
-  /** \brief returns the last recognised final sentence (or an empty string
+  /** \brief Returns the last recognised final sentence (or an empty string
    * if no speech was recognised yet).
    */
-  std::string speech() const
-  {
-    return _speech;
-  }
+  std::optional<std::string> speech() const {return speech_;}
 
-  /** \brief returns the last recognised incremental sentence (or an empty
+  /** \brief Returns the last recognised incremental sentence (or an empty
    * string if no speech was recognised yet).
    */
-  std::string incremental_speech() const
-  {
-    return _incremental_speech;
-  }
+  std::optional<std::string> incremental_speech() const {return incremental_speech_;}
 
   /** \brief Registers a callback function, to be invoked everytime speech is
    * detected (ie, the person is speaking).
@@ -108,21 +92,23 @@ public:
   void init() override;
 
 private:
-  bool _is_speaking;
-  std::string _speech;
-  std::string _incremental_speech;
+  void _onSpeech(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg);  // TODO(LJU): find compliant name
+  void onIsSpeaking(std_msgs::msg::Bool::ConstSharedPtr msg);
+
+  std::optional<bool> is_speaking_;
+  std::optional<std::string> speech_;
+  std::optional<std::string> incremental_speech_;
 
   std::vector<std::function<void(bool)>> is_speaking_callbacks;
   std::vector<std::function<void(const std::string &)>> speech_callbacks;
   std::vector<std::function<void(const std::string &)>> incremental_speech_callbacks;
 
-  void _onSpeech(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg);
-
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr is_speaking_subscriber_{nullptr};
-  rclcpp::Subscription<hri_msgs::msg::LiveSpeech>::SharedPtr speech_subscriber_{nullptr};
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr is_speaking_subscriber_;
+  rclcpp::Subscription<hri_msgs::msg::LiveSpeech>::SharedPtr speech_subscriber_;
 };
 
 typedef std::shared_ptr<Voice> VoicePtr;
 
 }  // namespace hri
+
 #endif  // HRI__VOICE_HPP_

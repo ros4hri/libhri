@@ -13,7 +13,15 @@
 // limitations under the License.
 
 #include "hri/voice.hpp"
+
+#include <functional>
+#include <string>
+
+#include "hri/feature_tracker.hpp"
+#include "hri/types.hpp"
+#include "hri_msgs/msg/live_speech.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "tf2_ros/buffer.h"
 
 namespace hri
 {
@@ -22,54 +30,55 @@ Voice::Voice(
   ID id,
   rclcpp::Node::SharedPtr node,
   rclcpp::CallbackGroup::SharedPtr callback_group,
-  tf2::BufferCore & tf_buffer,
+  const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
 : FeatureTracker{id, "/humans/voices", "voice_", node, callback_group, tf_buffer, reference_frame}
-{
-}
+{}
 
 Voice::~Voice()
 {
-  // executor_->cancel();
-  // dedicated_listener_thread_->join();
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting voice " << id_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting voice " << kId_);
 }
 
 void Voice::init()
 {
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New voice detected: " << ns_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New voice detected: " << kNs_);
 
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
   auto default_qos = rclcpp::SystemDefaultsQoS();
 
   is_speaking_subscriber_ = node_->create_subscription<std_msgs::msg::Bool>(
-    ns_ + "/is_speaking", default_qos,
-    [&](std_msgs::msg::Bool::SharedPtr msg) {
-      _is_speaking = msg->data;
-      for (auto & cb : is_speaking_callbacks) {
-        cb(msg->data);
-      }
-    });
+    kNs_ + "/is_speaking", default_qos,
+    bind(&Voice::onIsSpeaking, this, std::placeholders::_1), options);
 
   speech_subscriber_ = node_->create_subscription<hri_msgs::msg::LiveSpeech>(
-    ns_ + "/speech", default_qos, bind(&Voice::_onSpeech, this, std::placeholders::_1));
+    kNs_ + "/speech", default_qos,
+    bind(&Voice::_onSpeech, this, std::placeholders::_1), options);
 }
 
-void Voice::_onSpeech(const hri_msgs::msg::LiveSpeech::ConstSharedPtr msg)
+void Voice::_onSpeech(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg)
 {
   if (msg->incremental.size() > 0) {
-    _incremental_speech = msg->incremental;
+    incremental_speech_ = msg->incremental;
     for (auto cb : incremental_speech_callbacks) {
-      cb(_incremental_speech);
+      cb(msg->incremental);
     }
   }
 
   if (msg->final.size() > 0) {
-    _speech = msg->final;
+    speech_ = msg->final;
     for (auto cb : speech_callbacks) {
-      cb(_speech);
+      cb(msg->final);
     }
+  }
+}
+
+void Voice::onIsSpeaking(std_msgs::msg::Bool::ConstSharedPtr msg)
+{
+  is_speaking_ = msg->data;
+  for (auto & cb : is_speaking_callbacks) {
+    cb(msg->data);
   }
 }
 

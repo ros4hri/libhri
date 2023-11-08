@@ -15,8 +15,8 @@
 #include "hri/feature_tracker.hpp"
 
 #include <optional>
+#include <string>
 
-#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/exceptions.h"
 #include "tf2/time.h"
@@ -31,25 +31,18 @@ FeatureTracker::FeatureTracker(
   std::string feature_tf_prefix,
   rclcpp::Node::SharedPtr node,
   rclcpp::CallbackGroup::SharedPtr callback_group,
-  tf2::BufferCore & tf_buffer,
+  const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
-: id_(id),
-  ns_(feature_ns + "/" + id),
-  frame_(feature_tf_prefix + id),
+: kId_(id),
+  kNs_(feature_ns + "/" + id),
+  kFrame_(feature_tf_prefix + id),
   node_(node),
   callback_group_(callback_group),
   tf_buffer_(tf_buffer),
   reference_frame_(reference_frame)
-{
-}
+{}
 
-std::optional<geometry_msgs::msg::TransformStamped> FeatureTracker::transform() const
-{
-  return transform(frame());
-}
-
-std::optional<geometry_msgs::msg::TransformStamped> FeatureTracker::transform(
-  std::string frame_name) const
+std::optional<Transform> FeatureTracker::transform(std::string frame_name) const
 {
   try {
     auto transform = tf_buffer_.lookupTransform(reference_frame_, frame_name, tf2::TimePointZero);

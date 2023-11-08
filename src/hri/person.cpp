@@ -12,11 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <geometry_msgs/msg/transform_stamped.hpp>
 #include "hri/person.hpp"
+
+#include <cmath>
+#include <functional>
+#include <string>
+
+#include "hri/body.hpp"
+#include "hri/face.hpp"
+#include "hri/feature_tracker.hpp"
 #include "hri/hri.hpp"
+#include "hri/types.hpp"
+#include "hri/voice.hpp"
 #include "hri_msgs/msg/engagement_level.hpp"
-#include <std_msgs/msg/float32.hpp>
+#include "std_msgs/msg/float32.hpp"
+#include "std_msgs/msg/string.hpp"
+#include "std_msgs/msg/bool.hpp"
+#include "tf2_ros/buffer.h"
 
 namespace hri
 {
@@ -26,24 +38,30 @@ Person::Person(
   rclcpp::Node::SharedPtr node,
   rclcpp::CallbackGroup::SharedPtr callback_group,
   HRIListener * const listener,
-  tf2::BufferCore & tf_buffer,
+  const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
-: FeatureTracker{id, "/humans/persons", "person_", node, callback_group, tf_buffer, reference_frame}
-  , listener_(listener)
-  , _alias("")
-  , _engagement_status(nullptr)
-  , _loc_confidence(0.)
-{
-}
+: FeatureTracker{
+    id, "/humans/persons", "person_", node, callback_group, tf_buffer, reference_frame},
+  listener_(listener)
+{}
 
 Person::~Person()
 {
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting person " << id_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting person " << kId_);
+}
+
+void assignStringOptional(std::optional<std::string> & op, std::string val)
+{
+  if (val.empty()) {
+    op.reset();
+  } else {
+    op = val;
+  }
 }
 
 void Person::init()
 {
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New person detected: " << ns_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New person detected: " << kNs_);
 
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
@@ -51,38 +69,38 @@ void Person::init()
   auto latched_qos = rclcpp::SystemDefaultsQoS().transient_local().reliable();
 
   face_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    ns_ + "/face_id", default_qos,
-    [&](const std_msgs::msg::String::SharedPtr msg) {face_id = msg->data;}, options);
+    kNs_ + "/face_id", default_qos,
+    bind(&Person::onFaceId, this, std::placeholders::_1), options);
 
   body_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    ns_ + "/body_id", default_qos,
-    [&](const std_msgs::msg::String::SharedPtr msg) {body_id = msg->data;}, options);
+    kNs_ + "/body_id", default_qos,
+    bind(&Person::onBodyId, this, std::placeholders::_1), options);
 
   voice_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    ns_ + "/voice_id", default_qos,
-    [&](const std_msgs::msg::String::SharedPtr msg) {voice_id = msg->data;}, options);
+    kNs_ + "/voice_id", default_qos,
+    bind(&Person::onVoiceId, this, std::placeholders::_1), options);
 
   anonymous_subscriber_ = node_->create_subscription<std_msgs::msg::Bool>(
-    ns_ + "/anonymous", latched_qos,
-    [&](const std_msgs::msg::Bool::SharedPtr msg) {_anonymous = msg->data;}, options);
+    kNs_ + "/anonymous", latched_qos,
+    bind(&Person::onAnonymous, this, std::placeholders::_1), options);
 
   alias_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    ns_ + "/alias", default_qos,
-    [&](const std_msgs::msg::String::SharedPtr msg) {_alias = msg->data;}, options);
+    kNs_ + "/alias", default_qos,
+    bind(&Person::onAlias, this, std::placeholders::_1), options);
 
   engagement_subscriber_ = node_->create_subscription<hri_msgs::msg::EngagementLevel>(
-    ns_ + "/engagement_status", default_qos,
-    [&](const hri_msgs::msg::EngagementLevel::SharedPtr msg) {_engagement_status = msg;}, options);
+    kNs_ + "/engagement_status", default_qos,
+    bind(&Person::onEngagementStatus, this, std::placeholders::_1), options);
 
   loc_confidence_subscriber_ = node_->create_subscription<std_msgs::msg::Float32>(
-    ns_ + "/location_confidence", default_qos,
-    [&](const std_msgs::msg::Float32::SharedPtr msg) {_loc_confidence = msg->data;}, options);
+    kNs_ + "/location_confidence", default_qos,
+    bind(&Person::onLocationConfidence, this, std::placeholders::_1), options);
 }
 
 FacePtr Person::face() const
 {
-  if (listener_->getFaces().count(face_id) != 0) {
-    return listener_->getFaces()[face_id];
+  if (face_id_ && listener_->getFaces().count(face_id_.value()) != 0) {
+    return listener_->getFaces()[*face_id_];
   } else {
     return FacePtr();
   }
@@ -90,8 +108,8 @@ FacePtr Person::face() const
 
 BodyPtr Person::body() const
 {
-  if (listener_->getBodies().count(body_id) != 0) {
-    return listener_->getBodies()[body_id];
+  if (body_id_ && listener_->getBodies().count(body_id_.value()) != 0) {
+    return listener_->getBodies()[*body_id_];
   } else {
     return BodyPtr();
   }
@@ -99,44 +117,76 @@ BodyPtr Person::body() const
 
 VoicePtr Person::voice() const
 {
-  if (listener_->getVoices().count(voice_id) != 0) {
-    return listener_->getVoices()[voice_id];
+  if (voice_id_ && listener_->getVoices().count(voice_id_.value()) != 0) {
+    return listener_->getVoices()[*voice_id_];
   } else {
     return VoicePtr();
   }
 }
 
-std::optional<EngagementLevel> Person::engagement_status() const
-{
-  if (!_engagement_status) {
-    return std::optional<EngagementLevel>();
-  }
 
-  switch (_engagement_status->level) {
-    case hri_msgs::msg::EngagementLevel::UNKNOWN:
-      return std::optional<EngagementLevel>();
-    case hri_msgs::msg::EngagementLevel::ENGAGING:
-      return EngagementLevel::ENGAGING;
-    case hri_msgs::msg::EngagementLevel::ENGAGED:
-      return EngagementLevel::ENGAGED;
-    case hri_msgs::msg::EngagementLevel::DISENGAGING:
-      return EngagementLevel::DISENGAGING;
-    case hri_msgs::msg::EngagementLevel::DISENGAGED:
-      return EngagementLevel::DISENGAGED;
-    default:
-      // we should handle all the possible engagement values
-      assert(false);
-      return std::optional<EngagementLevel>();
+void Person::onFaceId(std_msgs::msg::String::ConstSharedPtr msg)
+{
+  if (msg->data.empty()) {
+    face_id_.reset();
+  } else {
+    face_id_ = msg->data;
   }
 }
 
-std::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
+void Person::onBodyId(std_msgs::msg::String::ConstSharedPtr msg)
 {
-  if (abs(_loc_confidence) < 1e-2) {
-    return std::optional<geometry_msgs::msg::TransformStamped>();
+  if (msg->data.empty()) {
+    body_id_.reset();
+  } else {
+    body_id_ = msg->data;
   }
+}
 
-  return FeatureTracker::transform();
+void Person::onVoiceId(std_msgs::msg::String::ConstSharedPtr msg)
+{
+  if (msg->data.empty()) {
+    voice_id_.reset();
+  } else {
+    voice_id_ = msg->data;
+  }
+}
+
+void Person::onAlias(std_msgs::msg::String::ConstSharedPtr msg)
+{
+  if (msg->data.empty()) {
+    alias_.reset();
+  } else {
+    alias_ = msg->data;
+  }
+}
+
+void Person::onAnonymous(std_msgs::msg::Bool::ConstSharedPtr msg)
+{
+  anonymous_ = msg->data;
+}
+
+void Person::onEngagementStatus(hri_msgs::msg::EngagementLevel::ConstSharedPtr msg)
+{
+  if (msg->level == hri_msgs::msg::EngagementLevel::UNKNOWN) {
+    engagement_status_.reset();
+  } else {
+    engagement_status_ = static_cast<EngagementLevel>(msg->level);
+  }
+}
+
+void Person::onLocationConfidence(std_msgs::msg::Float32::ConstSharedPtr msg)
+{
+  loc_confidence_ = msg->data;
+}
+
+std::optional<Transform> Person::transform() const
+{
+  if (std::abs(loc_confidence_.value_or(0.f)) < 1e-2) {
+    return std::optional<Transform>();
+  } else {
+    return FeatureTracker::transform();
+  }
 }
 
 }  // namespace hri

@@ -17,48 +17,27 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
-#include <optional>
-
-#include <geometry_msgs/msg/transform_stamped.hpp>
-
-#include <std_msgs/msg/float32.hpp>
-#include <std_msgs/msg/string.hpp>
-#include <std_msgs/msg/bool.hpp>
-
+#include "hri/body.hpp"
+#include "hri/face.hpp"
+#include "hri/feature_tracker.hpp"
+#include "hri/types.hpp"
+#include "hri/voice.hpp"
 #include "hri_msgs/msg/engagement_level.hpp"
-
-#include "tf2_ros/transform_listener.h"
-#include "tf2_ros/message_filter.h"
+#include "std_msgs/msg/float32.hpp"
+#include "std_msgs/msg/string.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "tf2_ros/buffer.h"
-
-#include "message_filters/subscriber.h"
-
-#include "feature_tracker.hpp"
-#include "face.hpp"
-#include "body.hpp"
-#include "voice.hpp"
 
 namespace hri
 {
-enum EngagementLevel
-{
-  // disengaged: the human has not looked in the direction of the robot
-  DISENGAGED = 1,
-  // engaging: the human has started to look in the direction of the robot
-  ENGAGING = 2,
-  // engaged: the human is fully engaged with the robot
-  ENGAGED = 3,
-  // disengaging: the human has started to look away from the robot
-  DISENGAGING = 4
-};
-
 
 class HRIListener;
 
-
 class Person : public FeatureTracker
+// TODO(LJU): possibly subscribe also to the /name and the /native_language sub-topics
 {
 public:
   Person(
@@ -66,82 +45,67 @@ public:
     rclcpp::Node::SharedPtr node,
     rclcpp::CallbackGroup::SharedPtr callback_group,
     HRIListener * const listener,
-    tf2::BufferCore & tf_buffer,
+    const tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);
 
   virtual ~Person();
 
-  /* returns a shared pointer to the face of this person, or
+  /** \brief Returns a shared pointer to the face of this person, or
    * a nullptr if this person is currently not associated to any detected face.
    */
   FacePtr face() const;
 
-  /* returns a shared pointer to the body of this person, or
+  /** \brief Returns a shared pointer to the body of this person, or
    * a nullptr if this person is currently not associated to any detected body.
    */
   BodyPtr body() const;
 
-  /* returns a shared pointer to the voice of this person, or
+  /** \brief Returns a shared pointer to the voice of this person, or
    * a nullptr if this person is currently not associated to any detected voice.
    */
   VoicePtr voice() const;
 
-
-  std::optional<bool> anonymous() const
-  {
-    return _anonymous;
-  }
-
-  ID alias() const
-  {
-    return _alias;
-  }
-
-  std::optional<EngagementLevel> engagement_status() const;
-
-  float location_confidence() const
-  {
-    return _loc_confidence;
-  }
+  std::optional<bool> anonymous() const {return anonymous_;}
+  std::optional<EngagementLevel> engagement_status() const {return engagement_status_;}
+  std::optional<float> location_confidence() const {return loc_confidence_;}
+  std::optional<ID> alias() const {return alias_;}
 
   void init() override;
-  ID face_id;
-  ID body_id;
-  ID voice_id;
+  std::optional<Transform> transform() const override;
 
-  std::optional<geometry_msgs::msg::TransformStamped> transform() const override;
+private:
+  void onFaceId(std_msgs::msg::String::ConstSharedPtr msg);
+  void onBodyId(std_msgs::msg::String::ConstSharedPtr msg);
+  void onVoiceId(std_msgs::msg::String::ConstSharedPtr msg);
+  void onAnonymous(std_msgs::msg::Bool::ConstSharedPtr msg);
+  void onAlias(std_msgs::msg::String::ConstSharedPtr msg);
+  void onEngagementStatus(hri_msgs::msg::EngagementLevel::ConstSharedPtr msg);
+  void onLocationConfidence(std_msgs::msg::Float32::ConstSharedPtr msg);
 
-protected:
   // we use a raw pointer here. `this` is owned by the pointed HRIListener, so
   // `this` would normally be destroyed before HRIListener (in reality, a
   // pointer to `this` *might* outlive `HRIListener` -- make sure HRIListener
   // is destroyed after all pointers to this person are released.
-  const HRIListener * listener_;
+  HRIListener * const listener_;
 
-  void tfCallback(
-    [[maybe_unused]] const geometry_msgs::msg::TransformStamped::SharedPtr & transform_ptr)
-  {
-    RCLCPP_WARN_STREAM(node_->get_logger(), "got tf transform!");
-  }
-
+  std::optional<ID> face_id_;
+  std::optional<ID> body_id_;
+  std::optional<ID> voice_id_;
   // if non-empty, this person 'does not exist' and is instead an alias to
   // another person.  hri::getPersons and hri::getTrackedPersons will returns
   // pointers to the aliased person.
-  ID _alias;
+  std::optional<ID> alias_;
+  std::optional<bool> anonymous_;
+  std::optional<EngagementLevel> engagement_status_;
+  std::optional<float> loc_confidence_;
 
-  std::optional<bool> _anonymous;
-
-  hri_msgs::msg::EngagementLevel::SharedPtr _engagement_status;
-
-  float _loc_confidence;
-
-  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr face_id_subscriber_ {nullptr};
-  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr body_id_subscriber_ {nullptr};
-  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr voice_id_subscriber_ {nullptr};
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr anonymous_subscriber_ {nullptr};
-  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr alias_subscriber_ {nullptr};
-  rclcpp::Subscription<hri_msgs::msg::EngagementLevel>::SharedPtr engagement_subscriber_ {nullptr};
-  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr loc_confidence_subscriber_ {nullptr};
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr face_id_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr body_id_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr voice_id_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr anonymous_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr alias_subscriber_;
+  rclcpp::Subscription<hri_msgs::msg::EngagementLevel>::SharedPtr engagement_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr loc_confidence_subscriber_;
 };
 
 typedef std::shared_ptr<Person> PersonPtr;

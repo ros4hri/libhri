@@ -14,9 +14,18 @@
 
 #include "hri/face.hpp"
 
-#include <cv_bridge/cv_bridge.h>
-#include <hri_msgs/msg/soft_biometrics.hpp>
+#include <functional>
+#include <string>
 
+#include "cv_bridge/cv_bridge.h"
+#include "hri/feature_tracker.hpp"
+#include "hri/types.hpp"
+#include "hri_msgs/msg/facial_action_units.hpp"
+#include "hri_msgs/msg/facial_landmarks.hpp"
+#include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
+#include "hri_msgs/msg/soft_biometrics.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "sensor_msgs/msg/image.hpp"
 
 namespace hri
 {
@@ -25,56 +34,53 @@ Face::Face(
   ID id,
   rclcpp::Node::SharedPtr node,
   rclcpp::CallbackGroup::SharedPtr callback_group,
-  tf2::BufferCore & tf_buffer,
+  const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
 : FeatureTracker{id, "/humans/faces", "face_", node, callback_group, tf_buffer, reference_frame},
-  gaze_frame_("gaze_" + id_)
-{
-}
+  kGazeFrame_("gaze_" + kId_)
+{}
 
 Face::~Face()
 {
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting face " << id_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting face " << kId_);
 }
 
 void Face::init()
 {
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New face detected: " << ns_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New face detected: " << kNs_);
 
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
   auto default_qos = rclcpp::SystemDefaultsQoS();
 
-  roi_subscriber_ = node_->create_subscription<RegionOfInterest>(
-    ns_ + "/roi", default_qos,
+  roi_subscriber_ = node_->create_subscription<hri_msgs::msg::NormalizedRegionOfInterest2D>(
+    kNs_ + "/roi", default_qos,
     bind(&Face::onRoI, this, std::placeholders::_1), options);
 
   cropped_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
-    ns_ + "/cropped", default_qos,
+    kNs_ + "/cropped", default_qos,
     bind(&Face::onCropped, this, std::placeholders::_1), options);
 
   aligned_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
-    ns_ + "/aligned", default_qos,
+    kNs_ + "/aligned", default_qos,
     bind(&Face::onAligned, this, std::placeholders::_1), options);
 
   landmarks_subscriber_ = node_->create_subscription<hri_msgs::msg::FacialLandmarks>(
-    ns_ + "/landmarks", default_qos,
+    kNs_ + "/landmarks", default_qos,
     bind(&Face::onLandmarks, this, std::placeholders::_1), options);
 
   softbiometrics_subscriber_ = node_->create_subscription<hri_msgs::msg::SoftBiometrics>(
-    ns_ + "/softbiometrics", default_qos,
+    kNs_ + "/softbiometrics", default_qos,
     bind(&Face::onSoftBiometrics, this, std::placeholders::_1), options);
+
+  facial_action_units_subscriber_ = node_->create_subscription<hri_msgs::msg::FacialActionUnits>(
+    kNs_ + "/facs", default_qos,
+    bind(&Face::onFacs, this, std::placeholders::_1), options);
 }
 
-
-void Face::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr roi)
+void Face::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr msg)
 {
-  roi_ = *roi;
-}
-
-Face::RegionOfInterest Face::roi() const
-{
-  return roi_;
+  roi_ = *msg;
 }
 
 void Face::onCropped(const sensor_msgs::msg::Image::ConstSharedPtr msg)
@@ -83,62 +89,44 @@ void Face::onCropped(const sensor_msgs::msg::Image::ConstSharedPtr msg)
   cropped_ = cv_bridge::toCvCopy(msg)->image;
 }
 
-cv::Mat Face::cropped() const
-{
-  return cropped_;
-}
-
 void Face::onAligned(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 {
   // if using toCvShare, the image ends up shared with cropped_!
   aligned_ = cv_bridge::toCvCopy(msg)->image;
 }
 
-cv::Mat Face::aligned() const
-{
-  return aligned_;
-}
-
 void Face::onLandmarks(const hri_msgs::msg::FacialLandmarks::ConstSharedPtr msg)
 {
-  int i = 0;
-
-  for (auto landmark : msg->landmarks) {
-    facial_landmarks_[i].x = landmark.x;
-    facial_landmarks_[i].y = landmark.y;
-    facial_landmarks_[i].c = landmark.c;
-    ++i;
+  FacialLandmarks landmarks;
+  for (size_t i = 0; i < landmarks.size(); ++i) {
+    landmarks[i].x = msg->landmarks[i].x;
+    landmarks[i].y = msg->landmarks[i].y;
+    landmarks[i].c = msg->landmarks[i].c;
   }
+  landmarks_ = landmarks;
 }
 
-void Face::onSoftBiometrics(const hri_msgs::msg::SoftBiometrics::ConstSharedPtr biometrics)
+void Face::onSoftBiometrics(const hri_msgs::msg::SoftBiometrics::ConstSharedPtr msg)
 {
-  softbiometrics_ = biometrics;
+  age_ = msg->age;
+  if (msg->gender == hri_msgs::msg::SoftBiometrics::UNDEFINED) {
+    gender_.reset();
+  } else {
+    gender_ = static_cast<Gender>(msg->gender);
+  }
 }
 
-
-std::optional<float> Face::age() const
+void Face::onFacs(hri_msgs::msg::FacialActionUnits::ConstSharedPtr msg)
 {
-  if (!softbiometrics_) {
-    return std::optional<float>();
+  FacialActionUnits facial_action_units;
+  for (size_t i = 0; i < facial_action_units.size(); ++i) {
+    facial_action_units[i].intensity = msg->intensity[i];
+    facial_action_units[i].confidence = msg->confidence[i];
   }
-
-  return softbiometrics_->age;
+  facial_action_units_ = facial_action_units;
 }
 
-std::optional<Gender> Face::gender() const
-{
-  if (!softbiometrics_) {
-    return std::optional<Gender>();
-  }
-  if (softbiometrics_->gender == 0) {  // UNDEFINED
-    return std::optional<Gender>();
-  }
-
-  return static_cast<Gender>(softbiometrics_->gender);
-}
-
-std::optional<geometry_msgs::msg::TransformStamped> Face::gazeTransform() const
+std::optional<Transform> Face::gazeTransform() const
 {
   return transform(gazeFrame());
 }

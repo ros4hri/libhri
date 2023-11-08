@@ -38,7 +38,6 @@
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
 #include "hri_msgs/msg/soft_biometrics.hpp"
 
-
 using namespace std::chrono_literals;
 
 TEST(libhri_tests, GetFaces)
@@ -111,10 +110,10 @@ TEST(libhri_tests, GetFacesRoi)
   auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/faces/tracked", 1);
   // roi topic is transient local
-  auto pub_r1 = tester_node->create_publisher<hri::Face::RegionOfInterest>(
+  auto pub_r1 = tester_node->create_publisher<hri_msgs::msg::NormalizedRegionOfInterest2D>(
     "/humans/faces/A/roi", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
   // roi topic is transient local
-  auto pub_r2 = tester_node->create_publisher<hri::Face::RegionOfInterest>(
+  auto pub_r2 = tester_node->create_publisher<hri_msgs::msg::NormalizedRegionOfInterest2D>(
     "/humans/faces/B/roi", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
 
   auto ids = hri_msgs::msg::IdsList();
@@ -133,18 +132,19 @@ TEST(libhri_tests, GetFacesRoi)
   auto face = faces["B"];
   EXPECT_FALSE(face == nullptr);
   EXPECT_EQ(face->ns(), "/humans/faces/B");
-  EXPECT_FLOAT_EQ((face->roi().xmax - face->roi().xmin), 0.f);
+  EXPECT_FALSE(face->roi());
 
-  auto roi = hri::Face::RegionOfInterest();
+  auto roi = hri::RegionOfInterest();
   roi.xmin = 0.1;
   pub_r2->publish(roi);
   executor.spin_all(1s);
-  EXPECT_FLOAT_EQ(face->roi().xmin, 0.1f);
+  ASSERT_TRUE(face->roi());
+  EXPECT_FLOAT_EQ(face->roi().value().xmin, 0.1f);
 
   roi.xmin = 0.2;
   pub_r2->publish(roi);
   executor.spin_all(1s);
-  EXPECT_FLOAT_EQ(face->roi().xmin, 0.2f);
+  EXPECT_FLOAT_EQ(face->roi().value().xmin, 0.2f);
 
   ids.ids = {"B", "A"};
   pub->publish(ids);
@@ -158,9 +158,11 @@ TEST(libhri_tests, GetFacesRoi)
   ASSERT_FALSE(face_a == nullptr);
   ASSERT_FALSE(face_b == nullptr);
   EXPECT_EQ(face_a->ns(), "/humans/faces/A");
-  EXPECT_FLOAT_EQ(face_a->roi().xmin, 0.2f);
+  ASSERT_TRUE(face_a->roi());
+  EXPECT_FLOAT_EQ(face_a->roi().value().xmin, 0.2f);
   EXPECT_EQ(face_b->ns(), "/humans/faces/B");
-  EXPECT_FLOAT_EQ(face_b->roi().xmin, 0.2f);
+  ASSERT_TRUE(face_b->roi());
+  EXPECT_FLOAT_EQ(face_b->roi().value().xmin, 0.2f);
 }
 
 
@@ -492,8 +494,8 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
   auto p2 = hri_listener->getTrackedPersons()["p2"];
   ASSERT_TRUE(p1->anonymous());  // the anonymous optional flag should have been set
   ASSERT_TRUE(p2->anonymous());  // the anonymous optional flag should have been set
-  ASSERT_FALSE(*(p1->anonymous()));
-  ASSERT_TRUE(*(p2->anonymous()));
+  ASSERT_FALSE(p1->anonymous().value());
+  ASSERT_TRUE(p2->anonymous().value());
   // being anonymous or not should have no impact on face associations
   ASSERT_EQ(p1->face()->id(), "f1");
   ASSERT_EQ(p2->face()->id(), "f2");
@@ -575,14 +577,14 @@ TEST(libhri_tests, SoftBiometrics)
   auto face = hri_listener->getTrackedPersons()["p1"]->face();
   EXPECT_EQ(face->id(), "f1");
   ASSERT_TRUE(face->age());
-  EXPECT_FLOAT_EQ(*(face->age()), 45.f);
+  EXPECT_FLOAT_EQ(face->age().value(), 45.f);
   ASSERT_TRUE(face->gender());
-  EXPECT_EQ(*(face->gender()), hri::FEMALE);
+  EXPECT_EQ(face->gender().value(), hri::Gender::kFemale);
 
   softbiometrics_msg.gender = hri_msgs::msg::SoftBiometrics::OTHER;
   softbiometrics_pub->publish(softbiometrics_msg);
   executor.spin_all(1s);
-  EXPECT_EQ(*(face->gender()), hri::OTHER);
+  EXPECT_EQ(face->gender().value(), hri::Gender::kOther);
 
   softbiometrics_msg.gender = hri_msgs::msg::SoftBiometrics::UNDEFINED;
   softbiometrics_pub->publish(softbiometrics_msg);
@@ -615,12 +617,12 @@ TEST(libhri_tests, EngagementLevel)
   executor.spin_all(1s);
   auto p = hri_listener->getTrackedPersons()["p1"];
   ASSERT_TRUE(p->engagement_status());
-  EXPECT_EQ(*(p->engagement_status()), hri::DISENGAGED);
+  EXPECT_EQ(p->engagement_status().value(), hri::EngagementLevel::kDisengaged);
 
   msg.level = hri_msgs::msg::EngagementLevel::ENGAGED;
   engagement_pub->publish(msg);
   executor.spin_all(1s);
-  EXPECT_EQ(*(p->engagement_status()), hri::ENGAGED);
+  EXPECT_EQ(p->engagement_status().value(), hri::EngagementLevel::kEngaged);
 
   msg.level = hri_msgs::msg::EngagementLevel::UNKNOWN;
   engagement_pub->publish(msg);
@@ -789,13 +791,14 @@ TEST(libhri_tests, PeopleLocation)
   msg.data = 0.;
   loc_confidence_pub->publish(msg);
   executor.spin_all(1s);
-  EXPECT_FLOAT_EQ(p->location_confidence(), 0.f);
+  ASSERT_TRUE(p->location_confidence());
+  EXPECT_FLOAT_EQ(p->location_confidence().value(), 0.f);
   EXPECT_FALSE(p->transform()) << "location confidence at 0, no transform should be available";
 
   msg.data = 0.5;
   loc_confidence_pub->publish(msg);
   executor.spin_all(1s);
-  EXPECT_FLOAT_EQ(p->location_confidence(), 0.5f);
+  EXPECT_FLOAT_EQ(p->location_confidence().value(), 0.5f);
   p->transform();
   EXPECT_FALSE(p->transform())
     << "location confidence > 0 but no transform published yet -> no transform should be returned";
@@ -810,19 +813,28 @@ TEST(libhri_tests, PeopleLocation)
   p1_transform.transform.rotation.w = 1.0;
   static_broadcaster->sendTransform(p1_transform);
   executor.spin_all(1s);
-  EXPECT_FLOAT_EQ(p->location_confidence(), 0.5f);
-  EXPECT_TRUE(p->transform()) << "location confidence > 0 => a transform should be available";
-  auto t = *(p->transform());
+  EXPECT_FLOAT_EQ(p->location_confidence().value(), 0.5f);
+  ASSERT_TRUE(p->transform()) << "location confidence > 0 => a transform should be available";
+  auto t = p->transform().value();
   EXPECT_EQ(t.child_frame_id, "person_p1");
   EXPECT_EQ(t.header.frame_id, "base_link");
   EXPECT_FLOAT_EQ(t.transform.translation.x, 2.0f);
 
+  hri_listener->setReferenceFrame("person_p1");
+  ASSERT_TRUE(p->transform());
+  t = p->transform().value();
+  EXPECT_EQ(t.child_frame_id, "person_p1");
+  EXPECT_EQ(t.header.frame_id, "person_p1");
+  EXPECT_FLOAT_EQ(t.transform.translation.x, 0.f);
+
   msg.data = 1.0;
   loc_confidence_pub->publish(msg);
   executor.spin_all(1s);
-  EXPECT_FLOAT_EQ(p->location_confidence(), 1.f);
+  EXPECT_FLOAT_EQ(p->location_confidence().value(), 1.f);
   EXPECT_TRUE(p->transform()) << "location confidence > 0 => a transform should be available";
 }
+
+// TODO(LJU): missing quite a few tests, should have at least a basic one for each topic subscribed
 
 int main(int argc, char ** argv)
 {

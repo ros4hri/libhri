@@ -14,8 +14,17 @@
 
 #include "hri/body.hpp"
 
-#include <cv_bridge/cv_bridge.h>
+#include <functional>
+#include <string>
 
+#include "cv_bridge/cv_bridge.h"
+#include "hri/feature_tracker.hpp"
+#include "hri/types.hpp"
+#include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
+#include "hri_msgs/msg/skeleton2_d.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "sensor_msgs/msg/image.hpp"
+#include "tf2_ros/buffer.h"
 
 namespace hri
 {
@@ -24,7 +33,7 @@ Body::Body(
   ID id,
   rclcpp::Node::SharedPtr node,
   rclcpp::CallbackGroup::SharedPtr callback_group,
-  tf2::BufferCore & tf_buffer,
+  const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
 : FeatureTracker{id, "/humans/bodies", "body_", node, callback_group, tf_buffer, reference_frame}
 {
@@ -32,39 +41,34 @@ Body::Body(
 
 Body::~Body()
 {
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting body " << id_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting body " << kId_);
 }
 
 void Body::init()
 {
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New body detected: " << ns_);
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New body detected: " << kNs_);
 
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
   auto default_qos = rclcpp::SystemDefaultsQoS();
   auto latched_qos = rclcpp::SystemDefaultsQoS().transient_local().reliable();
 
-  roi_subscriber_ = node_->create_subscription<RegionOfInterest>(
-    ns_ + "/roi", latched_qos,
+  roi_subscriber_ = node_->create_subscription<hri_msgs::msg::NormalizedRegionOfInterest2D>(
+    kNs_ + "/roi", latched_qos,
     bind(&Body::onRoI, this, std::placeholders::_1), options);
 
   cropped_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
-    ns_ + "/cropped", latched_qos,
+    kNs_ + "/cropped", latched_qos,
     bind(&Body::onCropped, this, std::placeholders::_1), options);
 
   skeleton_subscriber_ = node_->create_subscription<hri_msgs::msg::Skeleton2D>(
-    ns_ + "/skeleton2d", default_qos,
+    kNs_ + "/skeleton2d", default_qos,
     bind(&Body::onSkeleton, this, std::placeholders::_1), options);
 }
 
-void Body::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr roi)
+void Body::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr msg)
 {
-  roi_ = *roi;
-}
-
-Body::RegionOfInterest Body::roi() const
-{
-  return roi_;
+  roi_ = *msg;
 }
 
 void Body::onCropped(const sensor_msgs::msg::Image::ConstSharedPtr msg)
@@ -72,19 +76,9 @@ void Body::onCropped(const sensor_msgs::msg::Image::ConstSharedPtr msg)
   cropped_ = cv_bridge::toCvShare(msg)->image;
 }
 
-cv::Mat Body::cropped() const
-{
-  return cropped_;
-}
-
 void Body::onSkeleton(const hri_msgs::msg::Skeleton2D::ConstSharedPtr msg)
 {
   skeleton_ = msg->skeleton;
-}
-
-Body::SkeletonPoints Body::skeleton() const
-{
-  return skeleton_;
 }
 
 }  // namespace hri

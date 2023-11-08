@@ -17,23 +17,23 @@
 
 #include <functional>
 #include <map>
-#include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
+#include "hri/body.hpp"
+#include "hri/face.hpp"
+#include "hri/feature_tracker.hpp"
+#include "hri/person.hpp"
+#include "hri/types.hpp"
+#include "hri/voice.hpp"
 #include "hri_msgs/msg/ids_list.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
-
-#include "body.hpp"
-#include "face.hpp"
-#include "feature_tracker.hpp"
-#include "person.hpp"
-#include "voice.hpp"
-
+#include "tf2_ros/transform_listener.h"
 
 namespace hri
 {
+
 /** \brief Main entry point to libhri. This is most likely what you want to use.
  *
  * See src/node_show_faces.cpp for a minimal usage example
@@ -60,7 +60,7 @@ public:
    */
   void onFace(std::function<void(FacePtr)> callback)
   {
-    face_callbacks.push_back(callback);
+    face_callbacks_.push_back(callback);
   }
 
   /** \brief Registers a callback function, to be invoked everytime a
@@ -68,7 +68,7 @@ public:
    */
   void onFaceLost(std::function<void(ID)> callback)
   {
-    face_lost_callbacks.push_back(callback);
+    face_lost_callbacks_.push_back(callback);
   }
 
 
@@ -83,7 +83,7 @@ public:
    */
   void onBody(std::function<void(BodyPtr)> callback)
   {
-    body_callbacks.push_back(callback);
+    body_callbacks_.push_back(callback);
   }
 
   /** \brief Registers a callback function, to be invoked everytime a
@@ -91,7 +91,7 @@ public:
    */
   void onBodyLost(std::function<void(ID)> callback)
   {
-    body_lost_callbacks.push_back(callback);
+    body_lost_callbacks_.push_back(callback);
   }
 
 
@@ -106,7 +106,7 @@ public:
    */
   void onVoice(std::function<void(VoicePtr)> callback)
   {
-    voice_callbacks.push_back(callback);
+    voice_callbacks_.push_back(callback);
   }
 
   /** \brief Registers a callback function, to be invoked everytime a
@@ -114,7 +114,7 @@ public:
    */
   void onVoiceLost(std::function<void(ID)> callback)
   {
-    voice_lost_callbacks.push_back(callback);
+    voice_lost_callbacks_.push_back(callback);
   }
 
 
@@ -134,7 +134,7 @@ public:
    */
   void onPerson(std::function<void(PersonPtr)> callback)
   {
-    person_callbacks.push_back(callback);
+    person_callbacks_.push_back(callback);
   }
 
   /** \brief Registers a callback function, to be invoked everytime a person
@@ -143,7 +143,7 @@ public:
    */
   void onPersonLost(std::function<void(ID)> callback)
   {
-    person_lost_callbacks.push_back(callback);
+    person_lost_callbacks_.push_back(callback);
   }
 
   /** \brief Returns the list of currently detected persons, mapped to their IDs
@@ -154,13 +154,12 @@ public:
    */
   std::map<ID, PersonPtr> getTrackedPersons() const;
 
-
   /** \brief Registers a callback function, to be invoked everytime a new person
    * is detected and actively tracked (eg, currently seen).
    */
   void onTrackedPerson(std::function<void(PersonPtr)> callback)
   {
-    person_tracked_callbacks.push_back(callback);
+    person_tracked_callbacks_.push_back(callback);
   }
 
   /** \brief Registers a callback function, to be invoked everytime a previously tracked
@@ -168,55 +167,54 @@ public:
    */
   void onTrackedPersonLost(std::function<void(ID)> callback)
   {
-    person_tracked_lost_callbacks.push_back(callback);
+    person_tracked_lost_callbacks_.push_back(callback);
   }
 
 
-  /** sets the reference frame from which the TF transformations of the persons will
+  /** \brief Sets the reference frame from which the TF transformations of the persons will
    * be returned (via `Person::transform()`).
    *
    * By default, `base_link`.
    */
   void setReferenceFrame(const std::string & frame)
   {
-    _reference_frame = frame;
+    reference_frame_ = frame;
   }
 
 private:
   void init();
 
-  void onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::SharedPtr tracked);
+  void onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::ConstSharedPtr tracked);
 
   std::map<FeatureType,
     rclcpp::Subscription<hri_msgs::msg::IdsList>::SharedPtr> feature_subscribers_;
   rclcpp::Node::SharedPtr node_{nullptr};
   rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
-  std::map<ID, FacePtr> faces;
-  std::vector<std::function<void(FacePtr)>> face_callbacks;
-  std::vector<std::function<void(ID)>> face_lost_callbacks;
+  std::map<ID, FacePtr> faces_;
+  std::vector<std::function<void(FacePtr)>> face_callbacks_;
+  std::vector<std::function<void(ID)>> face_lost_callbacks_;
 
-  std::map<ID, BodyPtr> bodies;
-  std::vector<std::function<void(BodyPtr)>> body_callbacks;
-  std::vector<std::function<void(ID)>> body_lost_callbacks;
+  std::map<ID, BodyPtr> bodies_;
+  std::vector<std::function<void(BodyPtr)>> body_callbacks_;
+  std::vector<std::function<void(ID)>> body_lost_callbacks_;
 
-  std::map<ID, VoicePtr> voices;
-  std::vector<std::function<void(VoicePtr)>> voice_callbacks;
-  std::vector<std::function<void(ID)>> voice_lost_callbacks;
+  std::map<ID, VoicePtr> voices_;
+  std::vector<std::function<void(VoicePtr)>> voice_callbacks_;
+  std::vector<std::function<void(ID)>> voice_lost_callbacks_;
 
-  std::map<ID, PersonPtr> persons;
-  std::vector<std::function<void(PersonPtr)>> person_callbacks;
-  std::vector<std::function<void(ID)>> person_lost_callbacks;
-  std::map<ID, PersonPtr> tracked_persons;
-  std::vector<std::function<void(PersonPtr)>> person_tracked_callbacks;
-  std::vector<std::function<void(ID)>> person_tracked_lost_callbacks;
+  std::map<ID, PersonPtr> persons_;
+  std::vector<std::function<void(PersonPtr)>> person_callbacks_;
+  std::vector<std::function<void(ID)>> person_lost_callbacks_;
+  std::map<ID, PersonPtr> tracked_persons_;
+  std::vector<std::function<void(PersonPtr)>> person_tracked_callbacks_;
+  std::vector<std::function<void(ID)>> person_tracked_lost_callbacks_;
 
-  std::string _reference_frame;
-  tf2::BufferCore _tf_buffer;
-  tf2_ros::TransformListener _tf_listener;
+  std::string reference_frame_;
+  tf2::BufferCore tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
 };
 
 }  // namespace hri
-
 
 #endif  // HRI__HRI_HPP_

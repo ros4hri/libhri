@@ -12,17 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <functional>
 #include <memory>
 
-#include <hri/hri.hpp>
+#include "hri/hri.hpp"
+#include "opencv2/opencv.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include <opencv2/opencv.hpp>
-
-
 using namespace std::chrono_literals;
-using std::placeholders::_1;
-
 
 class ShowFaces : public rclcpp::Node
 {
@@ -35,7 +32,6 @@ public:
       500ms, std::bind(&ShowFaces::timer_callback, this));
   }
 
-
   void timer_callback()
   {
     auto faces = hri_listener_->getFaces();
@@ -43,11 +39,11 @@ public:
       auto face_id = f.first;
       auto face = f.second;
       if (face) {
-        if (!face->cropped().empty()) {
-          cv::imshow("Cropped face " + face_id, face->cropped());
+        if (auto cropped = face->cropped()) {
+          cv::imshow("Cropped face " + face_id, *cropped);
         }
-        if (!face->aligned().empty()) {
-          cv::imshow("Aligned face " + face_id, face->aligned());
+        if (auto aligned = face->aligned()) {
+          cv::imshow("Aligned face " + face_id, *aligned);
         }
         cv::waitKey(10);
       }

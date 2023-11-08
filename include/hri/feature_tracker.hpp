@@ -15,28 +15,15 @@
 #ifndef HRI__FEATURE_TRACKER_HPP_
 #define HRI__FEATURE_TRACKER_HPP_
 
-#include <memory>
 #include <optional>
 #include <string>
 
-#include "geometry_msgs/msg/transform_stamped.hpp"
+#include "hri/types.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 
 namespace hri
 {
-
-typedef std::string ID;
-
-enum FeatureType
-{
-  invalid = 0,
-  person = (1u << 0),  // all known persons, whether or not they are currently seen
-  tracked_person = (1u << 1),  // only the actively tracked persons
-  face = (1u << 2),
-  body = (1u << 3),
-  voice = (1u << 4)
-};  // note that FeatureType values can also be used as bitmasks
 
 class FeatureTracker
 {
@@ -59,7 +46,7 @@ public:
     std::string feature_tf_prefix,
     rclcpp::Node::SharedPtr node,
     rclcpp::CallbackGroup::SharedPtr callback_group,
-    tf2::BufferCore & tf_buffer,
+    const tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);
 
   virtual ~FeatureTracker() = default;
@@ -76,52 +63,40 @@ public:
    * :see: FeatureTracker::getNamespace, to access the fully-qualified topic
    * namespace under which this feature is published.
    */
-  ID id() const
-  {
-    return id_;
-  }
+  ID id() const {return kId_;}
 
   /** \brief Returns the topic namespace under which this feature is advertised.
    */
-  std::string ns() const
-  {
-    return ns_;
-  }
+  std::string ns() const {return kNs_;}
 
   /** \brief Returns the name of the tf frame that correspond to this feature.
    */
-  std::string frame() const
-  {
-    return frame_;
-  }
+  std::string frame() const {return kFrame_;}
 
   /** \brief Returns the estimated (stamped) 3D transform of self (if available).
    */
-  virtual std::optional<geometry_msgs::msg::TransformStamped> transform() const;
+  // NOLINTNEXTLINE(build/include_what_you_use): false positive requiring #include <algorithm>
+  virtual std::optional<Transform> transform() const {return transform(frame());}
 
-  bool operator<(const FeatureTracker & other) const
-  {
-    return id_ < other.id();
-  }
+  bool operator<(const FeatureTracker & other) const {return kId_ < other.id();}
 
   virtual void init() = 0;
 
 protected:
   /** \brief Returns the estimated (stamped) 3D transform of the argument frame (if available).
    */
-  std::optional<geometry_msgs::msg::TransformStamped> transform(
-    std::string frame_name) const;  // NOLINT(build/include_what_you_use):
-                                    // false positive requiring #include <algorithm>
+  // NOLINTNEXTLINE(build/include_what_you_use): false positive requiring #include <algorithm>
+  std::optional<Transform> transform(std::string frame_name) const;
 
-  const ID id_;
-  const std::string ns_;  // topic namespace under which this feature is advertised
-  const std::string frame_;
+  const ID kId_;
+  const std::string kNs_;  // topic namespace under which this feature is advertised
+  const std::string kFrame_;
 
   rclcpp::Node::SharedPtr node_;
   rclcpp::CallbackGroup::SharedPtr callback_group_;
 
-  tf2::BufferCore & tf_buffer_;
-  const std::string reference_frame_;
+  const tf2::BufferCore & tf_buffer_;
+  const std::string & reference_frame_;
 };
 
 }  // namespace hri
