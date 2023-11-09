@@ -80,7 +80,8 @@ void Face::init()
 
 void Face::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr msg)
 {
-  roi_ = *msg;
+  roi_.emplace(
+    RegionOfInterest{cv::Point2f{msg->xmin, msg->ymin}, cv::Point2f{msg->xmax, msg->ymax}});
 }
 
 void Face::onCropped(const sensor_msgs::msg::Image::ConstSharedPtr msg)
@@ -97,13 +98,13 @@ void Face::onAligned(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 
 void Face::onLandmarks(const hri_msgs::msg::FacialLandmarks::ConstSharedPtr msg)
 {
-  FacialLandmarks landmarks;
-  for (size_t i = 0; i < landmarks.size(); ++i) {
-    landmarks[i].x = msg->landmarks[i].x;
-    landmarks[i].y = msg->landmarks[i].y;
-    landmarks[i].c = msg->landmarks[i].c;
+  if (!landmarks_) {
+    landmarks_ = FacialLandmarks();
   }
-  landmarks_ = landmarks;
+  for (size_t i = 0; i < msg->landmarks.size(); ++i) {
+    auto & lm = msg->landmarks[i];
+    (*landmarks_)[static_cast<FacialLandmark>(i)] = PointOfInterest{lm.x, lm.y, lm.c};
+  }
 }
 
 void Face::onSoftBiometrics(const hri_msgs::msg::SoftBiometrics::ConstSharedPtr msg)
@@ -118,12 +119,13 @@ void Face::onSoftBiometrics(const hri_msgs::msg::SoftBiometrics::ConstSharedPtr 
 
 void Face::onFacs(hri_msgs::msg::FacialActionUnits::ConstSharedPtr msg)
 {
-  FacialActionUnits facial_action_units;
-  for (size_t i = 0; i < facial_action_units.size(); ++i) {
-    facial_action_units[i].intensity = msg->intensity[i];
-    facial_action_units[i].confidence = msg->confidence[i];
+  if (!facial_action_units_) {
+    facial_action_units_ = FacialActionUnits();
   }
-  facial_action_units_ = facial_action_units;
+  for (size_t i = 0; i < msg->intensity.size(); ++i) {
+    (*facial_action_units_)[static_cast<FacialActionUnit>(i)] =
+      IntensityConfidence{msg->intensity[i], msg->confidence[i]};
+  }
 }
 
 std::optional<Transform> Face::gazeTransform() const

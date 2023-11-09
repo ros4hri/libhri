@@ -15,13 +15,16 @@
 #ifndef HRI__TYPES_HPP_
 #define HRI__TYPES_HPP_
 
-#include <array>
 #include <string>
+#include <map>
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "hri_msgs/msg/engagement_level.hpp"
+#include "hri_msgs/msg/facial_action_units.hpp"
+#include "hri_msgs/msg/facial_landmarks.hpp"
 #include "hri_msgs/msg/normalized_point_of_interest2_d.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
+#include "hri_msgs/msg/skeleton2_d.hpp"
 #include "hri_msgs/msg/soft_biometrics.hpp"
 #include "opencv2/core.hpp"
 
@@ -38,6 +41,161 @@ enum class EngagementLevel
   kEngaged = hri_msgs::msg::EngagementLevel::ENGAGED,
   // disengaging: the human has started to look away from the robot
   kDisengaging = hri_msgs::msg::EngagementLevel::DISENGAGING
+};
+
+enum class FacialActionUnit
+{
+  kNeutralFace = hri_msgs::msg::FacialActionUnits::NEUTRAL_FACE,
+  kInnerBrowRaiser = hri_msgs::msg::FacialActionUnits::INNER_BROW_RAISER,
+  kOuterBrowRaiser = hri_msgs::msg::FacialActionUnits::OUTER_BROW_RAISER,
+  kBrowLowerer = hri_msgs::msg::FacialActionUnits::BROW_LOWERER,
+  kUpperLidRaiser = hri_msgs::msg::FacialActionUnits::UPPER_LID_RAISER,
+  kCheeckRaiser = hri_msgs::msg::FacialActionUnits::CHEEK_RAISER,
+  kLidTightener = hri_msgs::msg::FacialActionUnits::LID_TIGHTENER,
+  kLipsTowardEachOther = hri_msgs::msg::FacialActionUnits::LIPS_TOWARD_EACH_OTHER,
+  kNoseWrinkler = hri_msgs::msg::FacialActionUnits::NOSE_WRINKLER,
+  kUpperLipRaiser = hri_msgs::msg::FacialActionUnits::UPPER_LIP_RAISER,
+  kNasolabialDeepener = hri_msgs::msg::FacialActionUnits::NASOLABIAL_DEEPENER,
+  kLipCornerPuller = hri_msgs::msg::FacialActionUnits::LIP_CORNER_PULLER,
+  kSharpLipPuller = hri_msgs::msg::FacialActionUnits::SHARP_LIP_PULLER,
+  kDimpler = hri_msgs::msg::FacialActionUnits::DIMPLER,
+  kLipCornerDepressor = hri_msgs::msg::FacialActionUnits::LIP_CORNER_DEPRESSOR,
+  kLowerLipDepressor = hri_msgs::msg::FacialActionUnits::LOWER_LIP_DEPRESSOR,
+  kChinRaiser = hri_msgs::msg::FacialActionUnits::CHIN_RAISER,
+  kLipPucker = hri_msgs::msg::FacialActionUnits::LIP_PUCKER,
+  kTongueShow = hri_msgs::msg::FacialActionUnits::TONGUE_SHOW,
+  kLipStretcher = hri_msgs::msg::FacialActionUnits::LIP_STRETCHER,
+  kNeckTightener = hri_msgs::msg::FacialActionUnits::NECK_TIGHTENER,
+  kLipFunneler = hri_msgs::msg::FacialActionUnits::LIP_FUNNELER,
+  kLipTightener = hri_msgs::msg::FacialActionUnits::LIP_TIGHTENER,
+  kLipPressor = hri_msgs::msg::FacialActionUnits::LIP_PRESSOR,
+  kLipsPart = hri_msgs::msg::FacialActionUnits::LIPS_PART,
+  kJawDrop = hri_msgs::msg::FacialActionUnits::JAW_DROP,
+  kMouthStretch = hri_msgs::msg::FacialActionUnits::MOUTH_STRETCH,
+  kLipSuck = hri_msgs::msg::FacialActionUnits::LIP_SUCK,
+  kHeadTurnLeft = hri_msgs::msg::FacialActionUnits::HEAD_TURN_LEFT,
+  kHeadTurnRight = hri_msgs::msg::FacialActionUnits::HEAD_TURN_RIGHT,
+  kHeadUp = hri_msgs::msg::FacialActionUnits::HEAD_UP,
+  kHeadDown = hri_msgs::msg::FacialActionUnits::HEAD_DOWN,
+  kHeadTiltLeft = hri_msgs::msg::FacialActionUnits::HEAD_TILT_LEFT,
+  kHeadTiltRight = hri_msgs::msg::FacialActionUnits::HEAD_TILT_RIGHT,
+  kHeadForward = hri_msgs::msg::FacialActionUnits::HEAD_FORWARD,
+  kHeadBack = hri_msgs::msg::FacialActionUnits::HEAD_BACK,
+  kEyesTurnLeft = hri_msgs::msg::FacialActionUnits::EYES_TURN_LEFT,
+  kEyesTurnRight = hri_msgs::msg::FacialActionUnits::EYES_TURN_RIGHT,
+  kEyesUp = hri_msgs::msg::FacialActionUnits::EYES_UP,
+  kEyesDown = hri_msgs::msg::FacialActionUnits::EYES_DOWN,
+  kWalleye = hri_msgs::msg::FacialActionUnits::WALLEYE,
+  kCrossEye = hri_msgs::msg::FacialActionUnits::CROSS_EYE,
+  kEyesPositionedToLookAtOtherPerson =
+    hri_msgs::msg::FacialActionUnits::EYES_POSITIONED_TO_LOOK_AT_OTHER_PERSON,
+  kBrownsAndForeheadNotVisible = hri_msgs::msg::FacialActionUnits::BROWS_AND_FOREHEAD_NOT_VISIBLE,
+  kEyesNotVisible = hri_msgs::msg::FacialActionUnits::EYES_NOT_VISIBLE,
+  kLowerFaceNotVisible = hri_msgs::msg::FacialActionUnits::LOWER_FACE_NOT_VISIBLE,
+  kEntireFaceNotVisible = hri_msgs::msg::FacialActionUnits::ENTIRE_FACE_NOT_VISIBLE,
+  kUnsociable = hri_msgs::msg::FacialActionUnits::UNSOCIABLE,
+  kJawThrust = hri_msgs::msg::FacialActionUnits::JAW_THRUST,
+  kJawSideways = hri_msgs::msg::FacialActionUnits::JAW_SIDEWAYS,
+  kJawClencher = hri_msgs::msg::FacialActionUnits::JAW_CLENCHER,
+  kLipBite = hri_msgs::msg::FacialActionUnits::LIP_BITE,
+  kCheekBlow = hri_msgs::msg::FacialActionUnits::CHEEK_BLOW,
+  kCheekPuff = hri_msgs::msg::FacialActionUnits::CHEEK_PUFF,
+  kCheekSuck = hri_msgs::msg::FacialActionUnits::CHEEK_SUCK,
+  kTongueBulge = hri_msgs::msg::FacialActionUnits::TONGUE_BULGE,
+  kLipWipe = hri_msgs::msg::FacialActionUnits::LIP_WIPE,
+  kNostrilDilator = hri_msgs::msg::FacialActionUnits::NOSTRIL_DILATOR,
+  kNostrilCompressor = hri_msgs::msg::FacialActionUnits::NOSTRIL_COMPRESSOR,
+  kSniff = hri_msgs::msg::FacialActionUnits::SNIFF,
+  kLidDroop = hri_msgs::msg::FacialActionUnits::LID_DROOP,
+  kSlit = hri_msgs::msg::FacialActionUnits::SLIT,
+  kEyesClosed = hri_msgs::msg::FacialActionUnits::EYES_CLOSED,
+  kSquint = hri_msgs::msg::FacialActionUnits::SQUINT,
+  kBlink = hri_msgs::msg::FacialActionUnits::BLINK,
+  kWink = hri_msgs::msg::FacialActionUnits::WINK,
+  kSpeech = hri_msgs::msg::FacialActionUnits::SPEECH,
+  kSwallow = hri_msgs::msg::FacialActionUnits::SWALLOW,
+  kChewing = hri_msgs::msg::FacialActionUnits::CHEWING,
+  kShoulderShrug = hri_msgs::msg::FacialActionUnits::SHOULDER_SHRUG,
+  kHeadShakeBackAndForth = hri_msgs::msg::FacialActionUnits::HEAD_SHAKE_BACK_AND_FORTH,
+  kHeadNodUpAndDown = hri_msgs::msg::FacialActionUnits::HEAD_NOD_UP_AND_DOWN,
+  kFlash = hri_msgs::msg::FacialActionUnits::FLASH,
+  kPartialFlash = hri_msgs::msg::FacialActionUnits::PARTIAL_FLASH,
+  kShiverTremble = hri_msgs::msg::FacialActionUnits::SHIVER_TREMBLE,
+  kFastUpDownLook = hri_msgs::msg::FacialActionUnits::FAST_UP_DOWN_LOOK
+};
+
+enum class FacialLandmark
+{
+  kRightEar = hri_msgs::msg::FacialLandmarks::RIGHT_EAR,
+  kRightProfile1 = hri_msgs::msg::FacialLandmarks::RIGHT_PROFILE_1,
+  kRightProfile2 = hri_msgs::msg::FacialLandmarks::RIGHT_PROFILE_2,
+  kRightProfile3 = hri_msgs::msg::FacialLandmarks::RIGHT_PROFILE_3,
+  kRightProfile4 = hri_msgs::msg::FacialLandmarks::RIGHT_PROFILE_4,
+  kRightProfile5 = hri_msgs::msg::FacialLandmarks::RIGHT_PROFILE_5,
+  kRightProfile6 = hri_msgs::msg::FacialLandmarks::RIGHT_PROFILE_6,
+  kRightProfile7 = hri_msgs::msg::FacialLandmarks::RIGHT_PROFILE_7,
+  kMenton = hri_msgs::msg::FacialLandmarks::MENTON,
+  kLeftEar = hri_msgs::msg::FacialLandmarks::LEFT_EAR,
+  kLeftProfile1 = hri_msgs::msg::FacialLandmarks::LEFT_PROFILE_1,
+  kLeftProfile2 = hri_msgs::msg::FacialLandmarks::LEFT_PROFILE_2,
+  kLeftProfile3 = hri_msgs::msg::FacialLandmarks::LEFT_PROFILE_3,
+  kLeftProfile4 = hri_msgs::msg::FacialLandmarks::LEFT_PROFILE_4,
+  kLeftProfile5 = hri_msgs::msg::FacialLandmarks::LEFT_PROFILE_5,
+  kLeftProfile6 = hri_msgs::msg::FacialLandmarks::LEFT_PROFILE_6,
+  kLeftProfile7 = hri_msgs::msg::FacialLandmarks::LEFT_PROFILE_7,
+  kRightEyebrowOutside = hri_msgs::msg::FacialLandmarks::RIGHT_EYEBROW_OUTSIDE,
+  kRightEyebrow1 = hri_msgs::msg::FacialLandmarks::RIGHT_EYEBROW_1,
+  kRightEyebrow2 = hri_msgs::msg::FacialLandmarks::RIGHT_EYEBROW_2,
+  kRightEyebrow3 = hri_msgs::msg::FacialLandmarks::RIGHT_EYEBROW_3,
+  kRightEyebrowInside = hri_msgs::msg::FacialLandmarks::RIGHT_EYEBROW_INSIDE,
+  kRightEyeOutside = hri_msgs::msg::FacialLandmarks::RIGHT_EYE_OUTSIDE,
+  kRightEyeTop1 = hri_msgs::msg::FacialLandmarks::RIGHT_EYE_TOP_1,
+  kRightEyeTop2 = hri_msgs::msg::FacialLandmarks::RIGHT_EYE_TOP_2,
+  kRightEyeInside = hri_msgs::msg::FacialLandmarks::RIGHT_EYE_INSIDE,
+  kRightEyeBottom1 = hri_msgs::msg::FacialLandmarks::RIGHT_EYE_BOTTOM_1,
+  kRightEyeBottom2 = hri_msgs::msg::FacialLandmarks::RIGHT_EYE_BOTTOM_2,
+  kRightPupil = hri_msgs::msg::FacialLandmarks::RIGHT_PUPIL,
+  kLeftEyebrowOutside = hri_msgs::msg::FacialLandmarks::LEFT_EYEBROW_OUTSIDE,
+  kLeftEyebrow1 = hri_msgs::msg::FacialLandmarks::LEFT_EYEBROW_1,
+  kLeftEyebrow2 = hri_msgs::msg::FacialLandmarks::LEFT_EYEBROW_2,
+  kLeftEyebrow3 = hri_msgs::msg::FacialLandmarks::LEFT_EYEBROW_3,
+  kLeftEyebrowInside = hri_msgs::msg::FacialLandmarks::LEFT_EYEBROW_INSIDE,
+  kLeftEyeOutside = hri_msgs::msg::FacialLandmarks::LEFT_EYE_OUTSIDE,
+  kLeftEyeTop1 = hri_msgs::msg::FacialLandmarks::LEFT_EYE_TOP_1,
+  kLeftEyeTop2 = hri_msgs::msg::FacialLandmarks::LEFT_EYE_TOP_2,
+  kLeftEyeInside = hri_msgs::msg::FacialLandmarks::LEFT_EYE_INSIDE,
+  kLeftEyeBottom1 = hri_msgs::msg::FacialLandmarks::LEFT_EYE_BOTTOM_1,
+  kLeftEyeBottom2 = hri_msgs::msg::FacialLandmarks::LEFT_EYE_BOTTOM_2,
+  kLeftPupil = hri_msgs::msg::FacialLandmarks::LEFT_PUPIL,
+  kSellion = hri_msgs::msg::FacialLandmarks::SELLION,
+  kNose1 = hri_msgs::msg::FacialLandmarks::NOSE_1,
+  kNose2 = hri_msgs::msg::FacialLandmarks::NOSE_2,
+  kNose = hri_msgs::msg::FacialLandmarks::NOSE,
+  kNostril1 = hri_msgs::msg::FacialLandmarks::NOSTRIL_1,
+  kNostril2 = hri_msgs::msg::FacialLandmarks::NOSTRIL_2,
+  kNostril3 = hri_msgs::msg::FacialLandmarks::NOSTRIL_3,
+  kNostril4 = hri_msgs::msg::FacialLandmarks::NOSTRIL_4,
+  kNostril5 = hri_msgs::msg::FacialLandmarks::NOSTRIL_5,
+  kMouthOuterRight = hri_msgs::msg::FacialLandmarks::MOUTH_OUTER_RIGHT,
+  kMouthOuterTop1 = hri_msgs::msg::FacialLandmarks::MOUTH_OUTER_TOP_1,
+  kMouthOuterTop2 = hri_msgs::msg::FacialLandmarks::MOUTH_OUTER_TOP_2,
+  kMouthOuterTop3 = hri_msgs::msg::FacialLandmarks::MOUTH_OUTER_TOP_3,
+  kMouthOuterTop4 = hri_msgs::msg::FacialLandmarks::MOUTH_OUTER_TOP_4,
+  kMouthOuterTop5 = hri_msgs::msg::FacialLandmarks::MOUTH_OUTER_TOP_5,
+  kMouthOuterLeft = hri_msgs::msg::FacialLandmarks::MOUTH_OUTER_LEFT,
+  kMouthOuterBottom1 = hri_msgs::msg::FacialLandmarks::MOUTH_OUTER_BOTTOM_1,
+  kMouthOuterBottom2 = hri_msgs::msg::FacialLandmarks::MOUTH_OUTER_BOTTOM_2,
+  kMouthOuterBottom3 = hri_msgs::msg::FacialLandmarks::MOUTH_OUTER_BOTTOM_3,
+  kMouthOuterBottom4 = hri_msgs::msg::FacialLandmarks::MOUTH_OUTER_BOTTOM_4,
+  kMouthOuterBottom5 = hri_msgs::msg::FacialLandmarks::MOUTH_OUTER_BOTTOM_5,
+  kMouthInnerRight = hri_msgs::msg::FacialLandmarks::MOUTH_INNER_RIGHT,
+  kMouthInnerTop1 = hri_msgs::msg::FacialLandmarks::MOUTH_INNER_TOP_1,
+  kMouthInnerTop2 = hri_msgs::msg::FacialLandmarks::MOUTH_INNER_TOP_2,
+  kMouthInnerTop3 = hri_msgs::msg::FacialLandmarks::MOUTH_INNER_TOP_3,
+  kMouthInnerLeft = hri_msgs::msg::FacialLandmarks::MOUTH_INNER_LEFT,
+  kMouthInnerBottom1 = hri_msgs::msg::FacialLandmarks::MOUTH_INNER_BOTTOM_1,
+  kMouthInnerBottom2 = hri_msgs::msg::FacialLandmarks::MOUTH_INNER_BOTTOM_2,
+  kMouthInnerBottom3 = hri_msgs::msg::FacialLandmarks::MOUTH_INNER_BOTTOM_3
 };
 
 enum class FeatureType
@@ -63,12 +221,41 @@ struct IntensityConfidence
   float confidence;
 };
 
-typedef std::array<IntensityConfidence, 99> FacialActionUnits;
-typedef std::array<hri_msgs::msg::NormalizedPointOfInterest2D, 70> FacialLandmarks;
+struct PointOfInterest
+{
+  float x;
+  float y;
+  float c;
+};
+
+enum class SkeletalKeypoint
+{
+  kNose = hri_msgs::msg::Skeleton2D::NOSE,
+  kNeck = hri_msgs::msg::Skeleton2D::NECK,
+  kRightShoulder = hri_msgs::msg::Skeleton2D::RIGHT_SHOULDER,
+  kRightElbow = hri_msgs::msg::Skeleton2D::RIGHT_ELBOW,
+  kRightWrist = hri_msgs::msg::Skeleton2D::RIGHT_WRIST,
+  kLeftShoulder = hri_msgs::msg::Skeleton2D::LEFT_SHOULDER,
+  kLeftElbow = hri_msgs::msg::Skeleton2D::LEFT_ELBOW,
+  kLeftWrist = hri_msgs::msg::Skeleton2D::LEFT_WRIST,
+  kRightHip = hri_msgs::msg::Skeleton2D::RIGHT_HIP,
+  kRightKnee = hri_msgs::msg::Skeleton2D::RIGHT_KNEE,
+  kRightAnkle = hri_msgs::msg::Skeleton2D::RIGHT_ANKLE,
+  kLeftHip = hri_msgs::msg::Skeleton2D::LEFT_HIP,
+  kLeftKnee = hri_msgs::msg::Skeleton2D::LEFT_KNEE,
+  kLeftAnkle = hri_msgs::msg::Skeleton2D::LEFT_ANKLE,
+  kLeftEye = hri_msgs::msg::Skeleton2D::LEFT_EYE,
+  kRightEye = hri_msgs::msg::Skeleton2D::RIGHT_EYE,
+  kLeftEar = hri_msgs::msg::Skeleton2D::LEFT_EAR,
+  kRightEar = hri_msgs::msg::Skeleton2D::RIGHT_EAR
+};
+
+typedef std::map<FacialActionUnit, IntensityConfidence> FacialActionUnits;
+typedef std::map<FacialLandmark, PointOfInterest> FacialLandmarks;
 typedef std::string ID;
 typedef cv::Mat Image;
-typedef hri_msgs::msg::NormalizedRegionOfInterest2D RegionOfInterest;
-typedef std::array<hri_msgs::msg::NormalizedPointOfInterest2D, 18> SkeletonPoints;
+typedef cv::Rect2f RegionOfInterest;
+typedef std::map<SkeletalKeypoint, PointOfInterest> SkeletalKeypoints;
 typedef geometry_msgs::msg::TransformStamped Transform;
 
 }  // namespace hri

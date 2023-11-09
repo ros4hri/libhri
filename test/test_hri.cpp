@@ -134,17 +134,20 @@ TEST(libhri_tests, GetFacesRoi)
   EXPECT_EQ(face->ns(), "/humans/faces/B");
   EXPECT_FALSE(face->roi());
 
-  auto roi = hri::RegionOfInterest();
+  auto roi = hri_msgs::msg::NormalizedRegionOfInterest2D();
   roi.xmin = 0.1;
+  roi.ymin = 0;
+  roi.xmax = 1;
+  roi.ymax = 1;
   pub_r2->publish(roi);
   executor.spin_all(1s);
   ASSERT_TRUE(face->roi());
-  EXPECT_FLOAT_EQ(face->roi().value().xmin, 0.1f);
+  EXPECT_FLOAT_EQ(face->roi().value().x, 0.1f);
 
   roi.xmin = 0.2;
   pub_r2->publish(roi);
   executor.spin_all(1s);
-  EXPECT_FLOAT_EQ(face->roi().value().xmin, 0.2f);
+  EXPECT_FLOAT_EQ(face->roi().value().x, 0.2f);
 
   ids.ids = {"B", "A"};
   pub->publish(ids);
@@ -159,10 +162,10 @@ TEST(libhri_tests, GetFacesRoi)
   ASSERT_FALSE(face_b == nullptr);
   EXPECT_EQ(face_a->ns(), "/humans/faces/A");
   ASSERT_TRUE(face_a->roi());
-  EXPECT_FLOAT_EQ(face_a->roi().value().xmin, 0.2f);
+  EXPECT_FLOAT_EQ(face_a->roi().value().x, 0.2f);
   EXPECT_EQ(face_b->ns(), "/humans/faces/B");
   ASSERT_TRUE(face_b->roi());
-  EXPECT_FLOAT_EQ(face_b->roi().value().xmin, 0.2f);
+  EXPECT_FLOAT_EQ(face_b->roi().value().x, 0.2f);
 }
 
 

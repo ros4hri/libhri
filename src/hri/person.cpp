@@ -182,7 +182,7 @@ void Person::onLocationConfidence(std_msgs::msg::Float32::ConstSharedPtr msg)
 
 std::optional<Transform> Person::transform() const
 {
-  if (std::abs(loc_confidence_.value_or(0.f)) < 1e-2) {
+  if (std::abs(loc_confidence_.value_or(0.f)) < 1e-2f) {
     return std::optional<Transform>();
   } else {
     return FeatureTracker::transform();

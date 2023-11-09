@@ -64,7 +64,7 @@ public:
    * The skeleton joints indices follow those defined in
    * http://docs.ros.org/en/api/hri_msgs/html/msg/Skeleton2D.html
    */
-  std::optional<SkeletonPoints> skeleton() const {return skeleton_;}
+  std::optional<SkeletalKeypoints> skeleton() const {return skeleton_;}
 
   void init() override;
 
@@ -75,7 +75,7 @@ private:
 
   std::optional<RegionOfInterest> roi_;
   std::optional<Image> cropped_;
-  std::optional<SkeletonPoints> skeleton_;
+  std::optional<SkeletalKeypoints> skeleton_;
 
   rclcpp::Subscription<hri_msgs::msg::NormalizedRegionOfInterest2D>::SharedPtr roi_subscriber_;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr cropped_subscriber_;

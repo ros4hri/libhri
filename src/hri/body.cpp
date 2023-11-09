@@ -22,6 +22,7 @@
 #include "hri/types.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
 #include "hri_msgs/msg/skeleton2_d.hpp"
+#include "opencv2/core.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "tf2_ros/buffer.h"
@@ -68,7 +69,8 @@ void Body::init()
 
 void Body::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr msg)
 {
-  roi_ = *msg;
+  roi_.emplace(
+    RegionOfInterest{cv::Point2f{msg->xmin, msg->ymin}, cv::Point2f{msg->xmax, msg->ymax}});
 }
 
 void Body::onCropped(const sensor_msgs::msg::Image::ConstSharedPtr msg)
@@ -78,7 +80,13 @@ void Body::onCropped(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 
 void Body::onSkeleton(const hri_msgs::msg::Skeleton2D::ConstSharedPtr msg)
 {
-  skeleton_ = msg->skeleton;
+  if (!skeleton_) {
+    skeleton_ = SkeletalKeypoints();
+  }
+  for (size_t i = 0; i < msg->skeleton.size(); ++i) {
+    auto & kp = msg->skeleton[i];
+    (*skeleton_)[static_cast<SkeletalKeypoint>(i)] = PointOfInterest{kp.x, kp.y, kp.c};
+  }
 }
 
 }  // namespace hri
