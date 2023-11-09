@@ -45,10 +45,10 @@ Face::Face(
   tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
 : FeatureTracker{id}
-  , softbiometrics_(nullptr)
-  , tf_buffer_(tf_buffer)
-  , _reference_frame(reference_frame)
   , node_(node)
+  , softbiometrics_(nullptr)
+  , _reference_frame(reference_frame)
+  , tf_buffer_(tf_buffer)
 {
 }
 
@@ -78,7 +78,7 @@ void Face::init()
   ns_ = "/humans/faces/" + id_;
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "New face detected: " << ns_);
 
-  roi_subscriber_ = rclcpp::create_subscription<sensor_msgs::msg::RegionOfInterest>(
+  roi_subscriber_ = rclcpp::create_subscription<RegionOfInterest>(
     node_params, node_topics, ns_ + "/roi", qos, bind(
       &Face::onRoI, this,
       std::placeholders::_1), options);
@@ -106,12 +106,12 @@ void Face::init()
 }
 
 
-void Face::onRoI(const sensor_msgs::msg::RegionOfInterest::ConstSharedPtr roi)
+void Face::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr roi)
 {
-  roi_ = cv::Rect(roi->x_offset, roi->y_offset, roi->width, roi->height);
+  roi_ = *roi;
 }
 
-cv::Rect Face::roi() const
+Face::RegionOfInterest Face::roi() const
 {
   return roi_;
 }

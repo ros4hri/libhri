@@ -45,12 +45,13 @@ typedef std::string ID;
 
 enum FeatureType
 {
-  person,          // all known persons, whether or not they are currently seen
-  tracked_person,  // only the actively tracked persons
-  face,
-  body,
-  voice
-};
+  invalid = 0,
+  person = (1u << 0),  // all known persons, whether or not they are currently seen
+  tracked_person = (1u << 1),  // only the actively tracked persons
+  face = (1u << 2),
+  body = (1u << 3),
+  voice = (1u << 4)
+};  // note that FeatureType values can also be used as bitmasks
 
 class FeatureTracker
 {

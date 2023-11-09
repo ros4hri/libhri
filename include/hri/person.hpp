@@ -37,6 +37,8 @@
 #include <memory>
 #include <string>
 
+#include <boost/optional.hpp>
+
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
 #include <std_msgs/msg/float32.hpp>
@@ -110,7 +112,7 @@ public:
   VoiceWeakConstPtr voice() const;
 
 
-  bool anonymous() const
+  boost::optional<bool> anonymous() const
   {
     return _anonymous;
   }
@@ -141,7 +143,8 @@ protected:
   // is destroyed after all pointers to this person are released.
   const HRIListener * listener_;
 
-  void tfCallback(const geometry_msgs::msg::TransformStamped::SharedPtr & transform_ptr)
+  void tfCallback(
+    [[maybe_unused]] const geometry_msgs::msg::TransformStamped::SharedPtr & transform_ptr)
   {
     RCLCPP_WARN_STREAM(node_->get_logger(), "got tf transform!");
   }
@@ -151,7 +154,7 @@ protected:
   // pointers to the aliased person.
   ID _alias;
 
-  bool _anonymous;
+  boost::optional<bool> _anonymous;
 
   hri_msgs::msg::EngagementLevel::SharedPtr _engagement_status;
 

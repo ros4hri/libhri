@@ -2,6 +2,35 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.4 (2023-07-05)
+------------------
+* Fix Typo in voice.h
+  re-apply patch from  juandpenan
+  https://github.com/ros4hri/libhri/pull/3
+  (patch removed by mistake)
+* Contributors: juandpenan
+
+0.6.3 (2023-07-05)
+------------------
+* change ROI message type to hri_msgs/NormalizedRegionOfInterest2D
+* fix tests use of EXPECT_CALL and timeouts
+* Contributors: Luka Juricic
+
+0.6.2 (2023-04-21)
+------------------
+* anonymous field as optional
+* Contributors: lorenzoferrini
+
+0.6.1 (2023-01-16)
+------------------
+* add callbacks for when speech is detected on a voice
+* Contributors: Séverin Lemaignan
+
+0.6.0 (2023-01-05)
+------------------
+* redefine hri::FeatureType enum to be used as bitmask
+* Contributors: Séverin Lemaignan
+
 0.5.3 (2022-10-26)
 ------------------
 * bodies: expose the skeleton2d points

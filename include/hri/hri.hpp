@@ -138,7 +138,7 @@ public:
   /** \brief Registers a callback function, to be invoked everytime a new voice
    * is detected.
    */
-  void onVoice(std::function<void(VoiceWeakConstPtr)> callback)
+  void onVoice(std::function<void(VoiceWeakPtr)> callback)
   {
     voice_callbacks.push_back(callback);
   }
@@ -237,7 +237,7 @@ private:
   std::vector<std::function<void(ID)>> body_lost_callbacks;
 
   std::map<ID, VoiceConstPtr> voices;
-  std::vector<std::function<void(VoiceWeakConstPtr)>> voice_callbacks;
+  std::vector<std::function<void(VoiceWeakPtr)>> voice_callbacks;
   std::vector<std::function<void(ID)>> voice_lost_callbacks;
 
   std::map<ID, PersonConstPtr> persons;

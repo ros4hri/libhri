@@ -219,7 +219,10 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
 {
   // update the current list of tracked feature (face, body...) with
   // what has just been received on the respective /tracked topic.
-
+  if (feature == FeatureType::invalid) {
+    RCLCPP_DEBUG_STREAM(node_->get_logger(), "Received invalid tracked FeatureType");
+    return;
+  }
 
   std::set<ID> new_ids;
   for (auto const & id : tracked->ids) {
@@ -257,6 +260,9 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
       for (auto const & kv : tracked_persons) {
         current_ids.insert(kv.first);
       }
+      break;
+    case FeatureType::invalid:
+      std::abort();  // unreachable
       break;
   }
 
@@ -346,6 +352,9 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
         }
       }
       break;
+    case FeatureType::invalid:
+      std::abort();  // unreachable
+      break;
   }
 
   switch (feature) {
@@ -409,6 +418,9 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
           cb(person);
         }
       }
+      break;
+    case FeatureType::invalid:
+      std::abort();  // unreachable
       break;
   }
 }

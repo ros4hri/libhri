@@ -47,13 +47,12 @@ Person::Person(
   const std::string & reference_frame)
 : FeatureTracker{id}
   , listener_(listener)
-  , _anonymous(false)
-  , _engagement_status(nullptr)
   , _alias("")
+  , _engagement_status(nullptr)
   , _loc_confidence(0.)
-  , tf_buffer_(tf_buffer)
   , _reference_frame(reference_frame)
   , node_(node)
+  , tf_buffer_(tf_buffer)
 {
 }
 
@@ -174,7 +173,7 @@ boost::optional<EngagementLevel> Person::engagement_status() const
 
 boost::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
 {
-  if (_loc_confidence == 0) {
+  if (abs(_loc_confidence) < 1e-2) {
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }
 
@@ -187,7 +186,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
     RCLCPP_WARN_STREAM(
       node_->get_logger(),
       "failed to transform person frame " << frame()
-                                          << " to " << _reference_frame <<
+                                          << " to " << _reference_frame << ". " <<
         ex.what());
     return boost::optional<geometry_msgs::msg::TransformStamped>();
   }

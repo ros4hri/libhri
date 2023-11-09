@@ -41,10 +41,9 @@
 #include <opencv2/core.hpp>
 
 #include <hri_msgs/msg/normalized_point_of_interest2_d.hpp>
+#include <hri_msgs/msg/normalized_region_of_interest2_d.hpp>
 #include <hri_msgs/msg/facial_landmarks.hpp>
 #include <hri_msgs/msg/soft_biometrics.hpp>
-
-#include <sensor_msgs/msg/region_of_interest.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
 #include "FeatureTracker.hpp"
@@ -75,6 +74,8 @@ static const rclcpp::Duration FACE_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.0
 class Face : public FeatureTracker
 {
 public:
+  typedef hri_msgs::msg::NormalizedRegionOfInterest2D RegionOfInterest;
+
   Face(
     ID id,
     rclcpp::Node::SharedPtr node,
@@ -98,7 +99,7 @@ public:
     return GAZE_TF_PREFIX + id_;
   }
 
-  /** \brief Returns the 2D region of interest (RoI) of the face.
+  /** \brief Returns the normalized 2D region of interest (RoI) of the face.
    *
    * Use example:
    * ```
@@ -120,8 +121,8 @@ public:
    *     for (auto& f : faces)
    *     {
    *        auto roi = face.second.lock()->roi();
-   *        cout << "Size of face_" << face.first << ": ";
-   *        cout << roi.width << "x" << roi.height << endl;
+   *        cout << "Normalized size of face_" << face.first << ": ";
+   *        cout << (roi.xmax - roi.xmin) << "x" << (roi.ymax - roi.ymin) << endl;
    *     }
    *   }
    *
@@ -134,7 +135,7 @@ public:
    * The pixel coordinates are provided in the original camera's image coordinate
    * space.
    */
-  cv::Rect roi() const;
+  RegionOfInterest roi() const;
 
 
   /** \brief Returns the face image, if necessary scaled, centered and 0-padded
@@ -211,9 +212,9 @@ private:
 
   rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
-  rclcpp::Subscription<sensor_msgs::msg::RegionOfInterest>::SharedPtr roi_subscriber_{nullptr};
-  void onRoI(sensor_msgs::msg::RegionOfInterest::ConstSharedPtr roi);
-  cv::Rect roi_;
+  rclcpp::Subscription<RegionOfInterest>::SharedPtr roi_subscriber_{nullptr};
+  void onRoI(RegionOfInterest::ConstSharedPtr roi);
+  RegionOfInterest roi_;
 
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr cropped_subscriber_{nullptr};
   void onCropped(sensor_msgs::msg::Image::ConstSharedPtr roi);

@@ -1,3 +1,3 @@
-ament_add_gtest(libhri_tests test_hri.cpp)
+ament_add_gtest(libhri_tests test_hri.cpp TIMEOUT 120)
 ament_target_dependencies(libhri_tests ${dependencies})
 target_link_libraries(libhri_tests ${PROJECT_NAME})

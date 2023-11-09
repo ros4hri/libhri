@@ -44,19 +44,17 @@
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
-#include <sensor_msgs/msg/region_of_interest.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
 #include <hri_msgs/msg/skeleton2_d.hpp>
 #include <hri_msgs/msg/normalized_point_of_interest2_d.hpp>
+#include <hri_msgs/msg/normalized_region_of_interest2_d.hpp>
 
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
 
 #include "FeatureTracker.hpp"
 
-
-typedef hri_msgs::msg::NormalizedPointOfInterest2D SkeletonPoint;
 
 namespace hri
 {
@@ -67,6 +65,9 @@ static const rclcpp::Duration BODY_TF_TIMEOUT(rclcpp::Duration::from_seconds(0.0
 class Body : public FeatureTracker
 {
 public:
+  typedef std::array<hri_msgs::msg::NormalizedPointOfInterest2D, 18> SkeletonPoints;
+  typedef hri_msgs::msg::NormalizedRegionOfInterest2D RegionOfInterest;
+
   Body(
     ID id,
     rclcpp::Node::SharedPtr node,
@@ -82,7 +83,7 @@ public:
     return BODY_TF_PREFIX + id_;
   }
 
-  /** \brief If available, returns the 2D region of interest (RoI) of the body.
+  /** \brief If available, returns the normalized 2D region of interest (RoI) of the body.
    *
    * Use example:
    *
@@ -94,8 +95,8 @@ public:
    * for (auto const& body : bodies)
    * {
    *   auto roi = body.second.lock()->roi();
-   *   cout << "Size of body_" << body.first << ": ";
-   *   cout << roi.width << "x" << roi.height << endl;
+   *   cout << "Normalized size of body_" << body.first << ": ";
+   *   cout << (roi.xmax - roi.xmin) << "x" << (roi.ymax - roi.ymin) << endl;
    * }
    * ```
    *
@@ -105,7 +106,7 @@ public:
    * The header's timestamp is the same as a the timestamp of the original
    * image from which the body has been detected.
    */
-  cv::Rect roi() const;
+  RegionOfInterest roi() const;
 
   /** \brief Returns the body image, cropped from the source image.
    */
@@ -119,7 +120,7 @@ public:
    * The skeleton joints indices follow those defined in
    * http://docs.ros.org/en/api/hri_msgs/html/msg/Skeleton2D.html
    */
-  std::vector<SkeletonPoint> skeleton() const;
+  SkeletonPoints skeleton() const;
 
   /** \brief Returns the (stamped) 3D transform of the body (if available).
    */
@@ -135,9 +136,9 @@ private:
   rclcpp::Executor::SharedPtr executor_ {nullptr};
   rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
-  rclcpp::Subscription<sensor_msgs::msg::RegionOfInterest>::SharedPtr roi_subscriber_ {nullptr};
-  void onRoI(sensor_msgs::msg::RegionOfInterest::ConstSharedPtr roi);
-  cv::Rect roi_;
+  rclcpp::Subscription<RegionOfInterest>::SharedPtr roi_subscriber_ {nullptr};
+  void onRoI(RegionOfInterest::ConstSharedPtr roi);
+  RegionOfInterest roi_;
 
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr cropped_subscriber_ {nullptr};
   void onCropped(sensor_msgs::msg::Image::ConstSharedPtr roi);
@@ -145,7 +146,7 @@ private:
 
   rclcpp::Subscription<hri_msgs::msg::Skeleton2D>::SharedPtr skeleton_subscriber_ {nullptr};
   void onSkeleton(hri_msgs::msg::Skeleton2D::ConstSharedPtr skeleton);
-  std::vector<SkeletonPoint> skeleton_;
+  SkeletonPoints skeleton_;
 
   std::string _reference_frame;
   tf2::BufferCore & tf_buffer_;

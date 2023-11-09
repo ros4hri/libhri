@@ -44,9 +44,9 @@ Body::Body(
   tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
 : FeatureTracker{id}
-  , tf_buffer_(tf_buffer)
-  , _reference_frame(reference_frame)
   , node_(node)
+  , _reference_frame(reference_frame)
+  , tf_buffer_(tf_buffer)
 {
 }
 
@@ -76,7 +76,7 @@ void Body::init()
   ns_ = "/humans/bodies/" + id_;
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "New body detected: " << ns_);
 
-  roi_subscriber_ = rclcpp::create_subscription<sensor_msgs::msg::RegionOfInterest>(
+  roi_subscriber_ = rclcpp::create_subscription<RegionOfInterest>(
     node_params, node_topics, ns_ + "/roi", qos, bind(
       &Body::onRoI, this,
       std::placeholders::_1), options);
@@ -94,12 +94,12 @@ void Body::init()
   dedicated_listener_thread_ = std::make_unique<std::thread>([&]() {executor_->spin();});
 }
 
-void Body::onRoI(const sensor_msgs::msg::RegionOfInterest::ConstSharedPtr roi)
+void Body::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr roi)
 {
-  roi_ = cv::Rect(roi->x_offset, roi->y_offset, roi->width, roi->height);
+  roi_ = *roi;
 }
 
-cv::Rect Body::roi() const
+Body::RegionOfInterest Body::roi() const
 {
   return roi_;
 }
@@ -119,7 +119,7 @@ void Body::onSkeleton(const hri_msgs::msg::Skeleton2D::ConstSharedPtr msg)
   skeleton_ = msg->skeleton;
 }
 
-std::vector<SkeletonPoint> Body::skeleton() const
+Body::SkeletonPoints Body::skeleton() const
 {
   return skeleton_;
 }

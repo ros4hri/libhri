@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>hri</name>
-  <version>0.5.3</version>
+  <version>0.6.4</version>
   <description>A wrapper library around the ROS4HRI ROS topics</description>
 
   <maintainer email="severin.lemaignan@pal-robotics.com">Séverin Lemaignan</maintainer>
@@ -25,6 +25,7 @@
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>cv_bridge</depend>
+  <depend>boost</depend>
   
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

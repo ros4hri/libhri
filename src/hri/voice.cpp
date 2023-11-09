@@ -31,6 +31,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "hri/voice.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 namespace hri
 {
@@ -41,9 +42,9 @@ Voice::Voice(
   tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
 : FeatureTracker{id}
-  , tf_buffer_(tf_buffer)
-  , _reference_frame(reference_frame)
   , node_(node)
+  , _reference_frame(reference_frame)
+  , tf_buffer_(tf_buffer)
 {
 }
 
@@ -71,6 +72,36 @@ void Voice::init()
 
   ns_ = "/humans/voices/" + id_;
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "New voice detected: " << ns_);
+
+  is_speaking_subscriber_ = rclcpp::create_subscription<std_msgs::msg::Bool>(
+    node_params, node_topics, ns_ + "/is_speaking", qos,
+    [&](std_msgs::msg::Bool::SharedPtr msg) {
+      _is_speaking = msg->data;
+      for (auto & cb : is_speaking_callbacks) {
+        cb(msg->data);
+      }
+    });
+
+  speech_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::LiveSpeech>(
+    node_params, node_topics, ns_ + "/speech", qos,
+    bind(&Voice::_onSpeech, this, std::placeholders::_1));
+}
+
+void Voice::_onSpeech(const hri_msgs::msg::LiveSpeech::ConstSharedPtr msg)
+{
+  if (msg->incremental.size() > 0) {
+    _incremental_speech = msg->incremental;
+    for (auto cb : incremental_speech_callbacks) {
+      cb(_incremental_speech);
+    }
+  }
+
+  if (msg->final.size() > 0) {
+    _speech = msg->final;
+    for (auto cb : speech_callbacks) {
+      cb(_speech);
+    }
+  }
 }
 
 boost::optional<geometry_msgs::msg::TransformStamped> Voice::transform() const
