@@ -33,14 +33,6 @@ Voice::Voice(
   const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
 : FeatureTracker{id, "/humans/voices", "voice_", node, callback_group, tf_buffer, reference_frame}
-{}
-
-Voice::~Voice()
-{
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting voice " << kId_);
-}
-
-void Voice::init()
 {
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "New voice detected: " << kNs_);
 
@@ -55,6 +47,11 @@ void Voice::init()
   speech_subscriber_ = node_->create_subscription<hri_msgs::msg::LiveSpeech>(
     kNs_ + "/speech", default_qos,
     bind(&Voice::_onSpeech, this, std::placeholders::_1), options);
+}
+
+Voice::~Voice()
+{
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting voice " << kId_);
 }
 
 void Voice::_onSpeech(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg)

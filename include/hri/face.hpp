@@ -99,8 +99,6 @@ public:
    */
   std::optional<Transform> gazeTransform() const;
 
-  void init() override;
-
 private:
   void onRoI(hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr msg);
   void onCropped(sensor_msgs::msg::Image::ConstSharedPtr msg);

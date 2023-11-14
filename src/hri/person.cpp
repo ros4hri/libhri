@@ -43,23 +43,6 @@ Person::Person(
 : FeatureTracker{
     id, "/humans/persons", "person_", node, callback_group, tf_buffer, reference_frame},
   listener_(listener)
-{}
-
-Person::~Person()
-{
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting person " << kId_);
-}
-
-void assignStringOptional(std::optional<std::string> & op, std::string val)
-{
-  if (val.empty()) {
-    op.reset();
-  } else {
-    op = val;
-  }
-}
-
-void Person::init()
 {
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "New person detected: " << kNs_);
 
@@ -95,6 +78,20 @@ void Person::init()
   loc_confidence_subscriber_ = node_->create_subscription<std_msgs::msg::Float32>(
     kNs_ + "/location_confidence", default_qos,
     bind(&Person::onLocationConfidence, this, std::placeholders::_1), options);
+}
+
+Person::~Person()
+{
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting person " << kId_);
+}
+
+void assignStringOptional(std::optional<std::string> & op, std::string val)
+{
+  if (val.empty()) {
+    op.reset();
+  } else {
+    op = val;
+  }
 }
 
 FacePtr Person::face() const

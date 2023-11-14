@@ -80,8 +80,6 @@ public:
 
   bool operator<(const FeatureTracker & other) const {return kId_ < other.id();}
 
-  virtual void init() = 0;
-
 protected:
   /** \brief Returns the estimated (stamped) 3D transform of the argument frame (if available).
    */

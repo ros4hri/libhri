@@ -38,14 +38,6 @@ Face::Face(
   const std::string & reference_frame)
 : FeatureTracker{id, "/humans/faces", "face_", node, callback_group, tf_buffer, reference_frame},
   kGazeFrame_("gaze_" + kId_)
-{}
-
-Face::~Face()
-{
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting face " << kId_);
-}
-
-void Face::init()
 {
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "New face detected: " << kNs_);
 
@@ -76,6 +68,11 @@ void Face::init()
   facial_action_units_subscriber_ = node_->create_subscription<hri_msgs::msg::FacialActionUnits>(
     kNs_ + "/facs", default_qos,
     bind(&Face::onFacs, this, std::placeholders::_1), options);
+}
+
+Face::~Face()
+{
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting face " << kId_);
 }
 
 void Face::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr msg)

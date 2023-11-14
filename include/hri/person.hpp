@@ -70,7 +70,6 @@ public:
   std::optional<float> location_confidence() const {return loc_confidence_;}
   std::optional<ID> alias() const {return alias_;}
 
-  void init() override;
   std::optional<Transform> transform() const override;
 
 private:

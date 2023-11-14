@@ -307,7 +307,6 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
       for (auto id  : to_add) {
         auto face =
           std::make_shared<Face>(id, node_, callback_group_, tf_buffer_, reference_frame_);
-        face->init();
         faces_.insert({id, face});
         // invoke all the callbacks
         for (auto & cb : face_callbacks_) {
@@ -319,7 +318,6 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
       for (auto id : to_add) {
         auto body =
           std::make_shared<Body>(id, node_, callback_group_, tf_buffer_, reference_frame_);
-        body->init();
         bodies_.insert({id, body});
 
         // invoke all the callbacks
@@ -332,7 +330,6 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
       for (auto id : to_add) {
         auto voice =
           std::make_shared<Voice>(id, node_, callback_group_, tf_buffer_, reference_frame_);
-        voice->init();
         voices_.insert({id, voice});
 
         // invoke all the callbacks
@@ -345,7 +342,6 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
       for (auto id : to_add) {
         auto person =
           std::make_shared<Person>(id, node_, callback_group_, this, tf_buffer_, reference_frame_);
-        person->init();
         persons_.insert({id, person});
 
         // invoke all the callbacks
@@ -358,7 +354,6 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
       for (auto id : to_add) {
         auto person =
           std::make_shared<Person>(id, node_, callback_group_, this, tf_buffer_, reference_frame_);
-        person->init();
         tracked_persons_.insert({id, person});
 
         // invoke all the callbacks

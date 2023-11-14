@@ -89,8 +89,6 @@ public:
     incremental_speech_callbacks.push_back(callback);
   }
 
-  void init() override;
-
 private:
   void _onSpeech(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg);  // TODO(LJU): find compliant name
   void onIsSpeaking(std_msgs::msg::Bool::ConstSharedPtr msg);

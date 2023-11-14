@@ -38,15 +38,6 @@ Body::Body(
   const std::string & reference_frame)
 : FeatureTracker{id, "/humans/bodies", "body_", node, callback_group, tf_buffer, reference_frame}
 {
-}
-
-Body::~Body()
-{
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting body " << kId_);
-}
-
-void Body::init()
-{
   RCLCPP_DEBUG_STREAM(node_->get_logger(), "New body detected: " << kNs_);
 
   rclcpp::SubscriptionOptions options;
@@ -65,6 +56,11 @@ void Body::init()
   skeleton_subscriber_ = node_->create_subscription<hri_msgs::msg::Skeleton2D>(
     kNs_ + "/skeleton2d", default_qos,
     bind(&Body::onSkeleton, this, std::placeholders::_1), options);
+}
+
+Body::~Body()
+{
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting body " << kId_);
 }
 
 void Body::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr msg)
