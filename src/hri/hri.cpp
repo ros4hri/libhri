@@ -31,7 +31,38 @@ namespace hri
 HRIListener::HRIListener(rclcpp::Node::SharedPtr node)
 : node_(node), reference_frame_("base_link"), tf_listener_(tf_buffer_)
 {
-  init();
+  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Initialising the HRI Listener");
+
+  callback_group_ = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  rclcpp::SubscriptionOptions options;
+  options.callback_group = callback_group_;
+  auto default_qos = rclcpp::SystemDefaultsQoS();
+  // There is a pending issue with binding functions with extra non-msg arguments, see
+  // https://github.com/ros2/rclcpp/issues/766
+  std::function<void(hri_msgs::msg::IdsList::ConstSharedPtr)> callback;
+
+  callback = bind(&HRIListener::onTrackedFeature, this, FeatureType::kFace, std::placeholders::_1);
+  feature_subscribers_[FeatureType::kFace] = node_->create_subscription<hri_msgs::msg::IdsList>(
+    "/humans/faces/tracked", default_qos, callback, options);
+
+  callback = bind(&HRIListener::onTrackedFeature, this, FeatureType::kBody, std::placeholders::_1);
+  feature_subscribers_[FeatureType::kBody] = node_->create_subscription<hri_msgs::msg::IdsList>(
+    "/humans/bodies/tracked", default_qos, callback, options);
+
+  callback = bind(&HRIListener::onTrackedFeature, this, FeatureType::kVoice, std::placeholders::_1);
+  feature_subscribers_[FeatureType::kVoice] = node_->create_subscription<hri_msgs::msg::IdsList>(
+    "/humans/voices/tracked", default_qos, callback, options);
+
+  callback = bind(
+    &HRIListener::onTrackedFeature, this, FeatureType::kTrackedPerson, std::placeholders::_1);
+  feature_subscribers_[FeatureType::kTrackedPerson] =
+    node_->create_subscription<hri_msgs::msg::IdsList>(
+    "/humans/persons/tracked", default_qos, callback, options);
+
+  callback = bind(
+    &HRIListener::onTrackedFeature, this, FeatureType::kPerson, std::placeholders::_1);
+  feature_subscribers_[FeatureType::kPerson] = node_->create_subscription<hri_msgs::msg::IdsList>(
+    "/humans/persons/known", default_qos, callback, options);
 }
 
 HRIListener::~HRIListener()
@@ -126,42 +157,6 @@ std::map<ID, PersonPtr> HRIListener::getTrackedPersons() const
   }
 
   return result;
-}
-
-void HRIListener::init()
-{
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Initialising the HRI Listener");
-
-  callback_group_ = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  rclcpp::SubscriptionOptions options;
-  options.callback_group = callback_group_;
-  auto default_qos = rclcpp::SystemDefaultsQoS();
-  // There is a pending issue with binding functions with extra non-msg arguments, see
-  // https://github.com/ros2/rclcpp/issues/766
-  std::function<void(hri_msgs::msg::IdsList::ConstSharedPtr)> callback;
-
-  callback = bind(&HRIListener::onTrackedFeature, this, FeatureType::kFace, std::placeholders::_1);
-  feature_subscribers_[FeatureType::kFace] = node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/faces/tracked", default_qos, callback, options);
-
-  callback = bind(&HRIListener::onTrackedFeature, this, FeatureType::kBody, std::placeholders::_1);
-  feature_subscribers_[FeatureType::kBody] = node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/bodies/tracked", default_qos, callback, options);
-
-  callback = bind(&HRIListener::onTrackedFeature, this, FeatureType::kVoice, std::placeholders::_1);
-  feature_subscribers_[FeatureType::kVoice] = node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/voices/tracked", default_qos, callback, options);
-
-  callback = bind(
-    &HRIListener::onTrackedFeature, this, FeatureType::kTrackedPerson, std::placeholders::_1);
-  feature_subscribers_[FeatureType::kTrackedPerson] =
-    node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/persons/tracked", default_qos, callback, options);
-
-  callback = bind(
-    &HRIListener::onTrackedFeature, this, FeatureType::kPerson, std::placeholders::_1);
-  feature_subscribers_[FeatureType::kPerson] = node_->create_subscription<hri_msgs::msg::IdsList>(
-    "/humans/persons/known", default_qos, callback, options);
 }
 
 void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::ConstSharedPtr msg)
@@ -340,8 +335,8 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
       break;
     case FeatureType::kPerson:
       for (auto id : to_add) {
-        auto person =
-          std::make_shared<Person>(id, node_, callback_group_, this, tf_buffer_, reference_frame_);
+        auto person = std::make_shared<Person>(
+          id, node_, callback_group_, weak_from_this(), tf_buffer_, reference_frame_);
         persons_.insert({id, person});
 
         // invoke all the callbacks
@@ -352,8 +347,8 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::
       break;
     case FeatureType::kTrackedPerson:
       for (auto id : to_add) {
-        auto person =
-          std::make_shared<Person>(id, node_, callback_group_, this, tf_buffer_, reference_frame_);
+        auto person = std::make_shared<Person>(
+          id, node_, callback_group_, weak_from_this(), tf_buffer_, reference_frame_);
         tracked_persons_.insert({id, person});
 
         // invoke all the callbacks

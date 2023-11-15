@@ -48,7 +48,7 @@ TEST(libhri_tests, GetFaces)
   auto hri_node = rclcpp::Node::make_shared("hri_node");
   executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
+  auto hri_listener = hri::HRIListener::create(hri_node);
   auto publisher = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/faces/tracked", 1);
 
@@ -106,7 +106,7 @@ TEST(libhri_tests, GetFacesRoi)
   auto hri_node = rclcpp::Node::make_shared("hri_node");
   executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
+  auto hri_listener = hri::HRIListener::create(hri_node);
   auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/faces/tracked", 1);
   // roi topic is transient local
@@ -177,7 +177,7 @@ TEST(libhri_tests, GetBodies)
   auto hri_node = rclcpp::Node::make_shared("hri_node");
   executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
+  auto hri_listener = hri::HRIListener::create(hri_node);
   auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/bodies/tracked", 1);
 
@@ -234,7 +234,7 @@ TEST(libhri_tests, GetVoices)
   auto hri_node = rclcpp::Node::make_shared("hri_node");
   executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
+  auto hri_listener = hri::HRIListener::create(hri_node);
   auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/voices/tracked", 1);
 
@@ -297,7 +297,7 @@ TEST(libhri_tests, GetKnownPersons)
   auto hri_node = rclcpp::Node::make_shared("hri_node");
   hri_executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
+  auto hri_listener = hri::HRIListener::create(hri_node);
   auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/known", 1);
 
@@ -359,7 +359,7 @@ TEST(libhri_tests, GetTrackedPersons)
   auto hri_node = rclcpp::Node::make_shared("hri_node");
   executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
+  auto hri_listener = hri::HRIListener::create(hri_node);
   auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/tracked", 1);
 
@@ -418,7 +418,7 @@ TEST(libhri_tests, PersonAttributes)
   auto hri_node = rclcpp::Node::make_shared("hri_node");
   executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
+  auto hri_listener = hri::HRIListener::create(hri_node);
   auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/tracked", 1);
   auto face_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
@@ -455,7 +455,7 @@ TEST(libhri_tests, AnonymousPersonsAndAliases)
   auto hri_node = rclcpp::Node::make_shared("hri_node");
   executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
+  auto hri_listener = hri::HRIListener::create(hri_node);
   auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "humans/persons/tracked", 1);
   auto p1_anon_pub = tester_node->create_publisher<std_msgs::msg::Bool>(
@@ -547,7 +547,7 @@ TEST(libhri_tests, SoftBiometrics)
   auto hri_node = rclcpp::Node::make_shared("hri_node");
   executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
+  auto hri_listener = hri::HRIListener::create(hri_node);
   auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/tracked", 1);
   auto face_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
@@ -603,7 +603,7 @@ TEST(libhri_tests, EngagementLevel)
   auto hri_node = rclcpp::Node::make_shared("hri_node");
   executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
+  auto hri_listener = hri::HRIListener::create(hri_node);
   auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/tracked", 1);
   auto engagement_pub = tester_node->create_publisher<hri_msgs::msg::EngagementLevel>(
@@ -641,7 +641,7 @@ TEST(libhri_tests, Callback)
   auto hri_node = rclcpp::Node::make_shared("hri_node");
   executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
+  auto hri_listener = hri::HRIListener::create(hri_node);
 
   int face_callbacks_invoked = 0;
   int lost_face_callbacks_invoked = 0;
@@ -763,7 +763,7 @@ TEST(libhri_tests, PeopleLocation)
   auto hri_node = rclcpp::Node::make_shared("hri_node");
   executor.add_node(hri_node);
 
-  auto hri_listener = std::make_shared<hri::HRIListener>(hri_node);
+  auto hri_listener = hri::HRIListener::create(hri_node);
   auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/tracked", 1);
   auto loc_confidence_pub = tester_node->create_publisher<std_msgs::msg::Float32>(

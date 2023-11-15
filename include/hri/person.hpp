@@ -44,7 +44,7 @@ public:
     ID id,
     rclcpp::Node::SharedPtr node,
     rclcpp::CallbackGroup::SharedPtr callback_group,
-    HRIListener * const listener,
+    std::weak_ptr<const HRIListener> listener,
     const tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);
 
@@ -81,11 +81,7 @@ private:
   void onEngagementStatus(hri_msgs::msg::EngagementLevel::ConstSharedPtr msg);
   void onLocationConfidence(std_msgs::msg::Float32::ConstSharedPtr msg);
 
-  // we use a raw pointer here. `this` is owned by the pointed HRIListener, so
-  // `this` would normally be destroyed before HRIListener (in reality, a
-  // pointer to `this` *might* outlive `HRIListener` -- make sure HRIListener
-  // is destroyed after all pointers to this person are released.
-  HRIListener * const listener_;
+  std::weak_ptr<const HRIListener> listener_;
 
   std::optional<ID> face_id_;
   std::optional<ID> body_id_;

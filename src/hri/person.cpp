@@ -16,6 +16,7 @@
 
 #include <cmath>
 #include <functional>
+#include <memory>
 #include <string>
 
 #include "hri/body.hpp"
@@ -37,7 +38,7 @@ Person::Person(
   ID id,
   rclcpp::Node::SharedPtr node,
   rclcpp::CallbackGroup::SharedPtr callback_group,
-  HRIListener * const listener,
+  std::weak_ptr<const HRIListener> listener,
   const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
 : FeatureTracker{
@@ -96,29 +97,44 @@ void assignStringOptional(std::optional<std::string> & op, std::string val)
 
 FacePtr Person::face() const
 {
-  if (face_id_ && listener_->getFaces().count(face_id_.value()) != 0) {
-    return listener_->getFaces()[*face_id_];
+  auto ret = FacePtr();
+  if (auto locked_listener = listener_.lock()) {
+    if (face_id_ && locked_listener->getFaces().count(face_id_.value())) {
+      ret = locked_listener->getFaces()[*face_id_];
+    }
   } else {
-    return FacePtr();
+    RCLCPP_WARN_STREAM(
+      node_->get_logger(), "Person " << id() << " lost connection to the HRI listener!");
   }
+  return ret;
 }
 
 BodyPtr Person::body() const
 {
-  if (body_id_ && listener_->getBodies().count(body_id_.value()) != 0) {
-    return listener_->getBodies()[*body_id_];
+  auto ret = BodyPtr();
+  if (auto locked_listener = listener_.lock()) {
+    if (body_id_ && locked_listener->getBodies().count(body_id_.value())) {
+      ret = locked_listener->getBodies()[*body_id_];
+    }
   } else {
-    return BodyPtr();
+    RCLCPP_WARN_STREAM(
+      node_->get_logger(), "Person " << id() << " lost connection to the HRI listener!");
   }
+  return ret;
 }
 
 VoicePtr Person::voice() const
 {
-  if (voice_id_ && listener_->getVoices().count(voice_id_.value()) != 0) {
-    return listener_->getVoices()[*voice_id_];
+  auto ret = VoicePtr();
+  if (auto locked_listener = listener_.lock()) {
+    if (voice_id_ && locked_listener->getVoices().count(voice_id_.value())) {
+      ret = locked_listener->getVoices()[*voice_id_];
+    }
   } else {
-    return VoicePtr();
+    RCLCPP_WARN_STREAM(
+      node_->get_logger(), "Person " << id() << " lost connection to the HRI listener!");
   }
+  return ret;
 }
 
 

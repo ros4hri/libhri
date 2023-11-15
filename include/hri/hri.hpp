@@ -17,6 +17,7 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -38,14 +39,17 @@ namespace hri
  *
  * See src/node_show_faces.cpp for a minimal usage example
  */
-class HRIListener
+class HRIListener : public std::enable_shared_from_this<HRIListener>
 {
 public:
-  /** \brief Initializes the libhri main class.
+  /** \brief Factory function for the libhri main class.
    *
    * The class can subscribe to topics and print logs, using the node argument.
    */
-  explicit HRIListener(rclcpp::Node::SharedPtr node);
+  [[nodiscard]] static std::shared_ptr<HRIListener> create(rclcpp::Node::SharedPtr node)
+  {
+    return std::shared_ptr<HRIListener>(new HRIListener(node));
+  }
 
   ~HRIListener();
 
@@ -182,8 +186,7 @@ public:
   }
 
 private:
-  void init();
-
+  explicit HRIListener(rclcpp::Node::SharedPtr node);
   void onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::ConstSharedPtr tracked);
 
   std::map<FeatureType,

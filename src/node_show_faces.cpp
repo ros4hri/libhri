@@ -27,7 +27,7 @@ public:
   ShowFaces()
   : Node("show_faces")
   {
-    hri_listener_ = std::make_shared<hri::HRIListener>(this->shared_from_this());
+    hri_listener_ = hri::HRIListener::create(shared_from_this());
     timer_ = create_wall_timer(
       500ms, std::bind(&ShowFaces::timer_callback, this));
   }
@@ -51,7 +51,7 @@ public:
   }
 
 private:
-  std::shared_ptr<hri::HRIListener> hri_listener_{nullptr};
+  std::shared_ptr<hri::HRIListener> hri_listener_;
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
