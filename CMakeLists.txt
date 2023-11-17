@@ -64,6 +64,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
 )
 install(
+  DIRECTORY include/
+  DESTINATION include/${PROJECT_NAME}
+)
+install(
   TARGETS ${PROJECT_NAME}
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib

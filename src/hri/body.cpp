@@ -43,16 +43,14 @@ Body::Body(
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
   auto default_qos = rclcpp::SystemDefaultsQoS();
-  auto latched_qos = rclcpp::SystemDefaultsQoS().transient_local().reliable();
 
   roi_subscriber_ = node_->create_subscription<hri_msgs::msg::NormalizedRegionOfInterest2D>(
-    kNs_ + "/roi", latched_qos,
+    kNs_ + "/roi", default_qos,
     bind(&Body::onRoI, this, std::placeholders::_1), options);
 
   cropped_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
-    kNs_ + "/cropped", latched_qos,
+    kNs_ + "/cropped", default_qos,
     bind(&Body::onCropped, this, std::placeholders::_1), options);
-
   skeleton_subscriber_ = node_->create_subscription<hri_msgs::msg::Skeleton2D>(
     kNs_ + "/skeleton2d", default_qos,
     bind(&Body::onSkeleton, this, std::placeholders::_1), options);

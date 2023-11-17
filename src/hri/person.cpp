@@ -53,15 +53,15 @@ Person::Person(
   auto latched_qos = rclcpp::SystemDefaultsQoS().transient_local().reliable();
 
   face_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    kNs_ + "/face_id", default_qos,
+    kNs_ + "/face_id", latched_qos,
     bind(&Person::onFaceId, this, std::placeholders::_1), options);
 
   body_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    kNs_ + "/body_id", default_qos,
+    kNs_ + "/body_id", latched_qos,
     bind(&Person::onBodyId, this, std::placeholders::_1), options);
 
   voice_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    kNs_ + "/voice_id", default_qos,
+    kNs_ + "/voice_id", latched_qos,
     bind(&Person::onVoiceId, this, std::placeholders::_1), options);
 
   anonymous_subscriber_ = node_->create_subscription<std_msgs::msg::Bool>(
@@ -69,7 +69,7 @@ Person::Person(
     bind(&Person::onAnonymous, this, std::placeholders::_1), options);
 
   alias_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    kNs_ + "/alias", default_qos,
+    kNs_ + "/alias", latched_qos,
     bind(&Person::onAlias, this, std::placeholders::_1), options);
 
   engagement_subscriber_ = node_->create_subscription<hri_msgs::msg::EngagementLevel>(
