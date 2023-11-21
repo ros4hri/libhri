@@ -34,7 +34,7 @@ class Voice : public FeatureTracker
 public:
   Voice(
     ID id,
-    rclcpp::Node::SharedPtr node,
+    NodeInterfaces & node_interfaces,
     rclcpp::CallbackGroup::SharedPtr callback_group,
     const tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);
@@ -106,6 +106,7 @@ private:
 };
 
 typedef std::shared_ptr<Voice> VoicePtr;
+typedef std::shared_ptr<const Voice> ConstVoicePtr;
 
 }  // namespace hri
 

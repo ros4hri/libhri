@@ -28,30 +28,34 @@ namespace hri
 
 Voice::Voice(
   ID id,
-  rclcpp::Node::SharedPtr node,
+  NodeInterfaces & node_interfaces,
   rclcpp::CallbackGroup::SharedPtr callback_group,
   const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
-: FeatureTracker{id, "/humans/voices", "voice_", node, callback_group, tf_buffer, reference_frame}
+: FeatureTracker{
+    id, "/humans/voices", "voice_", node_interfaces, callback_group, tf_buffer, reference_frame}
 {
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New voice detected: " << kNs_);
+  RCLCPP_DEBUG_STREAM(
+    node_interfaces_.get_node_logging_interface()->get_logger(), "New voice detected: " << kNs_);
 
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
   auto default_qos = rclcpp::SystemDefaultsQoS();
 
-  is_speaking_subscriber_ = node_->create_subscription<std_msgs::msg::Bool>(
+  is_speaking_subscriber_ = rclcpp::create_subscription<std_msgs::msg::Bool>(
+    node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
     kNs_ + "/is_speaking", default_qos,
     bind(&Voice::onIsSpeaking, this, std::placeholders::_1), options);
 
-  speech_subscriber_ = node_->create_subscription<hri_msgs::msg::LiveSpeech>(
-    kNs_ + "/speech", default_qos,
-    bind(&Voice::_onSpeech, this, std::placeholders::_1), options);
+  speech_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::LiveSpeech>(
+    node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
+    kNs_ + "/speech", default_qos, bind(&Voice::_onSpeech, this, std::placeholders::_1), options);
 }
 
 Voice::~Voice()
 {
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting voice " << kId_);
+  RCLCPP_DEBUG_STREAM(
+    node_interfaces_.get_node_logging_interface()->get_logger(), "Deleting voice " << kId_);
 }
 
 void Voice::_onSpeech(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg)

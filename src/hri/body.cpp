@@ -32,39 +32,44 @@ namespace hri
 
 Body::Body(
   ID id,
-  rclcpp::Node::SharedPtr node,
+  NodeInterfaces & node_interfaces,
   rclcpp::CallbackGroup::SharedPtr callback_group,
   const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
-: FeatureTracker{id, "/humans/bodies", "body_", node, callback_group, tf_buffer, reference_frame}
+: FeatureTracker{
+    id, "/humans/bodies", "body_", node_interfaces, callback_group, tf_buffer, reference_frame}
 {
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New body detected: " << kNs_);
+  RCLCPP_DEBUG_STREAM(
+    node_interfaces_.get_node_logging_interface()->get_logger(), "New body detected: " << kNs_);
 
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
   auto default_qos = rclcpp::SystemDefaultsQoS();
 
-  roi_subscriber_ = node_->create_subscription<hri_msgs::msg::NormalizedRegionOfInterest2D>(
-    kNs_ + "/roi", default_qos,
-    bind(&Body::onRoI, this, std::placeholders::_1), options);
+  roi_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::NormalizedRegionOfInterest2D>(
+    node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
+    kNs_ + "/roi", default_qos, bind(&Body::onRoI, this, std::placeholders::_1), options);
 
-  cropped_subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
-    kNs_ + "/cropped", default_qos,
-    bind(&Body::onCropped, this, std::placeholders::_1), options);
-  skeleton_subscriber_ = node_->create_subscription<hri_msgs::msg::Skeleton2D>(
+  cropped_subscriber_ = rclcpp::create_subscription<sensor_msgs::msg::Image>(
+    node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
+    kNs_ + "/cropped", default_qos, bind(&Body::onCropped, this, std::placeholders::_1), options);
+
+  skeleton_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::Skeleton2D>(
+    node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
     kNs_ + "/skeleton2d", default_qos,
     bind(&Body::onSkeleton, this, std::placeholders::_1), options);
 }
 
 Body::~Body()
 {
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting body " << kId_);
+  RCLCPP_DEBUG_STREAM(
+    node_interfaces_.get_node_logging_interface()->get_logger(), "Deleting body " << kId_);
 }
 
 void Body::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr msg)
 {
   roi_.emplace(
-    RegionOfInterest{cv::Point2f{msg->xmin, msg->ymin}, cv::Point2f{msg->xmax, msg->ymax}});
+    cv::Rect2f{cv::Point2f{msg->xmin, msg->ymin}, cv::Point2f{msg->xmax, msg->ymax}});
 }
 
 void Body::onCropped(const sensor_msgs::msg::Image::ConstSharedPtr msg)

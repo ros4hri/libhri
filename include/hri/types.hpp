@@ -17,8 +17,8 @@
 
 #include <string>
 #include <map>
+#include <variant>
 
-#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "hri_msgs/msg/engagement_level.hpp"
 #include "hri_msgs/msg/facial_action_units.hpp"
 #include "hri_msgs/msg/facial_landmarks.hpp"
@@ -26,7 +26,8 @@
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
 #include "hri_msgs/msg/skeleton2_d.hpp"
 #include "hri_msgs/msg/soft_biometrics.hpp"
-#include "opencv2/core.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp_lifecycle/lifecycle_node.hpp"
 
 namespace hri
 {
@@ -221,6 +222,31 @@ struct IntensityConfidence
   float confidence;
 };
 
+struct NodeInterfaces
+{
+  const rclcpp::node_interfaces::NodeBaseInterface::SharedPtr &
+  get_node_base_interface() const {return base;}
+  rclcpp::node_interfaces::NodeBaseInterface::SharedPtr &
+  get_node_base_interface() {return base;}
+  const rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr &
+  get_node_logging_interface() const {return logging;}
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr &
+  get_node_logging_interface() {return logging;}
+  const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr &
+  get_node_parameters_interface() const {return parameters;}
+  rclcpp::node_interfaces::NodeParametersInterface::SharedPtr &
+  get_node_parameters_interface() {return parameters;}
+  const rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr &
+  get_node_topics_interface() const {return topics;}
+  rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr &
+  get_node_topics_interface() {return topics;}
+
+  rclcpp::node_interfaces::NodeBaseInterface::SharedPtr base;
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging;
+  rclcpp::node_interfaces::NodeParametersInterface::SharedPtr parameters;
+  rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics;
+};
+
 struct PointOfInterest
 {
   float x;
@@ -252,11 +278,10 @@ enum class SkeletalKeypoint
 
 typedef std::map<FacialActionUnit, IntensityConfidence> FacialActionUnits;
 typedef std::map<FacialLandmark, PointOfInterest> FacialLandmarks;
+typedef std::variant<rclcpp::Node::SharedPtr, rclcpp_lifecycle::LifecycleNode::SharedPtr>
+  NodeLikeSharedPtr;
 typedef std::string ID;
-typedef cv::Mat Image;
-typedef cv::Rect2f RegionOfInterest;
 typedef std::map<SkeletalKeypoint, PointOfInterest> SkeletalKeypoints;
-typedef geometry_msgs::msg::TransformStamped Transform;
 
 }  // namespace hri
 

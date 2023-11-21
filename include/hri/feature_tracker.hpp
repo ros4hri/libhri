@@ -18,6 +18,7 @@
 #include <optional>
 #include <string>
 
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "hri/types.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
@@ -44,7 +45,7 @@ public:
     ID id,
     std::string feature_ns,
     std::string feature_tf_prefix,
-    rclcpp::Node::SharedPtr node,
+    NodeInterfaces & node_interfaces,
     rclcpp::CallbackGroup::SharedPtr callback_group,
     const tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);
@@ -76,7 +77,10 @@ public:
   /** \brief Returns the estimated (stamped) 3D transform of self (if available).
    */
   // NOLINTNEXTLINE(build/include_what_you_use): false positive requiring #include <algorithm>
-  virtual std::optional<Transform> transform() const {return transform(frame());}
+  virtual std::optional<geometry_msgs::msg::TransformStamped> transform() const
+  {
+    return transform(frame());
+  }
 
   bool operator<(const FeatureTracker & other) const {return kId_ < other.id();}
 
@@ -84,13 +88,13 @@ protected:
   /** \brief Returns the estimated (stamped) 3D transform of the argument frame (if available).
    */
   // NOLINTNEXTLINE(build/include_what_you_use): false positive requiring #include <algorithm>
-  std::optional<Transform> transform(std::string frame_name) const;
+  std::optional<geometry_msgs::msg::TransformStamped> transform(std::string frame_name) const;
 
   const ID kId_;
   const std::string kNs_;  // topic namespace under which this feature is advertised
   const std::string kFrame_;
 
-  rclcpp::Node::SharedPtr node_;
+  NodeInterfaces node_interfaces_;
   rclcpp::CallbackGroup::SharedPtr callback_group_;
 
   const tf2::BufferCore & tf_buffer_;

@@ -23,6 +23,7 @@
 #include "hri/types.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
 #include "hri_msgs/msg/skeleton2_d.hpp"
+#include "opencv2/core.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "tf2_ros/buffer.h"
@@ -35,7 +36,7 @@ class Body : public FeatureTracker
 public:
   Body(
     ID id,
-    rclcpp::Node::SharedPtr node,
+    NodeInterfaces & node_interfaces,
     rclcpp::CallbackGroup::SharedPtr callback_group,
     const tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);
@@ -46,15 +47,12 @@ public:
    *
    * The coordinates are provided in the original camera's image coordinate
    * space.
-   *
-   * The header's timestamp is the same as a the timestamp of the original
-   * image from which the body has been detected.
    */
-  std::optional<RegionOfInterest> roi() const {return roi_;}
+  std::optional<cv::Rect2f> roi() const {return roi_;}
 
   /** \brief Returns the body image, cropped from the source image.
    */
-  std::optional<Image> cropped() const {return cropped_;}
+  std::optional<cv::Mat> cropped() const {return cropped_;}
 
   /** \brief Returns the 2D skeleton keypoints.
    *
@@ -71,8 +69,8 @@ private:
   void onCropped(sensor_msgs::msg::Image::ConstSharedPtr msg);
   void onSkeleton(hri_msgs::msg::Skeleton2D::ConstSharedPtr msg);
 
-  std::optional<RegionOfInterest> roi_;
-  std::optional<Image> cropped_;
+  std::optional<cv::Rect2f> roi_;
+  std::optional<cv::Mat> cropped_;
   std::optional<SkeletalKeypoints> skeleton_;
 
   rclcpp::Subscription<hri_msgs::msg::NormalizedRegionOfInterest2D>::SharedPtr roi_subscriber_;
@@ -81,6 +79,7 @@ private:
 };
 
 typedef std::shared_ptr<Body> BodyPtr;
+typedef std::shared_ptr<const Body> ConstBodyPtr;
 
 }  // namespace hri
 

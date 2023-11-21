@@ -17,6 +17,7 @@
 #include <optional>
 #include <string>
 
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/exceptions.h"
 #include "tf2/time.h"
@@ -29,27 +30,24 @@ FeatureTracker::FeatureTracker(
   ID id,
   std::string feature_ns,
   std::string feature_tf_prefix,
-  rclcpp::Node::SharedPtr node,
+  NodeInterfaces & node_interfaces,
   rclcpp::CallbackGroup::SharedPtr callback_group,
   const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
-: kId_(id),
-  kNs_(feature_ns + "/" + id),
-  kFrame_(feature_tf_prefix + id),
-  node_(node),
-  callback_group_(callback_group),
-  tf_buffer_(tf_buffer),
+: kId_(id), kNs_(feature_ns + "/" + id), kFrame_(feature_tf_prefix + id),
+  node_interfaces_(node_interfaces), callback_group_(callback_group), tf_buffer_(tf_buffer),
   reference_frame_(reference_frame)
 {}
 
-std::optional<Transform> FeatureTracker::transform(std::string frame_name) const
+std::optional<geometry_msgs::msg::TransformStamped> FeatureTracker::transform(
+  std::string frame_name) const
 {
   try {
     auto transform = tf_buffer_.lookupTransform(reference_frame_, frame_name, tf2::TimePointZero);
     return transform;
   } catch (const tf2::TransformException & ex) {
     RCLCPP_WARN_STREAM(
-      node_->get_logger(),
+      node_interfaces_.get_node_logging_interface()->get_logger(),
       "failed to transform " << frame_name << " to " << reference_frame_ << ". " << ex.what());
     return {};
   }

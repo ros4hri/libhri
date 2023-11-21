@@ -20,6 +20,7 @@
 #include <optional>
 #include <string>
 
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "hri/body.hpp"
 #include "hri/face.hpp"
 #include "hri/feature_tracker.hpp"
@@ -42,7 +43,7 @@ class Person : public FeatureTracker
 public:
   Person(
     ID id,
-    rclcpp::Node::SharedPtr node,
+    NodeInterfaces & node_interfaces,
     rclcpp::CallbackGroup::SharedPtr callback_group,
     std::weak_ptr<const HRIListener> listener,
     const tf2::BufferCore & tf_buffer,
@@ -53,24 +54,24 @@ public:
   /** \brief Returns a shared pointer to the face of this person, or
    * a nullptr if this person is currently not associated to any detected face.
    */
-  FacePtr face() const;
+  ConstFacePtr face() const;
 
   /** \brief Returns a shared pointer to the body of this person, or
    * a nullptr if this person is currently not associated to any detected body.
    */
-  BodyPtr body() const;
+  ConstBodyPtr body() const;
 
   /** \brief Returns a shared pointer to the voice of this person, or
    * a nullptr if this person is currently not associated to any detected voice.
    */
-  VoicePtr voice() const;
+  ConstVoicePtr voice() const;
 
   std::optional<bool> anonymous() const {return anonymous_;}
   std::optional<EngagementLevel> engagement_status() const {return engagement_status_;}
   std::optional<float> location_confidence() const {return loc_confidence_;}
   std::optional<ID> alias() const {return alias_;}
 
-  std::optional<Transform> transform() const override;
+  std::optional<geometry_msgs::msg::TransformStamped> transform() const override;
 
 private:
   void onFaceId(std_msgs::msg::String::ConstSharedPtr msg);
@@ -104,6 +105,7 @@ private:
 };
 
 typedef std::shared_ptr<Person> PersonPtr;
+typedef std::shared_ptr<const Person> ConstPersonPtr;
 
 }  // namespace hri
 

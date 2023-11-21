@@ -18,18 +18,25 @@
 #include "hri/hri.hpp"
 #include "opencv2/opencv.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_lifecycle/lifecycle_node.hpp"
 
 using namespace std::chrono_literals;
 
-class ShowFaces : public rclcpp::Node
+class ShowFaces : public rclcpp_lifecycle::LifecycleNode
 {
 public:
   ShowFaces()
-  : Node("show_faces")
+  : rclcpp_lifecycle::LifecycleNode("show_faces")
+  {}
+
+  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn on_configure(
+    [[maybe_unused]] const rclcpp_lifecycle::State &)
   {
+    // "shared_from_this()" cannot be used in the constructor!
     hri_listener_ = hri::HRIListener::create(shared_from_this());
     timer_ = create_wall_timer(
       500ms, std::bind(&ShowFaces::timer_callback, this));
+    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
   }
 
   void timer_callback()
@@ -59,7 +66,7 @@ int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<ShowFaces>();
-  rclcpp::spin(node);
+  rclcpp::spin(node->get_node_base_interface());
   rclcpp::shutdown();
   return 0;
 }

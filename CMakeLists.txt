@@ -31,6 +31,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(hri_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(tf2 REQUIRED)
@@ -41,6 +42,7 @@ set(dependencies
   geometry_msgs
   hri_msgs
   OpenCV
+  rclcpp_lifecycle
   rclcpp
   sensor_msgs
   std_msgs
@@ -78,7 +80,7 @@ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 # Example target
 set(example_name show_faces)
-add_executable(${example_name} src/node_show_faces.cpp)
+add_executable(${example_name} examples/node_show_faces.cpp)
 target_link_libraries(${example_name} PRIVATE ${PROJECT_NAME})
 install(
   TARGETS ${example_name}

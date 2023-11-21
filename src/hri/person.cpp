@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "hri/body.hpp"
 #include "hri/face.hpp"
 #include "hri/feature_tracker.hpp"
@@ -36,54 +37,60 @@ namespace hri
 
 Person::Person(
   ID id,
-  rclcpp::Node::SharedPtr node,
+  NodeInterfaces & node_interfaces,
   rclcpp::CallbackGroup::SharedPtr callback_group,
   std::weak_ptr<const HRIListener> listener,
   const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
 : FeatureTracker{
-    id, "/humans/persons", "person_", node, callback_group, tf_buffer, reference_frame},
+    id, "/humans/persons", "person_", node_interfaces, callback_group, tf_buffer, reference_frame},
   listener_(listener)
 {
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "New person detected: " << kNs_);
+  RCLCPP_DEBUG_STREAM(
+    node_interfaces_.get_node_logging_interface()->get_logger(), "New person detected: " << kNs_);
 
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
   auto default_qos = rclcpp::SystemDefaultsQoS();
   auto latched_qos = rclcpp::SystemDefaultsQoS().transient_local().reliable();
 
-  face_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    kNs_ + "/face_id", latched_qos,
-    bind(&Person::onFaceId, this, std::placeholders::_1), options);
+  face_id_subscriber_ = rclcpp::create_subscription<std_msgs::msg::String>(
+    node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
+    kNs_ + "/face_id", latched_qos, bind(&Person::onFaceId, this, std::placeholders::_1), options);
 
-  body_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    kNs_ + "/body_id", latched_qos,
-    bind(&Person::onBodyId, this, std::placeholders::_1), options);
+  body_id_subscriber_ = rclcpp::create_subscription<std_msgs::msg::String>(
+    node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
+    kNs_ + "/body_id", latched_qos, bind(&Person::onBodyId, this, std::placeholders::_1), options);
 
-  voice_id_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
+  voice_id_subscriber_ = rclcpp::create_subscription<std_msgs::msg::String>(
+    node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
     kNs_ + "/voice_id", latched_qos,
     bind(&Person::onVoiceId, this, std::placeholders::_1), options);
 
-  anonymous_subscriber_ = node_->create_subscription<std_msgs::msg::Bool>(
+  anonymous_subscriber_ = rclcpp::create_subscription<std_msgs::msg::Bool>(
+    node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
     kNs_ + "/anonymous", latched_qos,
     bind(&Person::onAnonymous, this, std::placeholders::_1), options);
 
-  alias_subscriber_ = node_->create_subscription<std_msgs::msg::String>(
-    kNs_ + "/alias", latched_qos,
-    bind(&Person::onAlias, this, std::placeholders::_1), options);
+  alias_subscriber_ = rclcpp::create_subscription<std_msgs::msg::String>(
+    node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
+    kNs_ + "/alias", latched_qos, bind(&Person::onAlias, this, std::placeholders::_1), options);
 
-  engagement_subscriber_ = node_->create_subscription<hri_msgs::msg::EngagementLevel>(
+  engagement_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::EngagementLevel>(
+    node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
     kNs_ + "/engagement_status", default_qos,
     bind(&Person::onEngagementStatus, this, std::placeholders::_1), options);
 
-  loc_confidence_subscriber_ = node_->create_subscription<std_msgs::msg::Float32>(
-    kNs_ + "/location_confidence", default_qos,
-    bind(&Person::onLocationConfidence, this, std::placeholders::_1), options);
+  loc_confidence_subscriber_ = rclcpp::create_subscription<std_msgs::msg::Float32>(
+    node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
+    kNs_ + "/location_confidence",
+    default_qos, bind(&Person::onLocationConfidence, this, std::placeholders::_1), options);
 }
 
 Person::~Person()
 {
-  RCLCPP_DEBUG_STREAM(node_->get_logger(), "Deleting person " << kId_);
+  RCLCPP_DEBUG_STREAM(
+    node_interfaces_.get_node_logging_interface()->get_logger(), "Deleting person " << kId_);
 }
 
 void assignStringOptional(std::optional<std::string> & op, std::string val)
@@ -95,44 +102,47 @@ void assignStringOptional(std::optional<std::string> & op, std::string val)
   }
 }
 
-FacePtr Person::face() const
+ConstFacePtr Person::face() const
 {
-  auto ret = FacePtr();
+  auto ret = ConstFacePtr();
   if (auto locked_listener = listener_.lock()) {
     if (face_id_ && locked_listener->getFaces().count(face_id_.value())) {
       ret = locked_listener->getFaces()[*face_id_];
     }
   } else {
     RCLCPP_WARN_STREAM(
-      node_->get_logger(), "Person " << id() << " lost connection to the HRI listener!");
+      node_interfaces_.get_node_logging_interface()->get_logger(),
+      "Person " << id() << " lost connection to the HRI listener!");
   }
   return ret;
 }
 
-BodyPtr Person::body() const
+ConstBodyPtr Person::body() const
 {
-  auto ret = BodyPtr();
+  auto ret = ConstBodyPtr();
   if (auto locked_listener = listener_.lock()) {
     if (body_id_ && locked_listener->getBodies().count(body_id_.value())) {
       ret = locked_listener->getBodies()[*body_id_];
     }
   } else {
     RCLCPP_WARN_STREAM(
-      node_->get_logger(), "Person " << id() << " lost connection to the HRI listener!");
+      node_interfaces_.get_node_logging_interface()->get_logger(),
+      "Person " << id() << " lost connection to the HRI listener!");
   }
   return ret;
 }
 
-VoicePtr Person::voice() const
+ConstVoicePtr Person::voice() const
 {
-  auto ret = VoicePtr();
+  auto ret = ConstVoicePtr();
   if (auto locked_listener = listener_.lock()) {
     if (voice_id_ && locked_listener->getVoices().count(voice_id_.value())) {
       ret = locked_listener->getVoices()[*voice_id_];
     }
   } else {
     RCLCPP_WARN_STREAM(
-      node_->get_logger(), "Person " << id() << " lost connection to the HRI listener!");
+      node_interfaces_.get_node_logging_interface()->get_logger(),
+      "Person " << id() << " lost connection to the HRI listener!");
   }
   return ret;
 }
@@ -193,10 +203,10 @@ void Person::onLocationConfidence(std_msgs::msg::Float32::ConstSharedPtr msg)
   loc_confidence_ = msg->data;
 }
 
-std::optional<Transform> Person::transform() const
+std::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
 {
   if (std::abs(loc_confidence_.value_or(0.f)) < 1e-2f) {
-    return std::optional<Transform>();
+    return std::optional<geometry_msgs::msg::TransformStamped>();
   } else {
     return FeatureTracker::transform();
   }

@@ -19,6 +19,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "hri/body.hpp"
@@ -37,18 +38,34 @@ namespace hri
 
 /** \brief Main entry point to libhri. This is most likely what you want to use.
  *
- * See src/node_show_faces.cpp for a minimal usage example
+ * See examples/node_show_faces.cpp for a minimal usage example
  */
 class HRIListener : public std::enable_shared_from_this<HRIListener>
 {
 public:
   /** \brief Factory function for the libhri main class.
    *
-   * The class can subscribe to topics and print logs, using the node argument.
+   * The class can subscribe to topics and print logs, using the node interfaces arguments.
+   * The class uses a factory design pattern to make sure a shared pointer to an instance of this
+   * class is created, enabling the safe internal use of shared_from_this().
+   * See https://en.cppreference.com/w/cpp/memory/enable_shared_from_this for more info.
+   *
+   * Internally the HRIListener uses node interfaces to adapt both to Node and LifecycleNode
+   * (see tinyurl.com/ROSCon-2023-node-interfaces).
+   * Since rclcpp::NodeInterface is not available in Humble, for convenience we use a variant for
+   * this factory and internally pass a structure mocking rclcpp::NodeInterface.
    */
-  [[nodiscard]] static std::shared_ptr<HRIListener> create(rclcpp::Node::SharedPtr node)
+  [[nodiscard]] static std::shared_ptr<HRIListener> create(NodeLikeSharedPtr node_like)
   {
-    return std::shared_ptr<HRIListener>(new HRIListener(node));
+    auto node_interfaces = std::visit(
+      [](auto && node) {
+        return NodeInterfaces {
+          node->get_node_base_interface(),
+          node->get_node_logging_interface(),
+          node->get_node_parameters_interface(),
+          node->get_node_topics_interface()};
+      }, node_like);
+    return std::shared_ptr<HRIListener>(new HRIListener(node_interfaces));
   }
 
   ~HRIListener();
@@ -57,7 +74,7 @@ public:
    *
    * Faces are returned as constant std::shared_ptr as they may disappear at any point.
    */
-  std::map<ID, FacePtr> getFaces() const;
+  std::map<ID, ConstFacePtr> getFaces() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new face
    * is detected.
@@ -78,9 +95,9 @@ public:
 
   /** \brief Returns the list of currently detected bodies, mapped to their IDs
    *
-   * Bodies are returned as constant std::shared_ptr as they may disappear at any point.
+   * Bodies are returned as constant std::shared_ptr. Note that they may disappear at any point.
    */
-  std::map<ID, BodyPtr> getBodies() const;
+  std::map<ID, ConstBodyPtr> getBodies() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new body
    * is detected.
@@ -103,7 +120,7 @@ public:
    *
    * Voices are returned as constant std::shared_ptr as they may disappear at any point.
    */
-  std::map<ID, VoicePtr> getVoices() const;
+  std::map<ID, ConstVoicePtr> getVoices() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new voice
    * is detected.
@@ -131,7 +148,7 @@ public:
    * been detected, and we can infer a yet-to-be-recognised person does exist)
    * can disappear.
    */
-  std::map<ID, PersonPtr> getPersons() const;
+  std::map<ID, ConstPersonPtr> getPersons() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new person
    * is detected.
@@ -156,7 +173,7 @@ public:
    * general, *anonymous* persons (created because, eg, a face has been detected, and we
    * can infer a yet-to-be-recognised person does exist) can disappear.
    */
-  std::map<ID, PersonPtr> getTrackedPersons() const;
+  std::map<ID, ConstPersonPtr> getTrackedPersons() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new person
    * is detected and actively tracked (eg, currently seen).
@@ -174,7 +191,6 @@ public:
     person_tracked_lost_callbacks_.push_back(callback);
   }
 
-
   /** \brief Sets the reference frame from which the TF transformations of the persons will
    * be returned (via `Person::transform()`).
    *
@@ -185,14 +201,25 @@ public:
     reference_frame_ = frame;
   }
 
+  /** \brief Get the mutually exclusive callback group used by HRIListener.
+   *
+   * This can be used to avoid race conditions between the internal subscribe callbacks and the
+   * HRIListener getter functions (e.g., HRIListener::getTrackedPersons(), Face::roi()).
+   * If a multithreaded executor is used to freely spin a node which interfaces are used by both
+   * HRIListener and by creating timer/topic/... callbacks which call an HRIListener getter
+   * function, then the latter should be added to this callback group.
+   */
+  rclcpp::CallbackGroup::SharedPtr getCallbackGroup() {return callback_group_;}
+
 private:
-  explicit HRIListener(rclcpp::Node::SharedPtr node);
-  void onTrackedFeature(FeatureType feature, hri_msgs::msg::IdsList::ConstSharedPtr tracked);
+  explicit HRIListener(NodeInterfaces & node_interfaces);
+  void onTrackedFeature(FeatureType & feature, hri_msgs::msg::IdsList::ConstSharedPtr tracked);
+
+  NodeInterfaces node_interfaces_;
+  rclcpp::CallbackGroup::SharedPtr callback_group_;
 
   std::map<FeatureType,
     rclcpp::Subscription<hri_msgs::msg::IdsList>::SharedPtr> feature_subscribers_;
-  rclcpp::Node::SharedPtr node_{nullptr};
-  rclcpp::CallbackGroup::SharedPtr callback_group_{nullptr};
 
   std::map<ID, FacePtr> faces_;
   std::vector<std::function<void(FacePtr)>> face_callbacks_;
