@@ -54,17 +54,17 @@ public:
   /** \brief Returns a shared pointer to the face of this person, or
    * a nullptr if this person is currently not associated to any detected face.
    */
-  ConstFacePtr face() const;
+  FacePtr face() const;
 
   /** \brief Returns a shared pointer to the body of this person, or
    * a nullptr if this person is currently not associated to any detected body.
    */
-  ConstBodyPtr body() const;
+  BodyPtr body() const;
 
   /** \brief Returns a shared pointer to the voice of this person, or
    * a nullptr if this person is currently not associated to any detected voice.
    */
-  ConstVoicePtr voice() const;
+  VoicePtr voice() const;
 
   std::optional<bool> anonymous() const {return anonymous_;}
   std::optional<EngagementLevel> engagementStatus() const {return engagement_status_;}
@@ -105,7 +105,6 @@ private:
 };
 
 typedef std::shared_ptr<Person> PersonPtr;
-typedef std::shared_ptr<const Person> ConstPersonPtr;
 
 }  // namespace hri
 

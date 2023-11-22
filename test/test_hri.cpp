@@ -678,7 +678,7 @@ TEST(libhri_tests, Callback)
   int ontracked_lost_person_callbacks_invoked = 0;
 
   hri_listener->onFace(
-    [&]([[maybe_unused]] hri::ConstFacePtr face) {
+    [&]([[maybe_unused]] hri::FacePtr face) {
       face_callbacks_invoked++;
     });
   hri_listener->onFaceLost(
@@ -686,7 +686,7 @@ TEST(libhri_tests, Callback)
       lost_face_callbacks_invoked++;
     });
   hri_listener->onBody(
-    [&]([[maybe_unused]] hri::ConstBodyPtr body) {
+    [&]([[maybe_unused]] hri::BodyPtr body) {
       body_callbacks_invoked++;
     });
   hri_listener->onBodyLost(
@@ -694,7 +694,7 @@ TEST(libhri_tests, Callback)
       lost_body_callbacks_invoked++;
     });
   hri_listener->onVoice(
-    [&]([[maybe_unused]] hri::ConstVoicePtr voice) {
+    [&]([[maybe_unused]] hri::VoicePtr voice) {
       voice_callbacks_invoked++;
     });
   hri_listener->onVoiceLost(
@@ -702,11 +702,11 @@ TEST(libhri_tests, Callback)
       lost_voice_callbacks_invoked++;
     });
   hri_listener->onPerson(
-    [&]([[maybe_unused]] hri::ConstPersonPtr person) {
+    [&]([[maybe_unused]] hri::PersonPtr person) {
       person_callbacks_invoked++;
     });
   hri_listener->onTrackedPerson(
-    [&]([[maybe_unused]] hri::ConstPersonPtr tracked_person) {
+    [&]([[maybe_unused]] hri::PersonPtr tracked_person) {
       ontracked_person_callbacks_invoked++;
     });
   hri_listener->onTrackedPersonLost(

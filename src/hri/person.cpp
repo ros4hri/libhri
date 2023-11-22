@@ -102,9 +102,9 @@ void assignStringOptional(std::optional<std::string> & op, std::string val)
   }
 }
 
-ConstFacePtr Person::face() const
+FacePtr Person::face() const
 {
-  auto ret = ConstFacePtr();
+  auto ret = FacePtr();
   if (auto locked_listener = listener_.lock()) {
     if (face_id_ && locked_listener->getFaces().count(face_id_.value())) {
       ret = locked_listener->getFaces()[*face_id_];
@@ -117,9 +117,9 @@ ConstFacePtr Person::face() const
   return ret;
 }
 
-ConstBodyPtr Person::body() const
+BodyPtr Person::body() const
 {
-  auto ret = ConstBodyPtr();
+  auto ret = BodyPtr();
   if (auto locked_listener = listener_.lock()) {
     if (body_id_ && locked_listener->getBodies().count(body_id_.value())) {
       ret = locked_listener->getBodies()[*body_id_];
@@ -132,9 +132,9 @@ ConstBodyPtr Person::body() const
   return ret;
 }
 
-ConstVoicePtr Person::voice() const
+VoicePtr Person::voice() const
 {
-  auto ret = ConstVoicePtr();
+  auto ret = VoicePtr();
   if (auto locked_listener = listener_.lock()) {
     if (voice_id_ && locked_listener->getVoices().count(voice_id_.value())) {
       ret = locked_listener->getVoices()[*voice_id_];

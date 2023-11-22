@@ -125,7 +125,6 @@ private:
 };
 
 typedef std::shared_ptr<Face> FacePtr;
-typedef std::shared_ptr<const Face> ConstFacePtr;
 
 }  // namespace hri
 
