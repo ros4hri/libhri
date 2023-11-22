@@ -222,6 +222,7 @@ struct IntensityConfidence
   float confidence;
 };
 
+// structure mocking the rclcpp::NodeInterfaces, not yet available in Humble
 struct NodeInterfaces
 {
   const rclcpp::node_interfaces::NodeBaseInterface::SharedPtr &

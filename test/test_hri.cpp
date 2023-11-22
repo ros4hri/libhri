@@ -643,18 +643,18 @@ TEST(libhri_tests, EngagementLevel)
   engagement_pub->publish(msg);
   executor.spin_all(1s);
   auto p = hri_listener->getTrackedPersons()["p1"];
-  ASSERT_TRUE(p->engagement_status());
-  EXPECT_EQ(p->engagement_status().value(), hri::EngagementLevel::kDisengaged);
+  ASSERT_TRUE(p->engagementStatus());
+  EXPECT_EQ(p->engagementStatus().value(), hri::EngagementLevel::kDisengaged);
 
   msg.level = hri_msgs::msg::EngagementLevel::ENGAGED;
   engagement_pub->publish(msg);
   executor.spin_all(1s);
-  EXPECT_EQ(p->engagement_status().value(), hri::EngagementLevel::kEngaged);
+  EXPECT_EQ(p->engagementStatus().value(), hri::EngagementLevel::kEngaged);
 
   msg.level = hri_msgs::msg::EngagementLevel::UNKNOWN;
   engagement_pub->publish(msg);
   executor.spin_all(1s);
-  EXPECT_FALSE(p->engagement_status());
+  EXPECT_FALSE(p->engagementStatus());
 }
 
 TEST(libhri_tests, Callback)
@@ -818,14 +818,14 @@ TEST(libhri_tests, PeopleLocation)
   msg.data = 0.;
   loc_confidence_pub->publish(msg);
   executor.spin_all(1s);
-  ASSERT_TRUE(p->location_confidence());
-  EXPECT_FLOAT_EQ(p->location_confidence().value(), 0.f);
+  ASSERT_TRUE(p->locationConfidence());
+  EXPECT_FLOAT_EQ(p->locationConfidence().value(), 0.f);
   EXPECT_FALSE(p->transform()) << "location confidence at 0, no transform should be available";
 
   msg.data = 0.5;
   loc_confidence_pub->publish(msg);
   executor.spin_all(1s);
-  EXPECT_FLOAT_EQ(p->location_confidence().value(), 0.5f);
+  EXPECT_FLOAT_EQ(p->locationConfidence().value(), 0.5f);
   p->transform();
   EXPECT_FALSE(p->transform())
     << "location confidence > 0 but no transform published yet -> no transform should be returned";
@@ -840,7 +840,7 @@ TEST(libhri_tests, PeopleLocation)
   p1_transform.transform.rotation.w = 1.0;
   static_broadcaster->sendTransform(p1_transform);
   executor.spin_all(1s);
-  EXPECT_FLOAT_EQ(p->location_confidence().value(), 0.5f);
+  EXPECT_FLOAT_EQ(p->locationConfidence().value(), 0.5f);
   ASSERT_TRUE(p->transform()) << "location confidence > 0 => a transform should be available";
   auto t = p->transform().value();
   EXPECT_EQ(t.child_frame_id, "person_p1");
@@ -857,7 +857,7 @@ TEST(libhri_tests, PeopleLocation)
   msg.data = 1.0;
   loc_confidence_pub->publish(msg);
   executor.spin_all(1s);
-  EXPECT_FLOAT_EQ(p->location_confidence().value(), 1.f);
+  EXPECT_FLOAT_EQ(p->locationConfidence().value(), 1.f);
   EXPECT_TRUE(p->transform()) << "location confidence > 0 => a transform should be available";
 }
 

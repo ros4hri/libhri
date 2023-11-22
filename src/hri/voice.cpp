@@ -49,7 +49,7 @@ Voice::Voice(
 
   speech_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::LiveSpeech>(
     node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
-    kNs_ + "/speech", default_qos, bind(&Voice::_onSpeech, this, std::placeholders::_1), options);
+    kNs_ + "/speech", default_qos, bind(&Voice::onSpeech_, this, std::placeholders::_1), options);
 }
 
 Voice::~Voice()
@@ -58,18 +58,18 @@ Voice::~Voice()
     node_interfaces_.get_node_logging_interface()->get_logger(), "Deleting voice " << kId_);
 }
 
-void Voice::_onSpeech(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg)
+void Voice::onSpeech_(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg)
 {
   if (msg->incremental.size() > 0) {
     incremental_speech_ = msg->incremental;
-    for (auto cb : incremental_speech_callbacks) {
+    for (auto cb : incremental_speech_callbacks_) {
       cb(msg->incremental);
     }
   }
 
   if (msg->final.size() > 0) {
     speech_ = msg->final;
-    for (auto cb : speech_callbacks) {
+    for (auto cb : speech_callbacks_) {
       cb(msg->final);
     }
   }
@@ -78,7 +78,7 @@ void Voice::_onSpeech(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg)
 void Voice::onIsSpeaking(std_msgs::msg::Bool::ConstSharedPtr msg)
 {
   is_speaking_ = msg->data;
-  for (auto & cb : is_speaking_callbacks) {
+  for (auto & cb : is_speaking_callbacks_) {
     cb(msg->data);
   }
 }

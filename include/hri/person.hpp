@@ -67,8 +67,8 @@ public:
   ConstVoicePtr voice() const;
 
   std::optional<bool> anonymous() const {return anonymous_;}
-  std::optional<EngagementLevel> engagement_status() const {return engagement_status_;}
-  std::optional<float> location_confidence() const {return loc_confidence_;}
+  std::optional<EngagementLevel> engagementStatus() const {return engagement_status_;}
+  std::optional<float> locationConfidence() const {return loc_confidence_;}
   std::optional<ID> alias() const {return alias_;}
 
   std::optional<geometry_msgs::msg::TransformStamped> transform() const override;

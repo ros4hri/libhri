@@ -44,7 +44,7 @@ public:
   /** \brief Returns speech is currently detected in this voice, ie, whether the person is
    * currently speaking.
    */
-  std::optional<bool> is_speaking() const {return is_speaking_;}
+  std::optional<bool> isSpeaking() const {return is_speaking_;}
 
   /** \brief Returns the last recognised final sentence (or an empty string
    * if no speech was recognised yet).
@@ -54,7 +54,7 @@ public:
   /** \brief Returns the last recognised incremental sentence (or an empty
    * string if no speech was recognised yet).
    */
-  std::optional<std::string> incremental_speech() const {return incremental_speech_;}
+  std::optional<std::string> incrementalSpeech() const {return incremental_speech_;}
 
   /** \brief Registers a callback function, to be invoked everytime speech is
    * detected (ie, the person is speaking).
@@ -62,11 +62,11 @@ public:
    * See also:
    * * Voice::onSpeech and Voice::onIncrementalSpeech to register a callback
    * ot get the actual recognised speech
-   * * Voice::speech and Voice::incremental_speech for the last recognised speech
+   * * Voice::speech and Voice::incrementalSpeech for the last recognised speech
    */
   void onSpeaking(std::function<void(bool)> callback)
   {
-    is_speaking_callbacks.push_back(callback);
+    is_speaking_callbacks_.push_back(callback);
   }
 
   /** \brief Registers a callback function, to be invoked everytime speech is
@@ -77,7 +77,7 @@ public:
    */
   void onSpeech(std::function<void(const std::string &)> callback)
   {
-    speech_callbacks.push_back(callback);
+    speech_callbacks_.push_back(callback);
   }
 
   /** \brief Registers a callback function, to be invoked everytime speech is
@@ -86,20 +86,20 @@ public:
    */
   void onIncrementalSpeech(std::function<void(const std::string &)> callback)
   {
-    incremental_speech_callbacks.push_back(callback);
+    incremental_speech_callbacks_.push_back(callback);
   }
 
 private:
-  void _onSpeech(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg);  // TODO(LJU): find compliant name
+  void onSpeech_(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg);
   void onIsSpeaking(std_msgs::msg::Bool::ConstSharedPtr msg);
 
   std::optional<bool> is_speaking_;
   std::optional<std::string> speech_;
   std::optional<std::string> incremental_speech_;
 
-  std::vector<std::function<void(bool)>> is_speaking_callbacks;
-  std::vector<std::function<void(const std::string &)>> speech_callbacks;
-  std::vector<std::function<void(const std::string &)>> incremental_speech_callbacks;
+  std::vector<std::function<void(bool)>> is_speaking_callbacks_;
+  std::vector<std::function<void(const std::string &)>> speech_callbacks_;
+  std::vector<std::function<void(const std::string &)>> incremental_speech_callbacks_;
 
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr is_speaking_subscriber_;
   rclcpp::Subscription<hri_msgs::msg::LiveSpeech>::SharedPtr speech_subscriber_;
