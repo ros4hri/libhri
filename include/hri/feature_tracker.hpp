@@ -53,10 +53,7 @@ public:
   virtual ~FeatureTracker() = default;
 
   // forbids copies of our 'feature trackers', as we need to internally manage
-  // if/when they disappear. Instead, access them via shared pointers (cf HRIListener API).
-
-  // TODO(SLE): ask a C++ expert how to enable that while avoid compilation errors when
-  // building/moving a FeatureTracker into a container (in HRIListener)
+  // if/when they disappear. Instead, access them via shared pointers to const (cf HRIListener API).
   FeatureTracker(const FeatureTracker &) = delete;
 
   /** \brief Returns the unique ID of this feature.

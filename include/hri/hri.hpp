@@ -71,15 +71,13 @@ public:
   ~HRIListener();
 
   /** \brief Returns the list of currently detected faces, mapped to their IDs
-   *
-   * Faces are returned as constant std::shared_ptr as they may disappear at any point.
    */
   std::map<ID, ConstFacePtr> getFaces() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new face
    * is detected.
    */
-  void onFace(std::function<void(FacePtr)> callback)
+  void onFace(std::function<void(ConstFacePtr)> callback)
   {
     face_callbacks_.push_back(callback);
   }
@@ -94,15 +92,13 @@ public:
 
 
   /** \brief Returns the list of currently detected bodies, mapped to their IDs
-   *
-   * Bodies are returned as constant std::shared_ptr. Note that they may disappear at any point.
    */
   std::map<ID, ConstBodyPtr> getBodies() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new body
    * is detected.
    */
-  void onBody(std::function<void(BodyPtr)> callback)
+  void onBody(std::function<void(ConstBodyPtr)> callback)
   {
     body_callbacks_.push_back(callback);
   }
@@ -117,15 +113,13 @@ public:
 
 
   /** \brief Returns the list of currently detected voices, mapped to their IDs
-   *
-   * Voices are returned as constant std::shared_ptr as they may disappear at any point.
    */
   std::map<ID, ConstVoicePtr> getVoices() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new voice
    * is detected.
    */
-  void onVoice(std::function<void(VoicePtr)> callback)
+  void onVoice(std::function<void(ConstVoicePtr)> callback)
   {
     voice_callbacks_.push_back(callback);
   }
@@ -142,18 +136,13 @@ public:
   /** \brief Returns the list of all known persons, whether or not they are
    * currently actively detected (eg, seen). The persons are mapped to their
    * IDs.
-   *
-   * Persons are returned as constant std::shared_ptr: while person do *not*
-   * disappear in general, *anonymous* persons (created because, eg, a face has
-   * been detected, and we can infer a yet-to-be-recognised person does exist)
-   * can disappear.
    */
   std::map<ID, ConstPersonPtr> getPersons() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new person
    * is detected.
    */
-  void onPerson(std::function<void(PersonPtr)> callback)
+  void onPerson(std::function<void(ConstPersonPtr)> callback)
   {
     person_callbacks_.push_back(callback);
   }
@@ -168,17 +157,13 @@ public:
   }
 
   /** \brief Returns the list of currently detected persons, mapped to their IDs
-   *
-   * Persons are returned as constant std::shared_ptr: while person do *not* disappear in
-   * general, *anonymous* persons (created because, eg, a face has been detected, and we
-   * can infer a yet-to-be-recognised person does exist) can disappear.
    */
   std::map<ID, ConstPersonPtr> getTrackedPersons() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new person
    * is detected and actively tracked (eg, currently seen).
    */
-  void onTrackedPerson(std::function<void(PersonPtr)> callback)
+  void onTrackedPerson(std::function<void(ConstPersonPtr)> callback)
   {
     person_tracked_callbacks_.push_back(callback);
   }
@@ -204,10 +189,10 @@ public:
   /** \brief Get the mutually exclusive callback group used by HRIListener.
    *
    * This can be used to avoid race conditions between the internal subscribe callbacks and the
-   * HRIListener getter functions (e.g., HRIListener::getTrackedPersons(), Face::roi()).
+   * HRIListener getter functions (e.g., hri::HRIListener::getTrackedPersons(), hri::Face::roi()).
    * If a multithreaded executor is used to freely spin a node which interfaces are used by both
-   * HRIListener and by creating timer/topic/... callbacks which call an HRIListener getter
-   * function, then the latter should be added to this callback group.
+   * HRIListener and by timer/topic/... callbacks which call an HRIListener getter function,
+   * then the latter should be added to this callback group.
    */
   rclcpp::CallbackGroup::SharedPtr getCallbackGroup() {return callback_group_;}
 
@@ -222,22 +207,22 @@ private:
     rclcpp::Subscription<hri_msgs::msg::IdsList>::SharedPtr> feature_subscribers_;
 
   std::map<ID, FacePtr> faces_;
-  std::vector<std::function<void(FacePtr)>> face_callbacks_;
+  std::vector<std::function<void(ConstFacePtr)>> face_callbacks_;
   std::vector<std::function<void(ID)>> face_lost_callbacks_;
 
   std::map<ID, BodyPtr> bodies_;
-  std::vector<std::function<void(BodyPtr)>> body_callbacks_;
+  std::vector<std::function<void(ConstBodyPtr)>> body_callbacks_;
   std::vector<std::function<void(ID)>> body_lost_callbacks_;
 
   std::map<ID, VoicePtr> voices_;
-  std::vector<std::function<void(VoicePtr)>> voice_callbacks_;
+  std::vector<std::function<void(ConstVoicePtr)>> voice_callbacks_;
   std::vector<std::function<void(ID)>> voice_lost_callbacks_;
 
   std::map<ID, PersonPtr> persons_;
-  std::vector<std::function<void(PersonPtr)>> person_callbacks_;
+  std::vector<std::function<void(ConstPersonPtr)>> person_callbacks_;
   std::vector<std::function<void(ID)>> person_lost_callbacks_;
   std::map<ID, PersonPtr> tracked_persons_;
-  std::vector<std::function<void(PersonPtr)>> person_tracked_callbacks_;
+  std::vector<std::function<void(ConstPersonPtr)>> person_tracked_callbacks_;
   std::vector<std::function<void(ID)>> person_tracked_lost_callbacks_;
 
   std::string reference_frame_;

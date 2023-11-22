@@ -305,60 +305,56 @@ void HRIListener::onTrackedFeature(
   switch (feature) {
     case FeatureType::kFace:
       for (auto id  : to_add) {
-        auto face = std::make_shared<Face>(
-          id, node_interfaces_, callback_group_, tf_buffer_, reference_frame_);
-        faces_.insert({id, face});
+        faces_.emplace(
+          id, std::make_shared<Face>(
+            id, node_interfaces_, callback_group_, tf_buffer_, reference_frame_));
         // invoke all the callbacks
         for (auto & cb : face_callbacks_) {
-          cb(face);
+          cb(std::const_pointer_cast<Face>(faces_[id]));
         }
       }
       break;
     case FeatureType::kBody:
       for (auto id : to_add) {
-        auto body = std::make_shared<Body>(
-          id, node_interfaces_, callback_group_, tf_buffer_, reference_frame_);
-        bodies_.insert({id, body});
-
+        bodies_.emplace(
+          id, std::make_shared<Body>(
+            id, node_interfaces_, callback_group_, tf_buffer_, reference_frame_));
         // invoke all the callbacks
         for (auto & cb : body_callbacks_) {
-          cb(body);
+          cb(std::const_pointer_cast<Body>(bodies_[id]));
         }
       }
       break;
     case FeatureType::kVoice:
       for (auto id : to_add) {
-        auto voice = std::make_shared<Voice>(
-          id, node_interfaces_, callback_group_, tf_buffer_, reference_frame_);
-        voices_.insert({id, voice});
-
+        voices_.emplace(
+          id, std::make_shared<Voice>(
+            id, node_interfaces_, callback_group_, tf_buffer_, reference_frame_));
         // invoke all the callbacks
         for (auto & cb : voice_callbacks_) {
-          cb(voice);
+          cb(std::const_pointer_cast<Voice>(voices_[id]));
         }
       }
       break;
     case FeatureType::kPerson:
       for (auto id : to_add) {
-        auto person = std::make_shared<Person>(
-          id, node_interfaces_, callback_group_, weak_from_this(), tf_buffer_, reference_frame_);
-        persons_.insert({id, person});
-
+        persons_.emplace(
+          id, std::make_shared<Person>(
+            id, node_interfaces_, callback_group_, weak_from_this(), tf_buffer_, reference_frame_));
         // invoke all the callbacks
         for (auto & cb : person_callbacks_) {
-          cb(person);
+          cb(std::const_pointer_cast<Person>(persons_[id]));
         }
       }
       break;
     case FeatureType::kTrackedPerson:
       for (auto id : to_add) {
-        auto person = std::make_shared<Person>(
-          id, node_interfaces_, callback_group_, weak_from_this(), tf_buffer_, reference_frame_);
-        tracked_persons_.insert({id, person});
-
+        tracked_persons_.emplace(
+          id, std::make_shared<Person>(
+            id, node_interfaces_, callback_group_, weak_from_this(), tf_buffer_, reference_frame_));
         // invoke all the callbacks
         for (auto & cb : person_tracked_callbacks_) {
-          cb(person);
+          cb(std::const_pointer_cast<Person>(tracked_persons_[id]));
         }
       }
       break;
