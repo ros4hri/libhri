@@ -16,18 +16,9 @@
 #include <chrono>
 #include <memory>
 
+#include "cv_bridge/cv_bridge.h"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "gtest/gtest.h"
-
-#include "geometry_msgs/msg/transform_stamped.h"
-
-#include "std_msgs/msg/float32.hpp"
-#include "std_msgs/msg/string.hpp"
-#include "std_msgs/msg/bool.hpp"
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "tf2_ros/static_transform_broadcaster.h"
-
 #include "hri/hri.hpp"
 #include "hri/face.hpp"
 #include "hri/person.hpp"
@@ -36,132 +27,160 @@
 #include "hri_msgs/msg/ids_list.hpp"
 #include "hri_msgs/msg/live_speech.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
+#include "hri_msgs/msg/skeleton2_d.hpp"
 #include "hri_msgs/msg/soft_biometrics.hpp"
+#include "opencv2/core.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "sensor_msgs/msg/image.hpp"
+#include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/float32.hpp"
+#include "std_msgs/msg/string.hpp"
+#include "tf2_ros/static_transform_broadcaster.h"
 
 using namespace std::chrono_literals;
 
-TEST(libhri_tests, GetFaces)
+class HRITest : public testing::Test
 {
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto tester_node = rclcpp::Node::make_shared("tester_node");
-  executor.add_node(tester_node);
-  auto hri_node = rclcpp::Node::make_shared("hri_node");
-  executor.add_node(hri_node);
+protected:
+  static void SetUpTestSuite()
+  {
+    rclcpp::init(0, NULL);
+  }
 
-  auto hri_listener = hri::HRIListener::create(hri_node);
-  auto publisher = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  static void TearDownTestSuite()
+  {
+    rclcpp::shutdown();
+  }
+
+  void SetUp() override
+  {
+    tester_node_ = rclcpp::Node::make_shared("tester_node_");
+    hri_executor_ = rclcpp::executors::MultiThreadedExecutor::make_shared();
+    hri_node_ = rclcpp::Node::make_shared("hri_node");
+    hri_executor_->add_node(hri_node_);
+    hri_listener_ = hri::HRIListener::create(hri_node_);
+  }
+
+  void TearDown() override
+  {
+    hri_listener_.reset();
+    hri_node_.reset();
+    hri_executor_.reset();
+    tester_node_.reset();
+  }
+
+  void spin(std::chrono::nanoseconds hri_timeout = 100ms)
+  {
+    hri_executor_->spin_some(hri_timeout);
+  }
+
+  const rclcpp::QoS kQoSLatched_{rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable()};
+  rclcpp::Executor::SharedPtr hri_executor_;
+  rclcpp::Node::SharedPtr hri_node_;
+  rclcpp::Node::SharedPtr tester_node_;
+  std::shared_ptr<hri::HRIListener> hri_listener_;
+};
+
+TEST_F(HRITest, GetFaces)
+{
+  auto faces_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/faces/tracked", 1);
+  auto ids_msg = hri_msgs::msg::IdsList();
 
-  ASSERT_EQ(publisher->get_subscription_count(), 1U);
-  EXPECT_EQ(hri_listener->getFaces().size(), 0U);
+  ASSERT_EQ(faces_pub->get_subscription_count(), 1U);
+  EXPECT_EQ(hri_listener_->getFaces().size(), 0U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A]");
-  auto ids = hri_msgs::msg::IdsList();
-  ids.ids = {"A"};
-  publisher->publish(ids);
-  executor.spin_all(1s);
-  auto faces = hri_listener->getFaces();
+  ids_msg.ids = {"A"};
+  faces_pub->publish(ids_msg);
+  spin();
+  auto faces = hri_listener_->getFaces();
   EXPECT_EQ(faces.size(), 1U);
   ASSERT_TRUE(faces.count("A"));
   EXPECT_EQ(faces["A"]->id(), "A");
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A]");
-  publisher->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(hri_listener->getFaces().size(), 1U);
+  faces_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(hri_listener_->getFaces().size(), 1U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
-  ids.ids = {"A", "B"};
-  publisher->publish(ids);
-  executor.spin_all(1s);
-  faces = hri_listener->getFaces();
+  ids_msg.ids = {"A", "B"};
+  faces_pub->publish(ids_msg);
+  spin();
+  faces = hri_listener_->getFaces();
   EXPECT_EQ(faces.size(), 2U);
   EXPECT_TRUE(faces.count("A"));
   EXPECT_TRUE(faces.count("B"));
 
-  RCLCPP_INFO(tester_node->get_logger(), "[B]");
-  ids.ids = {"B"};
-  publisher->publish(ids);
-  executor.spin_all(1s);
-  faces = hri_listener->getFaces();
+  ids_msg.ids = {"B"};
+  faces_pub->publish(ids_msg);
+  spin();
+  faces = hri_listener_->getFaces();
   EXPECT_EQ(faces.size(), 1U);
-  EXPECT_TRUE(faces.find("A") == faces.end());
+  EXPECT_FALSE(faces.count("A"));
   ASSERT_TRUE(faces.count("B"));
 
-  std::shared_ptr<const hri::Face> face_b = faces["B"];
-  int use_count_before_deletion = face_b.use_count();
+  ids_msg.ids = {};
+  faces_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(hri_listener_->getFaces().size(), 0U);
+  // check face B is not used anymore by hri_listener_!
+  EXPECT_EQ(faces["B"].use_count(), 1U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[]");
-  ids.ids = {};
-  publisher->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(hri_listener->getFaces().size(), 0U);
-  // check face B is not used anymore by hri_listener!
-  EXPECT_EQ(face_b.use_count(), --use_count_before_deletion);
-
-  hri_listener.reset();
-  EXPECT_EQ(publisher->get_subscription_count(), 0U);
-  EXPECT_FALSE(face_b->valid());
+  hri_listener_.reset();
+  EXPECT_EQ(faces_pub->get_subscription_count(), 0U);
+  EXPECT_FALSE(faces["B"]->valid());
 }
 
-TEST(libhri_tests, GetFacesRoi)
+TEST_F(HRITest, GetFacesRoi)
 {
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto tester_node = rclcpp::Node::make_shared("tester_node");
-  executor.add_node(tester_node);
-  auto hri_node = rclcpp::Node::make_shared("hri_node");
-  executor.add_node(hri_node);
-
-  auto hri_listener = hri::HRIListener::create(hri_node);
-  auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  auto faces_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/faces/tracked", 1);
-  // roi topic is transient local
-  auto pub_r1 = tester_node->create_publisher<hri_msgs::msg::NormalizedRegionOfInterest2D>(
+  auto roi_a_pub = tester_node_->create_publisher<hri_msgs::msg::NormalizedRegionOfInterest2D>(
     "/humans/faces/A/roi", 1);
-  // roi topic is transient local
-  auto pub_r2 = tester_node->create_publisher<hri_msgs::msg::NormalizedRegionOfInterest2D>(
+  auto roi_b_pub = tester_node_->create_publisher<hri_msgs::msg::NormalizedRegionOfInterest2D>(
     "/humans/faces/B/roi", 1);
+  auto ids_msg = hri_msgs::msg::IdsList();
+  auto roi_msg = hri_msgs::msg::NormalizedRegionOfInterest2D();
 
-  auto ids = hri_msgs::msg::IdsList();
-  ids.ids = {"A"};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(pub_r1->get_subscription_count(), 1U);
+  ids_msg.ids = {"A"};
+  faces_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(roi_a_pub->get_subscription_count(), 1U);
 
-  ids.ids = {"B"};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(pub_r1->get_subscription_count(), 0U);
-  EXPECT_EQ(pub_r2->get_subscription_count(), 1U);
-  auto faces = hri_listener->getFaces();
+  ids_msg.ids = {"B"};
+  faces_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(roi_a_pub->get_subscription_count(), 0U)
+    << "Face A is deleted. No one should be subscribed to /humans/faces/A/roi anymore";
+  EXPECT_EQ(roi_b_pub->get_subscription_count(), 1U)
+    << "Face B should have subscribed to /humans/faces/B/roi";
+  auto faces = hri_listener_->getFaces();
   ASSERT_TRUE(faces.count("B"));
   auto face = faces["B"];
   EXPECT_FALSE(face == nullptr);
   EXPECT_EQ(face->ns(), "/humans/faces/B");
   EXPECT_FALSE(face->roi());
 
-  auto roi = hri_msgs::msg::NormalizedRegionOfInterest2D();
-  roi.xmin = 0.1;
-  roi.ymin = 0;
-  roi.xmax = 1;
-  roi.ymax = 1;
-  pub_r2->publish(roi);
-  executor.spin_all(1s);
+  roi_msg.xmin = 0.1;
+  roi_msg.ymin = 0;
+  roi_msg.xmax = 1;
+  roi_msg.ymax = 1;
+  roi_b_pub->publish(roi_msg);
+  spin();
   ASSERT_TRUE(face->roi());
   EXPECT_FLOAT_EQ(face->roi().value().x, 0.1f);
 
-  roi.xmin = 0.2;
-  pub_r2->publish(roi);
-  executor.spin_all(1s);
+  roi_msg.xmin = 0.2;
+  roi_b_pub->publish(roi_msg);
+  spin();
   EXPECT_FLOAT_EQ(face->roi().value().x, 0.2f);
 
-  ids.ids = {"B", "A"};
-  pub->publish(ids);
-  executor.spin_all(1s);
+  ids_msg.ids = {"B", "A"};
+  faces_pub->publish(ids_msg);
+  spin();
 
-  pub_r1->publish(roi);
-  executor.spin_all(1s);
-  faces = hri_listener->getFaces();
+  roi_a_pub->publish(roi_msg);
+  spin();
+  faces = hri_listener_->getFaces();
   auto face_a = faces["A"];
   auto face_b = faces["B"];
   ASSERT_FALSE(face_a == nullptr);
@@ -174,439 +193,405 @@ TEST(libhri_tests, GetFacesRoi)
   EXPECT_FLOAT_EQ(face_b->roi().value().x, 0.2f);
 }
 
-
-TEST(libhri_tests, GetBodies)
+TEST_F(HRITest, GetBodies)
 {
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto tester_node = rclcpp::Node::make_shared("tester_node");
-  executor.add_node(tester_node);
-  auto hri_node = rclcpp::Node::make_shared("hri_node");
-  executor.add_node(hri_node);
-
-  auto hri_listener = hri::HRIListener::create(hri_node);
-  auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  auto bodies_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/bodies/tracked", 1);
+  auto ids_msg = hri_msgs::msg::IdsList();
 
-  ASSERT_EQ(pub->get_subscription_count(), 1U);
+  ASSERT_EQ(bodies_pub->get_subscription_count(), 1U);
+  EXPECT_EQ(hri_listener_->getBodies().size(), 0U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A]");
-  auto ids = hri_msgs::msg::IdsList();
-  ids.ids = {"A"};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  auto bodies = hri_listener->getBodies();
+  ids_msg.ids = {"A"};
+  bodies_pub->publish(ids_msg);
+  spin();
+  auto bodies = hri_listener_->getBodies();
   EXPECT_EQ(bodies.size(), 1U);
   ASSERT_TRUE(bodies.count("A"));
   EXPECT_EQ(bodies["A"]->id(), "A");
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A]");
-  pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(hri_listener->getBodies().size(), 1U);
+  bodies_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(hri_listener_->getBodies().size(), 1U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
-  ids.ids = {"A", "B"};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  bodies = hri_listener->getBodies();
+  ids_msg.ids = {"A", "B"};
+  bodies_pub->publish(ids_msg);
+  spin();
+  bodies = hri_listener_->getBodies();
   EXPECT_EQ(bodies.size(), 2U);
   EXPECT_TRUE(bodies.count("A"));
   EXPECT_TRUE(bodies.count("B"));
 
-  RCLCPP_INFO(tester_node->get_logger(), "[B]");
-  ids.ids = {"B"};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  bodies = hri_listener->getBodies();
+  ids_msg.ids = {"B"};
+  bodies_pub->publish(ids_msg);
+  spin();
+  bodies = hri_listener_->getBodies();
   EXPECT_EQ(bodies.size(), 1U);
-  EXPECT_EQ(bodies.find("A"), bodies.end());
+  EXPECT_FALSE(bodies.count("A"));
   ASSERT_TRUE(bodies.count("B"));
 
-  std::shared_ptr<const hri::Body> body_b = bodies["B"];
-  int use_count_before_deletion = body_b.use_count();
+  ids_msg.ids = {};
+  bodies_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(hri_listener_->getBodies().size(), 0U);
+  // check body B is not used anymore by hri_listener_!
+  EXPECT_EQ(bodies["B"].use_count(), 1U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[]");
-  ids.ids = {};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(hri_listener->getBodies().size(), 0U);
-  // check body B is not used anymore by hri_listener!
-  EXPECT_EQ(body_b.use_count(), --use_count_before_deletion);
-
-  hri_listener.reset();
-  EXPECT_EQ(pub->get_subscription_count(), 0U);
-  EXPECT_FALSE(body_b->valid());
+  hri_listener_.reset();
+  EXPECT_EQ(bodies_pub->get_subscription_count(), 0U);
+  EXPECT_FALSE(bodies["B"]->valid());
 }
 
-TEST(libhri_tests, GetVoices)
+TEST_F(HRITest, GetVoices)
 {
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto tester_node = rclcpp::Node::make_shared("tester_node");
-  executor.add_node(tester_node);
-  auto hri_node = rclcpp::Node::make_shared("hri_node");
-  executor.add_node(hri_node);
-
-  auto hri_listener = hri::HRIListener::create(hri_node);
-  auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  auto voices_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/voices/tracked", 1);
+  auto ids_msg = hri_msgs::msg::IdsList();
 
-  ASSERT_EQ(pub->get_subscription_count(), 1U);
+  ASSERT_EQ(voices_pub->get_subscription_count(), 1U);
+  EXPECT_EQ(hri_listener_->getVoices().size(), 0U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A]");
-  auto ids = hri_msgs::msg::IdsList();
-  ids.ids = {"A"};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  auto voices = hri_listener->getVoices();
+  ids_msg.ids = {"A"};
+  voices_pub->publish(ids_msg);
+  spin();
+  auto voices = hri_listener_->getVoices();
   EXPECT_EQ(voices.size(), 1U);
   ASSERT_TRUE(voices.count("A"));
   EXPECT_EQ(voices["A"]->id(), "A");
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A]");
-  pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(hri_listener->getVoices().size(), 1U);
+  voices_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(hri_listener_->getVoices().size(), 1U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
-  ids.ids = {"A", "B"};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  voices = hri_listener->getVoices();
+  ids_msg.ids = {"A", "B"};
+  voices_pub->publish(ids_msg);
+  spin();
+  voices = hri_listener_->getVoices();
   EXPECT_EQ(voices.size(), 2U);
   EXPECT_TRUE(voices.count("A"));
   EXPECT_TRUE(voices.count("B"));
 
-  RCLCPP_INFO(tester_node->get_logger(), "[B]");
-  ids.ids = {"B"};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  voices = hri_listener->getVoices();
+  ids_msg.ids = {"B"};
+  voices_pub->publish(ids_msg);
+  spin();
+  voices = hri_listener_->getVoices();
   EXPECT_EQ(voices.size(), 1U);
-  EXPECT_TRUE(voices.find("A") == voices.end());
+  EXPECT_FALSE(voices.count("A"));
   ASSERT_TRUE(voices.count("B"));
 
-  std::shared_ptr<const hri::Voice> voice_b = voices["B"];
-  int use_count_before_deletion = voice_b.use_count();
+  ids_msg.ids = {};
+  voices_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(hri_listener_->getVoices().size(), 0U);
+  // check face B is not used anymore by hri_listener_!
+  EXPECT_EQ(voices["B"].use_count(), 1U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[]");
-  ids.ids = {};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(hri_listener->getVoices().size(), 0U);
-  // check voice B is not used anymore by hri_listener!
-  EXPECT_EQ(voice_b.use_count(), --use_count_before_deletion);
-
-  hri_listener.reset();
-  EXPECT_EQ(pub->get_subscription_count(), 0U);
-  EXPECT_FALSE(voice_b->valid());
+  hri_listener_.reset();
+  EXPECT_EQ(voices_pub->get_subscription_count(), 0U);
+  EXPECT_FALSE(voices["B"]->valid());
 }
 
-TEST(libhri_tests, GetKnownPersons)
+TEST_F(HRITest, GetVoiceCallbacks)
 {
-  // rclcpp::executors::SingleThreadedExecutor tester_executor;
-  // auto tester_node = rclcpp::Node::make_shared("tester_node");
-  // tester_executor.add_node(tester_node);
-  // rclcpp::executors::SingleThreadedExecutor hri_executor;
-  // auto hri_node = rclcpp::Node::make_shared("hri_node");
-  // hri_executor.add_node(hri_node);
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto tester_node = rclcpp::Node::make_shared("tester_node");
-  executor.add_node(tester_node);
-  auto hri_node = rclcpp::Node::make_shared("hri_node");
-  executor.add_node(hri_node);
+  auto voices_pub =
+    tester_node_->create_publisher<hri_msgs::msg::IdsList>("/humans/voices/tracked", 1);
+  auto voice_a_is_speaking_pub =
+    tester_node_->create_publisher<std_msgs::msg::Bool>("/humans/voices/A/is_speaking", 1);
+  auto voice_a_speech_pub =
+    tester_node_->create_publisher<hri_msgs::msg::LiveSpeech>("/humans/voices/A/speech", 1);
+  auto ids_msg = hri_msgs::msg::IdsList();
+  auto is_speaking_msg = std_msgs::msg::Bool();
+  auto speech_msg = hri_msgs::msg::LiveSpeech();
 
-  auto hri_listener = hri::HRIListener::create(hri_node);
-  auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  auto cb_triggered = false;
+  hri_listener_->onVoice(
+    [&](hri::VoicePtr voice) {
+      cb_triggered = true;
+      voice->onSpeaking([&]([[maybe_unused]] bool speaking) {cb_triggered = true;});
+      voice->onIncrementalSpeech(
+        [&]([[maybe_unused]] const std::string & speech) {cb_triggered = true;});
+      voice->onSpeech([&]([[maybe_unused]] const std::string & speech) {cb_triggered = true;});
+    });
+
+  cb_triggered = false;
+  ids_msg.ids = {"A"};
+  voices_pub->publish(ids_msg);
+  spin();
+  EXPECT_TRUE(cb_triggered);
+
+  cb_triggered = false;
+  is_speaking_msg.data = true;
+  voice_a_is_speaking_pub->publish(is_speaking_msg);
+  spin();
+  EXPECT_TRUE(cb_triggered);
+  EXPECT_TRUE(hri_listener_->getVoices()["A"]->isSpeaking().value());
+
+  cb_triggered = false;
+  is_speaking_msg.data = false;
+  voice_a_is_speaking_pub->publish(is_speaking_msg);
+  spin();
+  EXPECT_TRUE(cb_triggered);
+  EXPECT_FALSE(hri_listener_->getVoices()["A"]->isSpeaking().value());
+
+  cb_triggered = false;
+  speech_msg.final = "test speech";
+  voice_a_speech_pub->publish(speech_msg);
+  spin();
+  EXPECT_TRUE(cb_triggered);
+  EXPECT_EQ(hri_listener_->getVoices()["A"]->speech().value(), "test speech");
+
+  cb_triggered = false;
+  speech_msg.incremental = "test speech incremental";
+  voice_a_speech_pub->publish(speech_msg);
+  spin();
+  EXPECT_TRUE(cb_triggered);
+  EXPECT_EQ(
+    hri_listener_->getVoices()["A"]->incrementalSpeech().value(), "test speech incremental");
+}
+
+TEST_F(HRITest, GetKnownPersons)
+{
+  auto persons_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/known", 1);
+  auto ids_msg = hri_msgs::msg::IdsList();
 
-  ASSERT_EQ(pub->get_subscription_count(), 1U);
+  ASSERT_EQ(persons_pub->get_subscription_count(), 1U);
+  EXPECT_EQ(hri_listener_->getPersons().size(), 0U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A]");
-  auto ids = hri_msgs::msg::IdsList();
-  ids.ids = {"A"};
-  pub->publish(ids);
-  // hri_executor.spin_all(1s);
-  executor.spin_all(1s);
-  auto persons = hri_listener->getPersons();
+  ids_msg.ids = {"A"};
+  persons_pub->publish(ids_msg);
+  spin();
+  auto persons = hri_listener_->getPersons();
   EXPECT_EQ(persons.size(), 1U);
   ASSERT_TRUE(persons.count("A"));
   EXPECT_EQ(persons["A"]->id(), "A");
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A]");
-  pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(hri_listener->getPersons().size(), 1U);
+  persons_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(hri_listener_->getPersons().size(), 1U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
-  ids.ids = {"A", "B"};
-  pub->publish(ids);
-  // hri_executor.spin_all(1s);
-  executor.spin_all(1s);
-  persons = hri_listener->getPersons();
+  ids_msg.ids = {"A", "B"};
+  persons_pub->publish(ids_msg);
+  spin();
+  persons = hri_listener_->getPersons();
   EXPECT_EQ(persons.size(), 2U);
   EXPECT_TRUE(persons.count("A"));
   EXPECT_TRUE(persons.count("B"));
 
-  RCLCPP_INFO(tester_node->get_logger(), "[B]");
-  ids.ids = {"B"};
-  pub->publish(ids);
-  // hri_executor.spin_all(1s);
-  executor.spin_all(1s);
-  persons = hri_listener->getPersons();
-  EXPECT_EQ(persons.size(), 1U) << "known persons can go down in case of eg an anonymous person";
-  EXPECT_TRUE(persons.find("A") == persons.end());
+  ids_msg.ids = {"B"};
+  persons_pub->publish(ids_msg);
+  spin();
+  persons = hri_listener_->getPersons();
+  EXPECT_EQ(persons.size(), 1U);
+  EXPECT_FALSE(persons.count("A"));
   ASSERT_TRUE(persons.count("B"));
 
-  std::shared_ptr<const hri::Person> person_b = persons["B"];
-  int use_count_before_deletion = person_b.use_count();
+  ids_msg.ids = {};
+  persons_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(hri_listener_->getPersons().size(), 0U);
+  // check face B is not used anymore by hri_listener_!
+  EXPECT_EQ(persons["B"].use_count(), 1U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[]");
-  ids.ids = {};
-  pub->publish(ids);
-  // hri_executor.spin_all(1s);
-  executor.spin_all(1s);
-  EXPECT_EQ(hri_listener->getPersons().size(), 0U);
-  // check person B is not used anymore by hri_listener!
-  EXPECT_EQ(person_b.use_count(), --use_count_before_deletion);
-
-  hri_listener.reset();
-  EXPECT_EQ(pub->get_subscription_count(), 0U);
-  EXPECT_FALSE(person_b->valid());
+  hri_listener_.reset();
+  EXPECT_EQ(persons_pub->get_subscription_count(), 0U);
+  EXPECT_FALSE(persons["B"]->valid());
 }
 
-TEST(libhri_tests, GetTrackedPersons)
+TEST_F(HRITest, GetTrackedPersons)
 {
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto tester_node = rclcpp::Node::make_shared("tester_node");
-  executor.add_node(tester_node);
-  auto hri_node = rclcpp::Node::make_shared("hri_node");
-  executor.add_node(hri_node);
-
-  auto hri_listener = hri::HRIListener::create(hri_node);
-  auto pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  auto tracked_persons_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/tracked", 1);
+  auto ids_msg = hri_msgs::msg::IdsList();
 
-  ASSERT_EQ(pub->get_subscription_count(), 1U);
+  ASSERT_EQ(tracked_persons_pub->get_subscription_count(), 1U);
+  EXPECT_EQ(hri_listener_->getTrackedPersons().size(), 0U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A]");
-  auto ids = hri_msgs::msg::IdsList();
-  ids.ids = {"A"};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  auto known_persons = hri_listener->getPersons();
-  EXPECT_EQ(known_persons.size(), 0U);
-  auto persons = hri_listener->getTrackedPersons();
+  ids_msg.ids = {"A"};
+  tracked_persons_pub->publish(ids_msg);
+  spin();
+  auto persons = hri_listener_->getTrackedPersons();
   EXPECT_EQ(persons.size(), 1U);
   ASSERT_TRUE(persons.count("A"));
   EXPECT_EQ(persons["A"]->id(), "A");
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A]");
-  pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(hri_listener->getTrackedPersons().size(), 1U);
+  tracked_persons_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(hri_listener_->getTrackedPersons().size(), 1U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[A,B]");
-  ids.ids = {"A", "B"};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  persons = hri_listener->getTrackedPersons();
+  ids_msg.ids = {"A", "B"};
+  tracked_persons_pub->publish(ids_msg);
+  spin();
+  persons = hri_listener_->getTrackedPersons();
   EXPECT_EQ(persons.size(), 2U);
   EXPECT_TRUE(persons.count("A"));
   EXPECT_TRUE(persons.count("B"));
 
-  RCLCPP_INFO(tester_node->get_logger(), "[B]");
-  ids.ids = {"B"};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  persons = hri_listener->getTrackedPersons();
+  ids_msg.ids = {"B"};
+  tracked_persons_pub->publish(ids_msg);
+  spin();
+  persons = hri_listener_->getTrackedPersons();
   EXPECT_EQ(persons.size(), 1U);
-  EXPECT_TRUE(persons.find("A") == persons.end());
+  EXPECT_FALSE(persons.count("A"));
   ASSERT_TRUE(persons.count("B"));
 
-  std::shared_ptr<const hri::Person> person_b = persons["B"];
-  int use_count_before_deletion = person_b.use_count();
+  ids_msg.ids = {};
+  tracked_persons_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(hri_listener_->getTrackedPersons().size(), 0U);
+  // check face B is not used anymore by hri_listener_!
+  EXPECT_EQ(persons["B"].use_count(), 1U);
 
-  RCLCPP_INFO(tester_node->get_logger(), "[]");
-  ids.ids = {};
-  pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(hri_listener->getTrackedPersons().size(), 0U);
-  // check person B is not used anymore by hri_listener!
-  EXPECT_EQ(person_b.use_count(), --use_count_before_deletion);
-
-  hri_listener.reset();
-  EXPECT_EQ(pub->get_subscription_count(), 0U);
-  EXPECT_FALSE(person_b->valid());
+  hri_listener_.reset();
+  EXPECT_EQ(tracked_persons_pub->get_subscription_count(), 0U);
+  EXPECT_FALSE(persons["B"]->valid());
 }
 
-TEST(libhri_tests, PersonAttributes)
+TEST_F(HRITest, PersonAttributes)
 {
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto tester_node = rclcpp::Node::make_shared("tester_node");
-  executor.add_node(tester_node);
-  auto hri_node = rclcpp::Node::make_shared("hri_node");
-  executor.add_node(hri_node);
-
-  auto hri_listener = hri::HRIListener::create(hri_node);
-  auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  auto tracked_persons_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/tracked", 1);
-  auto face_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  auto faces_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/faces/tracked", 1);
-  auto person_face_pub = tester_node->create_publisher<std_msgs::msg::String>(
-    "/humans/persons/p1/face_id", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
+  auto p1_face_pub = tester_node_->create_publisher<std_msgs::msg::String>(
+    "/humans/persons/p1/face_id", kQoSLatched_);
+  auto person_ids_msg = hri_msgs::msg::IdsList();
+  auto face_ids_msg = hri_msgs::msg::IdsList();
+  auto face_id_msg = std_msgs::msg::String();
 
-  auto person_ids = hri_msgs::msg::IdsList();
-  person_ids.ids = {"p1"};
-  person_pub->publish(person_ids);
-  auto face_ids = hri_msgs::msg::IdsList();
-  face_ids.ids = {"f1", "f2"};
-  face_pub->publish(face_ids);
-  executor.spin_all(1s);
-  auto p1 = hri_listener->getTrackedPersons()["p1"];
-  EXPECT_FALSE(p1->anonymous());
-  auto face0 = p1->face();
-  EXPECT_EQ(face0, nullptr);
+  person_ids_msg.ids = {"p1"};
+  tracked_persons_pub->publish(person_ids_msg);
+  face_ids_msg.ids = {"f1", "f2"};
+  faces_pub->publish(face_ids_msg);
+  spin();
+  auto p1 = hri_listener_->getTrackedPersons()["p1"];
+  EXPECT_FALSE(p1->anonymous()) << "By default, persons are not supposed to be anonymous";
+  EXPECT_EQ(p1->face(), nullptr);
 
-  auto face_id = std_msgs::msg::String();
-  face_id.data = "f1";
-  person_face_pub->publish(face_id);
-  executor.spin_all(1s);
-  auto face1 = p1->face();
-  ASSERT_NE(face1, nullptr);
-  EXPECT_EQ(face1->id(), "f1");
+  face_id_msg.data = "f1";
+  p1_face_pub->publish(face_id_msg);
+  spin();
+  auto f1 = p1->face();
+  ASSERT_NE(f1, nullptr);
+  EXPECT_EQ(f1->id(), "f1");
 }
 
-TEST(libhri_tests, AnonymousPersonsAndAliases)
+TEST_F(HRITest, AnonymousPersonsAndAliases)
 {
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto tester_node = rclcpp::Node::make_shared("tester_node");
-  executor.add_node(tester_node);
-  auto hri_node = rclcpp::Node::make_shared("hri_node");
-  executor.add_node(hri_node);
-
-  auto hri_listener = hri::HRIListener::create(hri_node);
-  auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  auto tracked_persons_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "humans/persons/tracked", 1);
-  auto p1_anon_pub = tester_node->create_publisher<std_msgs::msg::Bool>(
-    "/humans/persons/p1/anonymous", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
-  auto p2_anon_pub = tester_node->create_publisher<std_msgs::msg::Bool>(
-    "/humans/persons/p2/anonymous", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
-  auto face_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  auto faces_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/faces/tracked", 1);
-  auto p1_face_pub = tester_node->create_publisher<std_msgs::msg::String>(
-    "/humans/persons/p1/face_id", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
-  auto p2_face_pub = tester_node->create_publisher<std_msgs::msg::String>(
-    "/humans/persons/p2/face_id", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
-  auto p2_alias_pub = tester_node->create_publisher<std_msgs::msg::String>(
-    "/humans/persons/p2/alias", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
+  auto p1_anon_pub = tester_node_->create_publisher<std_msgs::msg::Bool>(
+    "/humans/persons/p1/anonymous", kQoSLatched_);
+  auto p2_anon_pub = tester_node_->create_publisher<std_msgs::msg::Bool>(
+    "/humans/persons/p2/anonymous", kQoSLatched_);
+  auto p1_face_pub = tester_node_->create_publisher<std_msgs::msg::String>(
+    "/humans/persons/p1/face_id", kQoSLatched_);
+  auto p2_face_pub = tester_node_->create_publisher<std_msgs::msg::String>(
+    "/humans/persons/p2/face_id", kQoSLatched_);
+  auto p2_alias_pub = tester_node_->create_publisher<std_msgs::msg::String>(
+    "/humans/persons/p2/alias", kQoSLatched_);
+  auto person_ids_msg = hri_msgs::msg::IdsList();
+  auto face_ids_msg = hri_msgs::msg::IdsList();
+  auto face_id_msg = std_msgs::msg::String();
+  auto anon_msg = std_msgs::msg::Bool();
+  auto alias_msg = std_msgs::msg::String();
 
-  auto person_ids = hri_msgs::msg::IdsList();
-  person_ids.ids = {"p1", "p2"};
-  person_pub->publish(person_ids);
-  auto face_ids = hri_msgs::msg::IdsList();
-  face_ids.ids = {"f1", "f2"};
-  face_pub->publish(face_ids);
-  executor.spin_all(1s);
-  ASSERT_EQ(hri_listener->getTrackedPersons().size(), 2U);
-  ASSERT_EQ(hri_listener->getFaces().size(), 2U);
+  person_ids_msg.ids = {"p1", "p2"};
+  tracked_persons_pub->publish(person_ids_msg);
+  face_ids_msg.ids = {"f1", "f2"};
+  faces_pub->publish(face_ids_msg);
+  spin();
+  ASSERT_EQ(hri_listener_->getTrackedPersons().size(), 2U);
+  ASSERT_EQ(hri_listener_->getFaces().size(), 2U);
 
   // each person is associated to a face
-  auto face_id = std_msgs::msg::String();
-  face_id.data = "f1";
-  p1_face_pub->publish(face_id);
-  face_id.data = "f2";
-  p2_face_pub->publish(face_id);
-  std_msgs::msg::Bool msg;
-  msg.data = false;
-  p1_anon_pub->publish(msg);
-  msg.data = true;
-  p2_anon_pub->publish(msg);
-  executor.spin_all(1s);
-  auto p1 = hri_listener->getTrackedPersons()["p1"];
-  auto p2 = hri_listener->getTrackedPersons()["p2"];
-  ASSERT_TRUE(p1->anonymous());  // the anonymous optional flag should have been set
-  ASSERT_TRUE(p2->anonymous());  // the anonymous optional flag should have been set
+  face_id_msg.data = "f1";
+  p1_face_pub->publish(face_id_msg);
+  face_id_msg.data = "f2";
+  p2_face_pub->publish(face_id_msg);
+  anon_msg.data = false;
+  p1_anon_pub->publish(anon_msg);
+  anon_msg.data = true;
+  p2_anon_pub->publish(anon_msg);
+  spin();
+  auto p1 = hri_listener_->getTrackedPersons()["p1"];
+  auto p2 = hri_listener_->getTrackedPersons()["p2"];
+  ASSERT_TRUE(p1->anonymous());
+  ASSERT_TRUE(p2->anonymous());
   ASSERT_FALSE(p1->anonymous().value());
   ASSERT_TRUE(p2->anonymous().value());
   // being anonymous or not should have no impact on face associations
   ASSERT_EQ(p1->face()->id(), "f1");
   ASSERT_EQ(p2->face()->id(), "f2");
 
-  ///////////// ALIASES ///////////////////////////
+  // ALIASES
 
   // set p2 as an alias of p1
-  auto alias_id = std_msgs::msg::String();
-  alias_id.data = "p1";
-  p2_alias_pub->publish(alias_id);
-  executor.spin_all(1s);
-  EXPECT_EQ(hri_listener->getTrackedPersons().size(), 2U);
-  p2 = hri_listener->getTrackedPersons()["p2"];
+  alias_msg.data = "p1";
+  p2_alias_pub->publish(alias_msg);
+  spin();
+  EXPECT_EQ(hri_listener_->getTrackedPersons().size(), 2U);
+  p2 = hri_listener_->getTrackedPersons()["p2"];
   EXPECT_EQ(p1, p2) << "p2 should now point to the same person as p1";
   EXPECT_EQ(p2->face()->id(), "f1") << "p2's face now points to f1";
 
   // remove the alias
-  alias_id.data = "";
-  p2_alias_pub->publish(alias_id);
-  executor.spin_all(1s);
-  p2 = hri_listener->getTrackedPersons()["p2"];
+  alias_msg.data = "";
+  p2_alias_pub->publish(alias_msg);
+  spin();
+  p2 = hri_listener_->getTrackedPersons()["p2"];
   EXPECT_NE(p1, p2) << "p2 is not anymore the same person as p1";
   EXPECT_EQ(p2->face()->id(), "f2") << "p2's face should still points to its former f2 face";
 
   // republish the alias
-  alias_id.data = "p1";
-  p2_alias_pub->publish(alias_id);
-  executor.spin_all(1s);
-  p2 = hri_listener->getTrackedPersons()["p2"];
+  alias_msg.data = "p1";
+  p2_alias_pub->publish(alias_msg);
+  spin();
+  p2 = hri_listener_->getTrackedPersons()["p2"];
   EXPECT_EQ(p1, p2) << "p2 is again the same person as p1";
 
   // delete p1 -> p2 should be deleted as well
-  person_ids.ids = {"p2"};
-  person_pub->publish(person_ids);
-  executor.spin_all(1s);
-
-  ASSERT_EQ(hri_listener->getTrackedPersons().size(), 0U)
-    << "the aliased person should have been deleted with its alias";
+  person_ids_msg.ids = {"p2"};
+  tracked_persons_pub->publish(person_ids_msg);
+  spin();
+  ASSERT_EQ(hri_listener_->getTrackedPersons().size(), 0U)
+    << "The aliased person should have been deleted with its alias";
 }
 
-TEST(libhri_tests, SoftBiometrics)
+TEST_F(HRITest, SoftBiometrics)
 {
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto tester_node = rclcpp::Node::make_shared("tester_node");
-  executor.add_node(tester_node);
-  auto hri_node = rclcpp::Node::make_shared("hri_node");
-  executor.add_node(hri_node);
-
-  auto hri_listener = hri::HRIListener::create(hri_node);
-  auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  auto tracked_persons_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/tracked", 1);
-  auto face_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  auto faces_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/faces/tracked", 1);
-  auto person_face_pub = tester_node->create_publisher<std_msgs::msg::String>(
-    "/humans/persons/p1/face_id", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
-  auto softbiometrics_pub = tester_node->create_publisher<hri_msgs::msg::SoftBiometrics>(
+  auto p1_face_pub = tester_node_->create_publisher<std_msgs::msg::String>(
+    "/humans/persons/p1/face_id", kQoSLatched_);
+  auto softbiometrics_pub = tester_node_->create_publisher<hri_msgs::msg::SoftBiometrics>(
     "/humans/faces/f1/softbiometrics", 1);
-
-  auto person_ids = hri_msgs::msg::IdsList();
-  person_ids.ids = {"p1"};
-  person_pub->publish(person_ids);
-  auto face_ids = hri_msgs::msg::IdsList();
-  face_ids.ids = {"f1"};
-  face_pub->publish(face_ids);
-  executor.spin_all(1s);
-  ASSERT_EQ(hri_listener->getTrackedPersons().size(), 1U);
-  ASSERT_EQ(hri_listener->getFaces().size(), 1U);
-
+  auto person_ids_msg = hri_msgs::msg::IdsList();
+  auto face_ids_msg = hri_msgs::msg::IdsList();
   auto softbiometrics_msg = hri_msgs::msg::SoftBiometrics();
+  auto face_id_msg = std_msgs::msg::String();
+
+  person_ids_msg.ids = {"p1"};
+  tracked_persons_pub->publish(person_ids_msg);
+  face_ids_msg.ids = {"f1"};
+  faces_pub->publish(face_ids_msg);
+  spin();
+  ASSERT_EQ(hri_listener_->getTrackedPersons().size(), 1U);
+  ASSERT_EQ(hri_listener_->getFaces().size(), 1U);
+
   softbiometrics_msg.age = 45;
   softbiometrics_msg.age_confidence = 0.8;
   softbiometrics_msg.gender = hri_msgs::msg::SoftBiometrics::FEMALE;
   softbiometrics_msg.gender_confidence = 0.7;
-  auto face_id = std_msgs::msg::String();
-  face_id.data = "f1";
   softbiometrics_pub->publish(softbiometrics_msg);
-  person_face_pub->publish(face_id);
-  executor.spin_all(1s);
-  auto face = hri_listener->getTrackedPersons()["p1"]->face();
+  face_id_msg.data = "f1";
+  p1_face_pub->publish(face_id_msg);
+  spin();
+  auto face = hri_listener_->getTrackedPersons()["p1"]->face();
   EXPECT_EQ(face->id(), "f1");
   ASSERT_TRUE(face->age());
   EXPECT_FLOAT_EQ(face->age().value(), 45.f);
@@ -615,266 +600,400 @@ TEST(libhri_tests, SoftBiometrics)
 
   softbiometrics_msg.gender = hri_msgs::msg::SoftBiometrics::OTHER;
   softbiometrics_pub->publish(softbiometrics_msg);
-  executor.spin_all(1s);
+  spin();
   EXPECT_EQ(face->gender().value(), hri::Gender::kOther);
 
   softbiometrics_msg.gender = hri_msgs::msg::SoftBiometrics::UNDEFINED;
   softbiometrics_pub->publish(softbiometrics_msg);
-  executor.spin_all(1s);
+  spin();
   EXPECT_FALSE(face->gender());
 }
 
-TEST(libhri_tests, EngagementLevel)
+TEST_F(HRITest, EngagementLevel)
 {
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto tester_node = rclcpp::Node::make_shared("tester_node");
-  executor.add_node(tester_node);
-  auto hri_node = rclcpp::Node::make_shared("hri_node");
-  executor.add_node(hri_node);
-
-  auto hri_listener = hri::HRIListener::create(hri_node);
-  auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  auto tracked_persons_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/tracked", 1);
-  auto engagement_pub = tester_node->create_publisher<hri_msgs::msg::EngagementLevel>(
+  auto engagement_pub = tester_node_->create_publisher<hri_msgs::msg::EngagementLevel>(
     "/humans/persons/p1/engagement_status", 1);
-
-  auto person_ids = hri_msgs::msg::IdsList();
-  person_ids.ids = {"p1"};
-  person_pub->publish(person_ids);
-  executor.spin_all(1s);
-
+  auto person_ids_msg = hri_msgs::msg::IdsList();
   auto msg = hri_msgs::msg::EngagementLevel();
+
+  person_ids_msg.ids = {"p1"};
+  tracked_persons_pub->publish(person_ids_msg);
+  spin();
+  auto p1 = hri_listener_->getTrackedPersons()["p1"];
   msg.level = hri_msgs::msg::EngagementLevel::DISENGAGED;
   engagement_pub->publish(msg);
-  executor.spin_all(1s);
-  auto p = hri_listener->getTrackedPersons()["p1"];
-  ASSERT_TRUE(p->engagementStatus());
-  EXPECT_EQ(p->engagementStatus().value(), hri::EngagementLevel::kDisengaged);
+  spin();
+  ASSERT_TRUE(p1->engagementStatus());
+  EXPECT_EQ(p1->engagementStatus().value(), hri::EngagementLevel::kDisengaged);
 
   msg.level = hri_msgs::msg::EngagementLevel::ENGAGED;
   engagement_pub->publish(msg);
-  executor.spin_all(1s);
-  EXPECT_EQ(p->engagementStatus().value(), hri::EngagementLevel::kEngaged);
+  spin();
+  EXPECT_EQ(p1->engagementStatus().value(), hri::EngagementLevel::kEngaged);
 
   msg.level = hri_msgs::msg::EngagementLevel::UNKNOWN;
   engagement_pub->publish(msg);
-  executor.spin_all(1s);
-  EXPECT_FALSE(p->engagementStatus());
+  spin();
+  EXPECT_FALSE(p1->engagementStatus());
 }
 
-TEST(libhri_tests, Callback)
+TEST_F(HRITest, Image)
 {
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto tester_node = rclcpp::Node::make_shared("tester_node");
-  executor.add_node(tester_node);
-  auto hri_node = rclcpp::Node::make_shared("hri_node");
-  executor.add_node(hri_node);
-
-  auto hri_listener = hri::HRIListener::create(hri_node);
-
-  int face_callbacks_invoked = 0;
-  int lost_face_callbacks_invoked = 0;
-  int body_callbacks_invoked = 0;
-  int lost_body_callbacks_invoked = 0;
-  int voice_callbacks_invoked = 0;
-  int lost_voice_callbacks_invoked = 0;
-  int person_callbacks_invoked = 0;
-  int ontracked_person_callbacks_invoked = 0;
-  int ontracked_lost_person_callbacks_invoked = 0;
-
-  hri_listener->onFace(
-    [&]([[maybe_unused]] hri::FacePtr face) {
-      face_callbacks_invoked++;
-    });
-  hri_listener->onFaceLost(
-    [&]([[maybe_unused]] hri::ID face_lost) {
-      lost_face_callbacks_invoked++;
-    });
-  hri_listener->onBody(
-    [&]([[maybe_unused]] hri::BodyPtr body) {
-      body_callbacks_invoked++;
-    });
-  hri_listener->onBodyLost(
-    [&]([[maybe_unused]] hri::ID body_lost) {
-      lost_body_callbacks_invoked++;
-    });
-  hri_listener->onVoice(
-    [&]([[maybe_unused]] hri::VoicePtr voice) {
-      voice_callbacks_invoked++;
-    });
-  hri_listener->onVoiceLost(
-    [&]([[maybe_unused]] hri::ID voice_lost) {
-      lost_voice_callbacks_invoked++;
-    });
-  hri_listener->onPerson(
-    [&]([[maybe_unused]] hri::PersonPtr person) {
-      person_callbacks_invoked++;
-    });
-  hri_listener->onTrackedPerson(
-    [&]([[maybe_unused]] hri::PersonPtr tracked_person) {
-      ontracked_person_callbacks_invoked++;
-    });
-  hri_listener->onTrackedPersonLost(
-    [&]([[maybe_unused]] hri::ID tracked_person_lost) {
-      ontracked_lost_person_callbacks_invoked++;
-    });
-
-  auto face_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  auto faces_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/faces/tracked", 1);
-  auto body_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
-    "/humans/bodies/tracked", 1);
-  auto voice_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
-    "/humans/voices/tracked", 1);
-  auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
-    "/humans/persons/known", 1);
-  auto person_tracked_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
-    "/humans/persons/tracked", 1);
+  auto face_cropped_a_pub = tester_node_->create_publisher<sensor_msgs::msg::Image>(
+    "/humans/faces/A/cropped", 1);
+  auto ids_msg = hri_msgs::msg::IdsList();
+  auto header = std_msgs::msg::Header();
+  cv::Mat image(64, 64, CV_8UC3);
+  cv::RNG image_rng;
+  image_rng.fill(image, cv::RNG::UNIFORM, 0, 255);
+  cv_bridge::CvImage cv_bridge(header, "bgr8", image);
+  auto image_msg = cv_bridge.toImageMsg();
 
-  EXPECT_EQ(face_callbacks_invoked, 0);
-  EXPECT_EQ(lost_face_callbacks_invoked, 0);
+  ids_msg.ids = {"A"};
+  faces_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(face_cropped_a_pub->get_subscription_count(), 1U);
+  auto face_a = hri_listener_->getFaces()["A"];
+  EXPECT_FALSE(face_a->cropped());
 
-  auto ids = hri_msgs::msg::IdsList();
-  ids.ids = {"id1"};
-  face_pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(face_callbacks_invoked, 1);
-  EXPECT_EQ(lost_face_callbacks_invoked, 0);
-
-  ids.ids = {"id1", "id2"};
-  face_pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(face_callbacks_invoked, 2);
-
-  ids.ids = {"id3", "id4"};
-  face_pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(lost_face_callbacks_invoked, 2);
-
-  ids.ids = {"id1", "id2"};
-  body_pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(body_callbacks_invoked, 2);
-  EXPECT_EQ(lost_body_callbacks_invoked, 0);
-
-  ids.ids = {"id1", "id2", "id3"};
-  face_pub->publish(ids);
-  body_pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(face_callbacks_invoked, 6);
-  EXPECT_EQ(lost_face_callbacks_invoked, 3);
-  EXPECT_EQ(body_callbacks_invoked, 3);
-  EXPECT_EQ(lost_body_callbacks_invoked, 0);
-
-  ids.ids = {"id5", "id6", "id7"};
-  face_pub->publish(ids);
-  body_pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(face_callbacks_invoked, 9);
-  EXPECT_EQ(lost_face_callbacks_invoked, 6);
-  EXPECT_EQ(body_callbacks_invoked, 6);
-  EXPECT_EQ(lost_body_callbacks_invoked, 3);
-
-  ids.ids = {"id1", "id2"};
-  voice_pub->publish(ids);
-  person_pub->publish(ids);
-  person_tracked_pub->publish(ids);
-  executor.spin_all(1s);
-  EXPECT_EQ(voice_callbacks_invoked, 2);
-  EXPECT_EQ(person_callbacks_invoked, 2);
-  EXPECT_EQ(ontracked_person_callbacks_invoked, 2);
+  face_cropped_a_pub->publish(*image_msg);
+  spin();
+  ASSERT_TRUE(face_a->cropped());
+  EXPECT_DOUBLE_EQ(cv::norm(face_a->cropped().value(), image), 0.);
 }
 
-TEST(libhri_tests, PeopleLocation)
+TEST_F(HRITest, FacialActionUnits)
 {
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto tester_node = rclcpp::Node::make_shared("tester_node");
-  executor.add_node(tester_node);
-  auto hri_node = rclcpp::Node::make_shared("hri_node");
-  executor.add_node(hri_node);
+  auto faces_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/faces/tracked", 1);
+  auto fau_a_pub = tester_node_->create_publisher<hri_msgs::msg::FacialActionUnits>(
+    "/humans/faces/A/facs", 1);
+  auto ids_msg = hri_msgs::msg::IdsList();
+  auto fau_msg = hri_msgs::msg::FacialActionUnits();
+  auto fau = hri::IntensityConfidence();
 
-  auto hri_listener = hri::HRIListener::create(hri_node);
-  auto person_pub = tester_node->create_publisher<hri_msgs::msg::IdsList>(
+  ids_msg.ids = {"A"};
+  faces_pub->publish(ids_msg);
+  faces_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(fau_a_pub->get_subscription_count(), 1U);
+  auto face_a = hri_listener_->getFaces()["A"];
+  EXPECT_FALSE(face_a->facialActionUnits());
+
+  fau_msg.intensity[fau_msg.WINK] = 0.5;
+  fau_msg.confidence[fau_msg.WINK] = 0.8;
+  fau_a_pub->publish(fau_msg);
+  spin();
+  ASSERT_TRUE(face_a->facialActionUnits());
+  fau = (*face_a->facialActionUnits())[hri::FacialActionUnit::kWink];
+  EXPECT_FLOAT_EQ(fau.intensity, fau_msg.intensity[fau_msg.WINK]);
+  EXPECT_FLOAT_EQ(fau.confidence, fau_msg.confidence[fau_msg.WINK]);
+
+  fau_msg.intensity[fau_msg.WINK] = 0.0;
+  fau_msg.confidence[fau_msg.WINK] = 1.0;
+  fau_a_pub->publish(fau_msg);
+  spin();
+  fau = (*face_a->facialActionUnits())[hri::FacialActionUnit::kWink];
+  EXPECT_FLOAT_EQ(fau.intensity, fau_msg.intensity[fau_msg.WINK]);
+  EXPECT_FLOAT_EQ(fau.confidence, fau_msg.confidence[fau_msg.WINK]);
+}
+
+TEST_F(HRITest, FacialLandmarks)
+{
+  auto faces_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/faces/tracked", 1);
+  auto facial_landmarks_a_pub = tester_node_->create_publisher<hri_msgs::msg::FacialLandmarks>(
+    "/humans/faces/A/landmarks", 1);
+  auto ids_msg = hri_msgs::msg::IdsList();
+  auto facial_landmarks_msg = hri_msgs::msg::FacialLandmarks();
+  auto point = hri::PointOfInterest();
+
+  ids_msg.ids = {"A"};
+  faces_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(facial_landmarks_a_pub->get_subscription_count(), 1U);
+  auto face_a = hri_listener_->getFaces()["A"];
+  EXPECT_FALSE(face_a->facialLandmarks());
+
+  facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].x = 0.3;
+  facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].y = 0.5;
+  facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].c = 0.8;
+  facial_landmarks_a_pub->publish(facial_landmarks_msg);
+  spin();
+  ASSERT_TRUE(face_a->facialLandmarks());
+  point = (*face_a->facialLandmarks())[hri::FacialLandmark::kNose];
+  EXPECT_FLOAT_EQ(point.x, facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].x);
+  EXPECT_FLOAT_EQ(point.y, facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].y);
+  EXPECT_FLOAT_EQ(point.c, facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].c);
+
+  facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].x = 1.0;
+  facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].c = 0.0;
+  facial_landmarks_a_pub->publish(facial_landmarks_msg);
+  spin();
+  point = (*face_a->facialLandmarks())[hri::FacialLandmark::kNose];
+  EXPECT_FLOAT_EQ(point.x, facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].x);
+  EXPECT_FLOAT_EQ(point.y, facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].y);
+  EXPECT_FLOAT_EQ(point.c, facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].c);
+}
+
+TEST_F(HRITest, SkeletalKeypoints)
+{
+  auto bodies_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/bodies/tracked", 1);
+  auto body_keypoints_a_pub = tester_node_->create_publisher<hri_msgs::msg::Skeleton2D>(
+    "/humans/bodies/A/skeleton2d", 1);
+  auto ids_msg = hri_msgs::msg::IdsList();
+  auto skeleton_msg = hri_msgs::msg::Skeleton2D();
+  auto point = hri::PointOfInterest();
+
+  ids_msg.ids = {"A"};
+  bodies_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(body_keypoints_a_pub->get_subscription_count(), 1U);
+  auto body_a = hri_listener_->getBodies()["A"];
+  EXPECT_FALSE(body_a->skeleton());
+
+  skeleton_msg.skeleton[skeleton_msg.NOSE].x = 0.3;
+  skeleton_msg.skeleton[skeleton_msg.NOSE].y = 0.5;
+  skeleton_msg.skeleton[skeleton_msg.NOSE].c = 0.8;
+  body_keypoints_a_pub->publish(skeleton_msg);
+  spin();
+  ASSERT_TRUE(body_a->skeleton());
+  point = (*body_a->skeleton())[hri::SkeletalKeypoint::kNose];
+  EXPECT_FLOAT_EQ(point.x, skeleton_msg.skeleton[skeleton_msg.NOSE].x);
+  EXPECT_FLOAT_EQ(point.y, skeleton_msg.skeleton[skeleton_msg.NOSE].y);
+  EXPECT_FLOAT_EQ(point.c, skeleton_msg.skeleton[skeleton_msg.NOSE].c);
+
+  skeleton_msg.skeleton[skeleton_msg.NOSE].x = 1.0;
+  skeleton_msg.skeleton[skeleton_msg.NOSE].c = 0.0;
+  body_keypoints_a_pub->publish(skeleton_msg);
+  spin();
+  point = (*body_a->skeleton())[hri::SkeletalKeypoint::kNose];
+  EXPECT_FLOAT_EQ(point.x, skeleton_msg.skeleton[skeleton_msg.NOSE].x);
+  EXPECT_FLOAT_EQ(point.y, skeleton_msg.skeleton[skeleton_msg.NOSE].y);
+  EXPECT_FLOAT_EQ(point.c, skeleton_msg.skeleton[skeleton_msg.NOSE].c);
+}
+
+TEST_F(HRITest, Callback)
+{
+  auto faces_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/faces/tracked", 1);
+  auto body_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/bodies/tracked", 1);
+  auto voice_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/voices/tracked", 1);
+  auto person_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/persons/known", 1);
+  auto tracked_persons_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
     "/humans/persons/tracked", 1);
-  auto loc_confidence_pub = tester_node->create_publisher<std_msgs::msg::Float32>(
+  auto ids_msg = hri_msgs::msg::IdsList();
+
+  int face_cb_invoked = 0;
+  int face_lost_cb_invoked = 0;
+  int body_cb_invoked = 0;
+  int body_lost_cb_invoked = 0;
+  int voice_cb_invoked = 0;
+  int voice_lost_cb_invoked = 0;
+  int person_cb_invoked = 0;
+  int person_lost_cb_invoked = 0;
+  int tracked_person_cb_invoked = 0;
+  int tracked_person_lost_cb_invoked = 0;
+  int old_face_cb_invoked;
+  int old_face_lost_cb_invoked;
+  int old_body_cb_invoked;
+  int old_body_lost_cb_invoked;
+  int old_voice_cb_invoked;
+  int old_voice_lost_cb_invoked;
+  int old_person_cb_invoked;
+  int old_person_lost_cb_invoked;
+  int old_tracked_person_cb_invoked;
+  int old_tracked_person_lost_cb_invoked;
+
+  hri_listener_->onFace([&]([[maybe_unused]] hri::FacePtr face) {++face_cb_invoked;});
+  hri_listener_->onFaceLost([&]([[maybe_unused]] hri::ID face_lost) {++face_lost_cb_invoked;});
+  hri_listener_->onBody([&]([[maybe_unused]] hri::BodyPtr body) {++body_cb_invoked;});
+  hri_listener_->onBodyLost([&]([[maybe_unused]] hri::ID body_lost) {++body_lost_cb_invoked;});
+  hri_listener_->onVoice([&]([[maybe_unused]] hri::VoicePtr voice) {++voice_cb_invoked;});
+  hri_listener_->onVoiceLost([&]([[maybe_unused]] hri::ID voice_lost) {++voice_lost_cb_invoked;});
+  hri_listener_->onPerson([&]([[maybe_unused]] hri::PersonPtr person) {++person_cb_invoked;});
+  hri_listener_->onPersonLost([&]([[maybe_unused]] hri::ID person) {++person_lost_cb_invoked;});
+  hri_listener_->onTrackedPerson(
+    [&]([[maybe_unused]] hri::PersonPtr tracked_person) {++tracked_person_cb_invoked;});
+  hri_listener_->onTrackedPersonLost(
+    [&]([[maybe_unused]] hri::ID tracked_person_lost) {++tracked_person_lost_cb_invoked;});
+
+  old_face_cb_invoked = face_cb_invoked;
+  old_face_lost_cb_invoked = face_lost_cb_invoked;
+  ids_msg.ids = {"id1"};
+  faces_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(face_cb_invoked, old_face_cb_invoked + 1);
+  EXPECT_EQ(face_lost_cb_invoked, old_face_lost_cb_invoked);
+
+  old_face_cb_invoked = face_cb_invoked;
+  ids_msg.ids = {"id1", "id2"};
+  faces_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(face_cb_invoked, old_face_cb_invoked + 1);
+
+  old_face_cb_invoked = face_cb_invoked;
+  old_face_lost_cb_invoked = face_lost_cb_invoked;
+  ids_msg.ids = {"id3", "id4"};
+  faces_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(face_cb_invoked, old_face_cb_invoked + 2);
+  EXPECT_EQ(face_lost_cb_invoked, old_face_lost_cb_invoked + 2);
+
+  old_body_cb_invoked = body_cb_invoked;
+  old_body_lost_cb_invoked = body_lost_cb_invoked;
+  ids_msg.ids = {"id1", "id2"};
+  body_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(body_cb_invoked, old_body_cb_invoked + 2);
+  EXPECT_EQ(body_lost_cb_invoked, old_body_lost_cb_invoked);
+
+  old_face_cb_invoked = face_cb_invoked;
+  old_face_lost_cb_invoked = face_lost_cb_invoked;
+  old_body_cb_invoked = body_cb_invoked;
+  old_body_lost_cb_invoked = body_lost_cb_invoked;
+  ids_msg.ids = {"id1", "id2", "id3"};
+  faces_pub->publish(ids_msg);
+  body_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(face_cb_invoked, old_face_cb_invoked + 2);
+  EXPECT_EQ(face_lost_cb_invoked, old_face_lost_cb_invoked + 1);
+  EXPECT_EQ(body_cb_invoked, old_body_cb_invoked + 1);
+  EXPECT_EQ(body_lost_cb_invoked, old_body_lost_cb_invoked);
+
+  old_face_cb_invoked = face_cb_invoked;
+  old_face_lost_cb_invoked = face_lost_cb_invoked;
+  old_body_cb_invoked = body_cb_invoked;
+  old_body_lost_cb_invoked = body_lost_cb_invoked;
+  ids_msg.ids = {"id5", "id6", "id7"};
+  faces_pub->publish(ids_msg);
+  body_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(face_cb_invoked, old_face_cb_invoked + 3);
+  EXPECT_EQ(face_lost_cb_invoked, old_face_lost_cb_invoked + 3);
+  EXPECT_EQ(body_cb_invoked, old_body_cb_invoked + 3);
+  EXPECT_EQ(body_lost_cb_invoked, old_body_lost_cb_invoked + 3);
+
+  old_voice_cb_invoked = voice_cb_invoked;
+  old_voice_lost_cb_invoked = voice_lost_cb_invoked;
+  old_person_cb_invoked = person_cb_invoked;
+  old_person_lost_cb_invoked = person_lost_cb_invoked;
+  old_tracked_person_cb_invoked = tracked_person_cb_invoked;
+  old_tracked_person_lost_cb_invoked = tracked_person_lost_cb_invoked;
+  ids_msg.ids = {"id1", "id2", "id3"};
+  voice_pub->publish(ids_msg);
+  ids_msg.ids = {"id1", "id2"};
+  person_pub->publish(ids_msg);
+  ids_msg.ids = {"id1"};
+  tracked_persons_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(voice_cb_invoked, old_voice_cb_invoked + 3);
+  EXPECT_EQ(voice_lost_cb_invoked, old_voice_lost_cb_invoked);
+  EXPECT_EQ(person_cb_invoked, old_person_cb_invoked + 2);
+  EXPECT_EQ(person_lost_cb_invoked, old_person_lost_cb_invoked);
+  EXPECT_EQ(tracked_person_cb_invoked, old_tracked_person_cb_invoked + 1);
+  EXPECT_EQ(tracked_person_lost_cb_invoked, old_tracked_person_lost_cb_invoked);
+
+  old_voice_cb_invoked = voice_cb_invoked;
+  old_voice_lost_cb_invoked = voice_lost_cb_invoked;
+  old_person_cb_invoked = person_cb_invoked;
+  old_person_lost_cb_invoked = person_lost_cb_invoked;
+  old_tracked_person_cb_invoked = tracked_person_cb_invoked;
+  old_tracked_person_lost_cb_invoked = tracked_person_lost_cb_invoked;
+  ids_msg.ids = {};
+  voice_pub->publish(ids_msg);
+  person_pub->publish(ids_msg);
+  tracked_persons_pub->publish(ids_msg);
+  spin();
+  EXPECT_EQ(voice_cb_invoked, old_voice_cb_invoked);
+  EXPECT_EQ(voice_lost_cb_invoked, old_voice_lost_cb_invoked + 3);
+  EXPECT_EQ(person_cb_invoked, old_person_cb_invoked);
+  EXPECT_EQ(person_lost_cb_invoked, old_person_lost_cb_invoked + 2);
+  EXPECT_EQ(tracked_person_cb_invoked, old_tracked_person_cb_invoked);
+  EXPECT_EQ(tracked_person_lost_cb_invoked, old_tracked_person_lost_cb_invoked + 1);
+}
+
+TEST_F(HRITest, PeopleLocation)
+{
+  auto tracked_persons_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/persons/tracked", 1);
+  auto location_confidence_pub = tester_node_->create_publisher<std_msgs::msg::Float32>(
     "/humans/persons/p1/location_confidence", 1);
-  auto static_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(tester_node);
+  auto tester_executor = rclcpp::executors::SingleThreadedExecutor();
+  auto static_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(tester_node_);
+  auto person_ids_msg = hri_msgs::msg::IdsList();
+  auto transform_msg = geometry_msgs::msg::TransformStamped();
+  auto loc_confindence_msg = std_msgs::msg::Float32();
 
-  hri_listener->setReferenceFrame("base_link");
-  auto now = tester_node->now();
-  geometry_msgs::msg::TransformStamped world_transform;
-  world_transform.header.stamp = now;
-  world_transform.header.frame_id = "world";
-  world_transform.child_frame_id = "base_link";
-  world_transform.transform.translation.x = -1.0;
-  world_transform.transform.translation.y = 0.0;
-  world_transform.transform.translation.z = 0.0;
-  world_transform.transform.rotation.w = 1.0;
+  hri_listener_->setReferenceFrame("base_link");
+  transform_msg.header.stamp = tester_node_->now();
+  transform_msg.header.frame_id = "world";
+  transform_msg.child_frame_id = "base_link";
+  transform_msg.transform.translation.x = -1.0;
+  transform_msg.transform.translation.y = 0.0;
+  transform_msg.transform.translation.z = 0.0;
+  transform_msg.transform.rotation.w = 1.0;
+  static_broadcaster->sendTransform(transform_msg);
+  tester_executor.spin_node_once(tester_node_);
+  spin();
 
-  static_broadcaster->sendTransform(world_transform);
-  executor.spin_all(1s);
+  person_ids_msg.ids = {"p1"};
+  tracked_persons_pub->publish(person_ids_msg);
+  spin();
+  auto p1 = hri_listener_->getTrackedPersons()["p1"];
 
-  auto person_ids = hri_msgs::msg::IdsList();
-  person_ids.ids = {"p1"};
-  person_pub->publish(person_ids);
-  executor.spin_all(1s);
-  auto p = hri_listener->getTrackedPersons()["p1"];
+  loc_confindence_msg.data = 0.;
+  location_confidence_pub->publish(loc_confindence_msg);
+  spin();
+  ASSERT_TRUE(p1->locationConfidence());
+  EXPECT_FLOAT_EQ(p1->locationConfidence().value(), 0.f);
+  EXPECT_FALSE(p1->transform()) << "location confidence at 0, no transform should be available";
 
-  auto msg = std_msgs::msg::Float32();
-  msg.data = 0.;
-  loc_confidence_pub->publish(msg);
-  executor.spin_all(1s);
-  ASSERT_TRUE(p->locationConfidence());
-  EXPECT_FLOAT_EQ(p->locationConfidence().value(), 0.f);
-  EXPECT_FALSE(p->transform()) << "location confidence at 0, no transform should be available";
-
-  msg.data = 0.5;
-  loc_confidence_pub->publish(msg);
-  executor.spin_all(1s);
-  EXPECT_FLOAT_EQ(p->locationConfidence().value(), 0.5f);
-  p->transform();
-  EXPECT_FALSE(p->transform())
+  loc_confindence_msg.data = 0.5;
+  location_confidence_pub->publish(loc_confindence_msg);
+  spin();
+  EXPECT_FLOAT_EQ(p1->locationConfidence().value(), 0.5f);
+  EXPECT_FALSE(p1->transform())
     << "location confidence > 0 but no transform published yet -> no transform should be returned";
 
-  geometry_msgs::msg::TransformStamped p1_transform;
-  p1_transform.header.stamp = now;
-  p1_transform.header.frame_id = "world";
-  p1_transform.child_frame_id = "person_p1";
-  p1_transform.transform.translation.x = 1.0;
-  p1_transform.transform.translation.y = 0.0;
-  p1_transform.transform.translation.z = 0.0;
-  p1_transform.transform.rotation.w = 1.0;
-  static_broadcaster->sendTransform(p1_transform);
-  executor.spin_all(1s);
-  EXPECT_FLOAT_EQ(p->locationConfidence().value(), 0.5f);
-  ASSERT_TRUE(p->transform()) << "location confidence > 0 => a transform should be available";
-  auto t = p->transform().value();
+  transform_msg.child_frame_id = "person_p1";
+  transform_msg.transform.translation.x += 2.0;
+  static_broadcaster->sendTransform(transform_msg);
+  tester_executor.spin_node_once(tester_node_);
+  spin();
+  EXPECT_FLOAT_EQ(p1->locationConfidence().value(), 0.5f);
+  ASSERT_TRUE(p1->transform()) << "location confidence > 0 => a transform should be available";
+  auto t = p1->transform().value();
   EXPECT_EQ(t.child_frame_id, "person_p1");
   EXPECT_EQ(t.header.frame_id, "base_link");
   EXPECT_FLOAT_EQ(t.transform.translation.x, 2.0f);
 
-  hri_listener->setReferenceFrame("person_p1");
-  ASSERT_TRUE(p->transform());
-  t = p->transform().value();
+  hri_listener_->setReferenceFrame("person_p1");
+  ASSERT_TRUE(p1->transform());
+  t = p1->transform().value();
   EXPECT_EQ(t.child_frame_id, "person_p1");
   EXPECT_EQ(t.header.frame_id, "person_p1");
   EXPECT_FLOAT_EQ(t.transform.translation.x, 0.f);
 
-  msg.data = 1.0;
-  loc_confidence_pub->publish(msg);
-  executor.spin_all(1s);
-  EXPECT_FLOAT_EQ(p->locationConfidence().value(), 1.f);
-  EXPECT_TRUE(p->transform()) << "location confidence > 0 => a transform should be available";
+  loc_confindence_msg.data = 1.0;
+  location_confidence_pub->publish(loc_confindence_msg);
+  spin();
+  EXPECT_FLOAT_EQ(p1->locationConfidence().value(), 1.f);
+  EXPECT_TRUE(p1->transform()) << "location confidence > 0 => a transform should be available";
 }
 
 // TODO(LJU): missing quite a few tests, should have at least a basic one for each topic subscribed
 
 int main(int argc, char ** argv)
 {
-  rclcpp::init(argc, argv);
   testing::InitGoogleTest(&argc, argv);
-  // ros::Time::init();  // needed for ros::Time::now()
-  // ros::init(argc, argv, "test_hri");
-  // ros::NodeHandle nh;
-  // ROS_INFO("Starting HRI tests");
   return RUN_ALL_TESTS();
 }
