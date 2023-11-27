@@ -33,6 +33,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/utilities.hpp"
 
+#include "ndarray_converter/ndarray_converter.h"
 #include "pyhri/casts.hpp"
 
 namespace py = pybind11;
@@ -94,6 +95,8 @@ private:
 
 PYBIND11_MODULE(pyhri, m) {
   m.doc() = "Python wrapper of the hri API";
+
+  NDArrayConverter::init_numpy();
 
   py::enum_<hri::EngagementLevel> engagement_level(m, "EngagementLevel");
   engagement_level.value("DISENGAGED", hri::EngagementLevel::kDisengaged);

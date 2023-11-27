@@ -1,0 +1,8 @@
+   =========================================================================
+   ==  NOTICE file corresponding to the section 4 d of                    ==
+   ==  the Apache License, Version 2.0,                                   ==
+   ==  in this case for the ndarray_converter code.                       ==
+   =========================================================================
+These files are Copyright 2016, 2017, 2018, 2019, 2020, 2021 Erwan BERNARD,
+but released under the Apache2 License, originally at
+https://github.com/edmBernard/pybind11_opencv_numpy
