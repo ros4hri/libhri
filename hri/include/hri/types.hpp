@@ -222,9 +222,23 @@ struct IntensityConfidence
   float confidence;
 };
 
+typedef std::variant<rclcpp::Node::SharedPtr, rclcpp_lifecycle::LifecycleNode::SharedPtr>
+  NodeLikeSharedPtr;
+
 // structure mocking the rclcpp::NodeInterfaces, not yet available in Humble
 struct NodeInterfaces
 {
+  explicit NodeInterfaces(NodeLikeSharedPtr node_like)
+  {
+    std::visit(
+      [&](auto && node) {
+        base = node->get_node_base_interface();
+        logging = node->get_node_logging_interface();
+        parameters = node->get_node_parameters_interface();
+        topics = node->get_node_topics_interface();
+      }, node_like);
+  }
+
   const rclcpp::node_interfaces::NodeBaseInterface::SharedPtr &
   get_node_base_interface() const {return base;}
   rclcpp::node_interfaces::NodeBaseInterface::SharedPtr &
@@ -279,8 +293,6 @@ enum class SkeletalKeypoint
 
 typedef std::map<FacialActionUnit, IntensityConfidence> FacialActionUnits;
 typedef std::map<FacialLandmark, PointOfInterest> FacialLandmarks;
-typedef std::variant<rclcpp::Node::SharedPtr, rclcpp_lifecycle::LifecycleNode::SharedPtr>
-  NodeLikeSharedPtr;
 typedef std::string ID;
 typedef std::map<SkeletalKeypoint, PointOfInterest> SkeletalKeypoints;
 

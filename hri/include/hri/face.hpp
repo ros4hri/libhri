@@ -20,8 +20,6 @@
 #include <string>
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "hri/feature_tracker.hpp"
-#include "hri/types.hpp"
 #include "hri_msgs/msg/facial_action_units.hpp"
 #include "hri_msgs/msg/facial_landmarks.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
@@ -31,17 +29,20 @@
 #include "sensor_msgs/msg/image.hpp"
 #include "tf2_ros/buffer.h"
 
+#include "hri/feature_tracker.hpp"
+#include "hri/types.hpp"
+
 namespace hri
 {
 // TODO(LJU): possibly subscribe also to the /frontalized and /expression sub-topics
-class Face : public FeatureTracker
+class Face : public FeatureTracker, public std::enable_shared_from_this<Face>
 {
   friend class HRIListener;  // for invalidate()
 
 public:
   Face(
     ID id,
-    NodeInterfaces & node_interfaces,
+    NodeInterfaces node_interfaces,
     rclcpp::CallbackGroup::SharedPtr callback_group,
     const tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);

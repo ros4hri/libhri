@@ -18,8 +18,6 @@
 #include <string>
 
 #include "cv_bridge/cv_bridge.h"
-#include "hri/feature_tracker.hpp"
-#include "hri/types.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
 #include "hri_msgs/msg/skeleton2_d.hpp"
 #include "opencv2/core.hpp"
@@ -27,12 +25,15 @@
 #include "sensor_msgs/msg/image.hpp"
 #include "tf2_ros/buffer.h"
 
+#include "hri/feature_tracker.hpp"
+#include "hri/types.hpp"
+
 namespace hri
 {
 
 Body::Body(
   ID id,
-  NodeInterfaces & node_interfaces,
+  NodeInterfaces node_interfaces,
   rclcpp::CallbackGroup::SharedPtr callback_group,
   const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)

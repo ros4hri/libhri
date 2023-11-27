@@ -19,8 +19,6 @@
 #include <optional>
 #include <string>
 
-#include "hri/feature_tracker.hpp"
-#include "hri/types.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
 #include "hri_msgs/msg/skeleton2_d.hpp"
 #include "opencv2/core.hpp"
@@ -28,17 +26,20 @@
 #include "sensor_msgs/msg/image.hpp"
 #include "tf2_ros/buffer.h"
 
+#include "hri/feature_tracker.hpp"
+#include "hri/types.hpp"
+
 namespace hri
 {
 // TODO(LJU): possibly subscribe also to the /joint_states, gesture and /posture sub-topics
-class Body : public FeatureTracker
+class Body : public FeatureTracker, public std::enable_shared_from_this<Body>
 {
   friend class HRIListener;  // for invalidate()
 
 public:
   Body(
     ID id,
-    NodeInterfaces & node_interfaces,
+    NodeInterfaces node_interfaces,
     rclcpp::CallbackGroup::SharedPtr callback_group,
     const tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);

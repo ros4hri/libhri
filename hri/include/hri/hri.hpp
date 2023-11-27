@@ -19,8 +19,12 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <variant>
 #include <vector>
+
+#include "hri_msgs/msg/ids_list.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "tf2_ros/buffer.h"
+#include "tf2_ros/transform_listener.h"
 
 #include "hri/body.hpp"
 #include "hri/face.hpp"
@@ -28,10 +32,6 @@
 #include "hri/person.hpp"
 #include "hri/types.hpp"
 #include "hri/voice.hpp"
-#include "hri_msgs/msg/ids_list.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
 
 namespace hri
 {
@@ -57,18 +57,10 @@ public:
    */
   [[nodiscard]] static std::shared_ptr<HRIListener> create(NodeLikeSharedPtr node_like)
   {
-    auto node_interfaces = std::visit(
-      [](auto && node) {
-        return NodeInterfaces {
-          node->get_node_base_interface(),
-          node->get_node_logging_interface(),
-          node->get_node_parameters_interface(),
-          node->get_node_topics_interface()};
-      }, node_like);
-    return std::shared_ptr<HRIListener>(new HRIListener(node_interfaces));
+    return std::shared_ptr<HRIListener>(new HRIListener(NodeInterfaces(node_like)));
   }
 
-  ~HRIListener();
+  virtual ~HRIListener();
 
   /** \brief Returns the list of currently detected faces, mapped to their IDs
    */
@@ -196,8 +188,10 @@ public:
    */
   rclcpp::CallbackGroup::SharedPtr getCallbackGroup() {return callback_group_;}
 
+protected:
+  explicit HRIListener(NodeInterfaces node_interfaces);
+
 private:
-  explicit HRIListener(NodeInterfaces & node_interfaces);
   void onTrackedFeature(FeatureType & feature, hri_msgs::msg::IdsList::ConstSharedPtr tracked);
 
   NodeInterfaces node_interfaces_;

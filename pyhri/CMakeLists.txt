@@ -13,10 +13,46 @@ endif()
 # Dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)  # Find python before pybind11
+find_package(pybind11_vendor REQUIRED)
+find_package(pybind11 REQUIRED)
+find_package(hri REQUIRED)
+find_package(rclcpp REQUIRED)
 
+set(dependencies
+  builtin_interfaces
+  geometry_msgs
+  hri
+  rclcpp
+)
+ament_export_dependencies(${dependencies})
+
+# Python target
+ament_python_install_package(${PROJECT_NAME})
+pybind11_add_module(${PROJECT_NAME} SHARED
+  src/pyhri/pyhri.cpp)
+target_include_directories(${PROJECT_NAME} PRIVATE include/)
+ament_target_dependencies(${PROJECT_NAME} PUBLIC ${dependencies})
+install(TARGETS ${PROJECT_NAME}
+  DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
+)
+
+if(NOT WIN32)
+  ament_environment_hooks(
+    "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+  )
+endif()
+
+# Testing
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(test_pyhri test/test_pyhri.py
+    APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}
+    TIMEOUT 60
+  )
 endif()
 
-ament_python_install_package(${PROJECT_NAME})
+ament_package()

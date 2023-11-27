@@ -17,18 +17,19 @@
 #include <functional>
 #include <string>
 
-#include "hri/feature_tracker.hpp"
-#include "hri/types.hpp"
 #include "hri_msgs/msg/live_speech.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "tf2_ros/buffer.h"
+
+#include "hri/feature_tracker.hpp"
+#include "hri/types.hpp"
 
 namespace hri
 {
 
 Voice::Voice(
   ID id,
-  NodeInterfaces & node_interfaces,
+  NodeInterfaces node_interfaces,
   rclcpp::CallbackGroup::SharedPtr callback_group,
   const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)

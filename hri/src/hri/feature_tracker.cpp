@@ -30,7 +30,7 @@ FeatureTracker::FeatureTracker(
   ID id,
   std::string feature_ns,
   std::string feature_tf_prefix,
-  NodeInterfaces & node_interfaces,
+  NodeInterfaces node_interfaces,
   rclcpp::CallbackGroup::SharedPtr callback_group,
   const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
@@ -41,7 +41,7 @@ FeatureTracker::FeatureTracker(
   valid_ = true;
 }
 
-std::optional<geometry_msgs::msg::TransformStamped> FeatureTracker::transform(
+std::optional<geometry_msgs::msg::TransformStamped> FeatureTracker::transformFromReference(
   std::string frame_name) const
 {
   try {

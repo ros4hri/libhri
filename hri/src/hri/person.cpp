@@ -20,24 +20,25 @@
 #include <string>
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "hri/body.hpp"
-#include "hri/face.hpp"
-#include "hri/feature_tracker.hpp"
-#include "hri/hri.hpp"
-#include "hri/types.hpp"
-#include "hri/voice.hpp"
 #include "hri_msgs/msg/engagement_level.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "tf2_ros/buffer.h"
 
+#include "hri/body.hpp"
+#include "hri/face.hpp"
+#include "hri/feature_tracker.hpp"
+#include "hri/hri.hpp"
+#include "hri/types.hpp"
+#include "hri/voice.hpp"
+
 namespace hri
 {
 
 Person::Person(
   ID id,
-  NodeInterfaces & node_interfaces,
+  NodeInterfaces node_interfaces,
   rclcpp::CallbackGroup::SharedPtr callback_group,
   std::weak_ptr<const HRIListener> listener,
   const tf2::BufferCore & tf_buffer,
@@ -93,15 +94,6 @@ Person::~Person()
     node_interfaces_.get_node_logging_interface()->get_logger(), "Deleting person " << kId_);
 }
 
-void assignStringOptional(std::optional<std::string> & op, std::string val)
-{
-  if (val.empty()) {
-    op.reset();
-  } else {
-    op = val;
-  }
-}
-
 ConstFacePtr Person::face() const
 {
   auto ret = ConstFacePtr();
@@ -112,7 +104,7 @@ ConstFacePtr Person::face() const
   } else {
     RCLCPP_WARN_STREAM(
       node_interfaces_.get_node_logging_interface()->get_logger(),
-      "Person " << id() << " lost connection to the HRI listener!");
+      "Person " << kId_ << " lost connection to the HRI listener!");
   }
   return ret;
 }
@@ -127,7 +119,7 @@ ConstBodyPtr Person::body() const
   } else {
     RCLCPP_WARN_STREAM(
       node_interfaces_.get_node_logging_interface()->get_logger(),
-      "Person " << id() << " lost connection to the HRI listener!");
+      "Person " << kId_ << " lost connection to the HRI listener!");
   }
   return ret;
 }
@@ -142,7 +134,7 @@ ConstVoicePtr Person::voice() const
   } else {
     RCLCPP_WARN_STREAM(
       node_interfaces_.get_node_logging_interface()->get_logger(),
-      "Person " << id() << " lost connection to the HRI listener!");
+      "Person " << kId_ << " lost connection to the HRI listener!");
   }
   return ret;
 }

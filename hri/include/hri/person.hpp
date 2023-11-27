@@ -21,23 +21,24 @@
 #include <string>
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "hri/body.hpp"
-#include "hri/face.hpp"
-#include "hri/feature_tracker.hpp"
-#include "hri/types.hpp"
-#include "hri/voice.hpp"
 #include "hri_msgs/msg/engagement_level.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "tf2_ros/buffer.h"
 
+#include "hri/body.hpp"
+#include "hri/face.hpp"
+#include "hri/feature_tracker.hpp"
+#include "hri/types.hpp"
+#include "hri/voice.hpp"
+
 namespace hri
 {
 
 class HRIListener;
 
-class Person : public FeatureTracker
+class Person : public FeatureTracker, public std::enable_shared_from_this<Person>
 // TODO(LJU): possibly subscribe also to the /name and the /native_language sub-topics
 {
   friend class HRIListener;  // for invalidate()
@@ -45,7 +46,7 @@ class Person : public FeatureTracker
 public:
   Person(
     ID id,
-    NodeInterfaces & node_interfaces,
+    NodeInterfaces node_interfaces,
     rclcpp::CallbackGroup::SharedPtr callback_group,
     std::weak_ptr<const HRIListener> listener,
     const tf2::BufferCore & tf_buffer,

@@ -20,15 +20,16 @@
 #include <string>
 #include <vector>
 
-#include "hri/feature_tracker.hpp"
-#include "hri/types.hpp"
 #include "hri_msgs/msg/live_speech.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "tf2_ros/buffer.h"
 
+#include "hri/feature_tracker.hpp"
+#include "hri/types.hpp"
+
 namespace hri
 {
-class Voice : public FeatureTracker
+class Voice : public FeatureTracker, public std::enable_shared_from_this<Voice>
 // TODO(LJU): possibly subscribe also to the /audio and the /features sub-topics
 {
   friend class HRIListener;  // for invalidate()
@@ -36,7 +37,7 @@ class Voice : public FeatureTracker
 public:
   Voice(
     ID id,
-    NodeInterfaces & node_interfaces,
+    NodeInterfaces node_interfaces,
     rclcpp::CallbackGroup::SharedPtr callback_group,
     const tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);

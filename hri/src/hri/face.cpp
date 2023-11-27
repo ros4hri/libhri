@@ -19,8 +19,6 @@
 
 #include "cv_bridge/cv_bridge.h"
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "hri/feature_tracker.hpp"
-#include "hri/types.hpp"
 #include "hri_msgs/msg/facial_action_units.hpp"
 #include "hri_msgs/msg/facial_landmarks.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
@@ -28,12 +26,15 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
 
+#include "hri/feature_tracker.hpp"
+#include "hri/types.hpp"
+
 namespace hri
 {
 
 Face::Face(
   ID id,
-  NodeInterfaces & node_interfaces,
+  NodeInterfaces node_interfaces,
   rclcpp::CallbackGroup::SharedPtr callback_group,
   const tf2::BufferCore & tf_buffer,
   const std::string & reference_frame)
@@ -133,7 +134,7 @@ void Face::onFacs(hri_msgs::msg::FacialActionUnits::ConstSharedPtr msg)
 
 std::optional<geometry_msgs::msg::TransformStamped> Face::gazeTransform() const
 {
-  return transform(gazeFrame());
+  return transformFromReference(gazeFrame());
 }
 
 void Face::invalidate()

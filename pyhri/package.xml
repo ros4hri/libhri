@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>pyhri</name>
-  <version>0.6.4</version>
+  <version>1.6.4</version>
   <description>A python wrapper around hri package</description>
   <maintainer email="luka.juricic@pal-robotics.com">user</maintainer>
   <license>Apache License 2.0</license>
@@ -10,8 +10,14 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
 
-  <depend>hri</depend>
+  <build_depend>pybind11_vendor</build_depend>
 
+  <depend>builtin_interfaces</depend>
+  <depend>geometry_msgs</depend>
+  <depend>hri</depend>
+  <depend>rclcpp</depend>
+
+  <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

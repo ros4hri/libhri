@@ -18,17 +18,18 @@
 #include <memory>
 #include <set>
 
+#include "hri_msgs/msg/ids_list.hpp"
+
 #include "hri/body.hpp"
 #include "hri/face.hpp"
 #include "hri/person.hpp"
 #include "hri/voice.hpp"
 #include "hri/types.hpp"
-#include "hri_msgs/msg/ids_list.hpp"
 
 namespace hri
 {
 
-HRIListener::HRIListener(NodeInterfaces & node_interfaces)
+HRIListener::HRIListener(NodeInterfaces node_interfaces)
 : node_interfaces_(node_interfaces), reference_frame_("base_link"), tf_listener_(tf_buffer_)
 {
   RCLCPP_DEBUG_STREAM(
@@ -258,29 +259,6 @@ void HRIListener::onTrackedFeature(
         }
       }
       break;
-    case FeatureType::kTrackedPerson:
-      for (auto id : to_remove) {
-        tracked_persons_[id]->invalidate();
-        tracked_persons_.erase(id);
-
-        // also erase the *aliases* of this ID
-        std::vector<ID> aliases;
-        for (const auto & p : tracked_persons_) {
-          if (p.second->alias() == id) {
-            aliases.push_back(p.first);
-          }
-        }
-        for (auto alias : aliases) {
-          tracked_persons_[alias]->invalidate();
-          tracked_persons_.erase(alias);
-        }
-
-        // invoke all the callbacks
-        for (auto & cb : person_tracked_lost_callbacks_) {
-          cb(id);
-        }
-      }
-      break;
     case FeatureType::kPerson:
       for (auto id : to_remove) {
         persons_[id]->invalidate();
@@ -300,6 +278,29 @@ void HRIListener::onTrackedFeature(
 
         // invoke all the callbacks
         for (auto & cb : person_lost_callbacks_) {
+          cb(id);
+        }
+      }
+      break;
+    case FeatureType::kTrackedPerson:
+      for (auto id : to_remove) {
+        tracked_persons_[id]->invalidate();
+        tracked_persons_.erase(id);
+
+        // also erase the *aliases* of this ID
+        std::vector<ID> aliases;
+        for (const auto & p : tracked_persons_) {
+          if (p.second->alias() == id) {
+            aliases.push_back(p.first);
+          }
+        }
+        for (auto alias : aliases) {
+          tracked_persons_[alias]->invalidate();
+          tracked_persons_.erase(alias);
+        }
+
+        // invoke all the callbacks
+        for (auto & cb : person_tracked_lost_callbacks_) {
           cb(id);
         }
       }

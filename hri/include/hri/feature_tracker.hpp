@@ -19,14 +19,15 @@
 #include <string>
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "hri/types.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
+
+#include "hri/types.hpp"
 
 namespace hri
 {
 
-class FeatureTracker
+class FeatureTracker : public std::enable_shared_from_this<FeatureTracker>
 {
 public:
   /** \brief Creates a new feature tracker (eg, a face, body or voice tracker).
@@ -45,7 +46,7 @@ public:
     ID id,
     std::string feature_ns,
     std::string feature_tf_prefix,
-    NodeInterfaces & node_interfaces,
+    NodeInterfaces node_interfaces,
     rclcpp::CallbackGroup::SharedPtr callback_group,
     const tf2::BufferCore & tf_buffer,
     const std::string & reference_frame);
@@ -83,16 +84,16 @@ public:
   // NOLINTNEXTLINE(build/include_what_you_use): false positive requiring #include <algorithm>
   virtual std::optional<geometry_msgs::msg::TransformStamped> transform() const
   {
-    return transform(frame());
+    return transformFromReference(frame());
   }
 
-  bool operator<(const FeatureTracker & other) const {return kId_ < other.id();}
+  bool operator<(const FeatureTracker & other) const {return id() < other.id();}
 
 protected:
   /** \brief Returns the estimated (stamped) 3D transform of the argument frame (if available).
    */
-  // NOLINTNEXTLINE(build/include_what_you_use): false positive requiring #include <algorithm>
-  std::optional<geometry_msgs::msg::TransformStamped> transform(std::string frame_name) const;
+  std::optional<geometry_msgs::msg::TransformStamped> transformFromReference(
+    std::string frame_name) const;
 
   /** \brief Makes the feature 'invalid', i.e., not existing anymore.
    */
