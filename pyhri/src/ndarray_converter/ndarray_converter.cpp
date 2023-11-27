@@ -1,7 +1,7 @@
 // borrowed in spirit from https://github.com/yati-sagade/opencv-ndarray-conversion
 // MIT License
 
-#include "ndarray_converter.h"
+#include "ndarray_converter/ndarray_converter.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/ndarrayobject.h>
@@ -14,7 +14,7 @@
 struct Tmp {
     const char * name;
 
-    Tmp(const char * name ) : name(name) {}
+    Tmp(const char * _name ) : name(_name) {}
 };
 
 Tmp info("return value");
