@@ -212,4 +212,23 @@ std::optional<geometry_msgs::msg::TransformStamped> Person::transform() const
   }
 }
 
+void Person::invalidate()
+{
+  face_id_subscriber_.reset();
+  body_id_subscriber_.reset();
+  voice_id_subscriber_.reset();
+  anonymous_subscriber_.reset();
+  alias_subscriber_.reset();
+  engagement_subscriber_.reset();
+  loc_confidence_subscriber_.reset();
+  face_id_.reset();
+  body_id_.reset();
+  voice_id_.reset();
+  alias_.reset();
+  anonymous_.reset();
+  engagement_status_.reset();
+  loc_confidence_.reset();
+  FeatureTracker::invalidate();
+}
+
 }  // namespace hri

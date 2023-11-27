@@ -101,6 +101,7 @@ TEST(libhri_tests, GetFaces)
 
   hri_listener.reset();
   EXPECT_EQ(publisher->get_subscription_count(), 0U);
+  EXPECT_FALSE(face_b->valid());
 }
 
 TEST(libhri_tests, GetFacesRoi)
@@ -234,6 +235,7 @@ TEST(libhri_tests, GetBodies)
 
   hri_listener.reset();
   EXPECT_EQ(pub->get_subscription_count(), 0U);
+  EXPECT_FALSE(body_b->valid());
 }
 
 TEST(libhri_tests, GetVoices)
@@ -296,6 +298,7 @@ TEST(libhri_tests, GetVoices)
 
   hri_listener.reset();
   EXPECT_EQ(pub->get_subscription_count(), 0U);
+  EXPECT_FALSE(voice_b->valid());
 }
 
 TEST(libhri_tests, GetKnownPersons)
@@ -368,6 +371,7 @@ TEST(libhri_tests, GetKnownPersons)
 
   hri_listener.reset();
   EXPECT_EQ(pub->get_subscription_count(), 0U);
+  EXPECT_FALSE(person_b->valid());
 }
 
 TEST(libhri_tests, GetTrackedPersons)
@@ -432,6 +436,7 @@ TEST(libhri_tests, GetTrackedPersons)
 
   hri_listener.reset();
   EXPECT_EQ(pub->get_subscription_count(), 0U);
+  EXPECT_FALSE(person_b->valid());
 }
 
 TEST(libhri_tests, PersonAttributes)

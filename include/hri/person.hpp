@@ -40,6 +40,8 @@ class HRIListener;
 class Person : public FeatureTracker
 // TODO(LJU): possibly subscribe also to the /name and the /native_language sub-topics
 {
+  friend class HRIListener;  // for invalidate()
+
 public:
   Person(
     ID id,
@@ -81,6 +83,8 @@ private:
   void onAlias(std_msgs::msg::String::ConstSharedPtr msg);
   void onEngagementStatus(hri_msgs::msg::EngagementLevel::ConstSharedPtr msg);
   void onLocationConfidence(std_msgs::msg::Float32::ConstSharedPtr msg);
+
+  void invalidate();
 
   std::weak_ptr<const HRIListener> listener_;
 

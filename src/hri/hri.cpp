@@ -227,6 +227,7 @@ void HRIListener::onTrackedFeature(
   switch (feature) {
     case FeatureType::kFace:
       for (auto id : to_remove) {
+        faces_[id]->invalidate();
         faces_.erase(id);
 
         // invoke all the callbacks
@@ -237,6 +238,7 @@ void HRIListener::onTrackedFeature(
       break;
     case FeatureType::kBody:
       for (auto id : to_remove) {
+        bodies_[id]->invalidate();
         bodies_.erase(id);
 
         // invoke all the callbacks
@@ -247,6 +249,7 @@ void HRIListener::onTrackedFeature(
       break;
     case FeatureType::kVoice:
       for (auto id : to_remove) {
+        voices_[id]->invalidate();
         voices_.erase(id);
 
         // invoke all the callbacks
@@ -257,6 +260,7 @@ void HRIListener::onTrackedFeature(
       break;
     case FeatureType::kTrackedPerson:
       for (auto id : to_remove) {
+        tracked_persons_[id]->invalidate();
         tracked_persons_.erase(id);
 
         // also erase the *aliases* of this ID
@@ -267,6 +271,7 @@ void HRIListener::onTrackedFeature(
           }
         }
         for (auto alias : aliases) {
+          tracked_persons_[alias]->invalidate();
           tracked_persons_.erase(alias);
         }
 
@@ -278,6 +283,7 @@ void HRIListener::onTrackedFeature(
       break;
     case FeatureType::kPerson:
       for (auto id : to_remove) {
+        persons_[id]->invalidate();
         persons_.erase(id);
 
         // also erase the *aliases* of this ID
@@ -288,6 +294,7 @@ void HRIListener::onTrackedFeature(
           }
         }
         for (auto alias : aliases) {
+          persons_[alias]->invalidate();
           persons_.erase(alias);
         }
 

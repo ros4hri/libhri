@@ -36,6 +36,8 @@ namespace hri
 // TODO(LJU): possibly subscribe also to the /frontalized and /expression sub-topics
 class Face : public FeatureTracker
 {
+  friend class HRIListener;  // for invalidate()
+
 public:
   Face(
     ID id,
@@ -105,6 +107,8 @@ private:
   void onLandmarks(hri_msgs::msg::FacialLandmarks::ConstSharedPtr msg);
   void onSoftBiometrics(hri_msgs::msg::SoftBiometrics::ConstSharedPtr msg);
   void onFacs(hri_msgs::msg::FacialActionUnits::ConstSharedPtr msg);
+
+  void invalidate();
 
   std::optional<cv::Rect2f> roi_;
   std::optional<cv::Mat> cropped_;

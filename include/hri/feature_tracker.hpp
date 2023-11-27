@@ -71,6 +71,13 @@ public:
    */
   std::string frame() const {return kFrame_;}
 
+  /** \brief Returns whether the feature is still 'valid', i.e., existing.
+   *
+   * If not, then the feature is not functional, all the optional members will be reset and the
+   * topic subsciptions terminated.
+   */
+  bool valid() const {return valid_;}
+
   /** \brief Returns the estimated (stamped) 3D transform of self (if available).
    */
   // NOLINTNEXTLINE(build/include_what_you_use): false positive requiring #include <algorithm>
@@ -87,6 +94,10 @@ protected:
   // NOLINTNEXTLINE(build/include_what_you_use): false positive requiring #include <algorithm>
   std::optional<geometry_msgs::msg::TransformStamped> transform(std::string frame_name) const;
 
+  /** \brief Makes the feature 'invalid', i.e., not existing anymore.
+   */
+  void invalidate() {valid_ = false;}
+
   const ID kId_;
   const std::string kNs_;  // topic namespace under which this feature is advertised
   const std::string kFrame_;
@@ -96,6 +107,8 @@ protected:
 
   const tf2::BufferCore & tf_buffer_;
   const std::string & reference_frame_;
+
+  bool valid_;
 };
 
 }  // namespace hri

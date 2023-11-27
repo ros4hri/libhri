@@ -83,4 +83,14 @@ void Voice::onIsSpeaking(std_msgs::msg::Bool::ConstSharedPtr msg)
   }
 }
 
+void Voice::invalidate()
+{
+  is_speaking_subscriber_.reset();
+  speech_subscriber_.reset();
+  is_speaking_.reset();
+  speech_.reset();
+  incremental_speech_.reset();
+  FeatureTracker::invalidate();
+}
+
 }  // namespace hri

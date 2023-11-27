@@ -136,4 +136,22 @@ std::optional<geometry_msgs::msg::TransformStamped> Face::gazeTransform() const
   return transform(gazeFrame());
 }
 
+void Face::invalidate()
+{
+  roi_subscriber_.reset();
+  cropped_subscriber_.reset();
+  aligned_subscriber_.reset();
+  landmarks_subscriber_.reset();
+  softbiometrics_subscriber_.reset();
+  facial_action_units_subscriber_.reset();
+  roi_.reset();
+  cropped_.reset();
+  aligned_.reset();
+  landmarks_.reset();
+  age_.reset();
+  gender_.reset();
+  facial_action_units_.reset();
+  FeatureTracker::invalidate();
+}
+
 }  // namespace hri

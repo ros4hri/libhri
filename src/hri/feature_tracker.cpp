@@ -37,7 +37,9 @@ FeatureTracker::FeatureTracker(
 : kId_(id), kNs_(feature_ns + "/" + id), kFrame_(feature_tf_prefix + id),
   node_interfaces_(node_interfaces), callback_group_(callback_group), tf_buffer_(tf_buffer),
   reference_frame_(reference_frame)
-{}
+{
+  valid_ = true;
+}
 
 std::optional<geometry_msgs::msg::TransformStamped> FeatureTracker::transform(
   std::string frame_name) const

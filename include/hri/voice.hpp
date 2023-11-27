@@ -31,6 +31,8 @@ namespace hri
 class Voice : public FeatureTracker
 // TODO(LJU): possibly subscribe also to the /audio and the /features sub-topics
 {
+  friend class HRIListener;  // for invalidate()
+
 public:
   Voice(
     ID id,
@@ -92,6 +94,8 @@ public:
 private:
   void onSpeech_(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg);
   void onIsSpeaking(std_msgs::msg::Bool::ConstSharedPtr msg);
+
+  void invalidate();
 
   std::optional<bool> is_speaking_;
   std::optional<std::string> speech_;

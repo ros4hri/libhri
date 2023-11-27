@@ -88,4 +88,15 @@ void Body::onSkeleton(const hri_msgs::msg::Skeleton2D::ConstSharedPtr msg)
   }
 }
 
+void Body::invalidate()
+{
+  roi_subscriber_.reset();
+  cropped_subscriber_.reset();
+  skeleton_subscriber_.reset();
+  roi_.reset();
+  cropped_.reset();
+  skeleton_.reset();
+  FeatureTracker::invalidate();
+}
+
 }  // namespace hri

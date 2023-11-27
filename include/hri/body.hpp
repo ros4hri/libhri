@@ -33,6 +33,8 @@ namespace hri
 // TODO(LJU): possibly subscribe also to the /joint_states, gesture and /posture sub-topics
 class Body : public FeatureTracker
 {
+  friend class HRIListener;  // for invalidate()
+
 public:
   Body(
     ID id,
@@ -68,6 +70,8 @@ private:
   void onRoI(hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr msg);
   void onCropped(sensor_msgs::msg::Image::ConstSharedPtr msg);
   void onSkeleton(hri_msgs::msg::Skeleton2D::ConstSharedPtr msg);
+
+  void invalidate();
 
   std::optional<cv::Rect2f> roi_;
   std::optional<cv::Mat> cropped_;
