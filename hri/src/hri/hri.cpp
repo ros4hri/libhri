@@ -17,6 +17,7 @@
 #include <functional>
 #include <memory>
 #include <set>
+#include <variant>
 
 #include "hri_msgs/msg/ids_list.hpp"
 
@@ -29,8 +30,8 @@
 namespace hri
 {
 
-HRIListener::HRIListener(NodeInterfaces node_interfaces)
-: node_interfaces_(node_interfaces), reference_frame_("base_link"), tf_listener_(tf_buffer_)
+HRIListener::HRIListener(NodeLikeSharedPtr node_like)
+: node_interfaces_(node_like), reference_frame_("base_link")
 {
   RCLCPP_DEBUG_STREAM(
     node_interfaces_.get_node_logging_interface()->get_logger(), "Initialising the HRI Listener");
@@ -40,6 +41,25 @@ HRIListener::HRIListener(NodeInterfaces node_interfaces)
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
   auto default_qos = rclcpp::SystemDefaultsQoS();
+  rclcpp::SubscriptionOptions tf_options{options};
+  tf_options.qos_overriding_options = rclcpp::QosOverridingOptions{
+    rclcpp::QosPolicyKind::Depth,
+    rclcpp::QosPolicyKind::Durability,
+    rclcpp::QosPolicyKind::History,
+    rclcpp::QosPolicyKind::Reliability};
+  rclcpp::SubscriptionOptions tf_static_options{options};
+  tf_static_options.qos_overriding_options = rclcpp::QosOverridingOptions{
+    rclcpp::QosPolicyKind::Depth,
+    rclcpp::QosPolicyKind::History,
+    rclcpp::QosPolicyKind::Reliability};
+
+  std::visit(
+    [&](auto && node) {
+      tf_listener_ = std::make_unique<tf2_ros::TransformListener>(
+        tf_buffer_, node, false, tf2_ros::DynamicListenerQoS(),
+        tf2_ros::StaticListenerQoS(), tf_options, tf_static_options);
+    }, node_like);
+
   // There is a pending issue with binding functions with extra non-msg arguments, see
   // https://github.com/ros2/rclcpp/issues/766
   std::function<void(hri_msgs::msg::IdsList::ConstSharedPtr)> callback;

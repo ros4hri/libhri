@@ -33,8 +33,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/utilities.hpp"
 
-#include "ndarray_converter/ndarray_converter.h"
-#include "pyhri/casts.hpp"
+#include "pyhri/ndarray_converter.h"
+#include "pyhri/converters.hpp"
 
 namespace py = pybind11;
 
@@ -77,7 +77,7 @@ public:
 
 protected:
   explicit PyHRIListener(rclcpp::Node::SharedPtr node, bool auto_spin)
-  : hri::HRIListener(hri::NodeInterfaces(node)), node_(node)
+  : hri::HRIListener(node), node_(node)
   {
     executor_ = rclcpp::executors::SingleThreadedExecutor::make_unique();
     executor_->add_node(node_);

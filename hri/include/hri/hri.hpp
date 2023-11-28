@@ -57,7 +57,7 @@ public:
    */
   [[nodiscard]] static std::shared_ptr<HRIListener> create(NodeLikeSharedPtr node_like)
   {
-    return std::shared_ptr<HRIListener>(new HRIListener(NodeInterfaces(node_like)));
+    return std::shared_ptr<HRIListener>(new HRIListener(node_like));
   }
 
   virtual ~HRIListener();
@@ -189,7 +189,7 @@ public:
   rclcpp::CallbackGroup::SharedPtr getCallbackGroup() {return callback_group_;}
 
 protected:
-  explicit HRIListener(NodeInterfaces node_interfaces);
+  explicit HRIListener(NodeLikeSharedPtr node_like);
 
 private:
   void onTrackedFeature(FeatureType & feature, hri_msgs::msg::IdsList::ConstSharedPtr tracked);
@@ -221,7 +221,7 @@ private:
 
   std::string reference_frame_;
   tf2::BufferCore tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
+  std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
 };
 
 }  // namespace hri
