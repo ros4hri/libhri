@@ -20,6 +20,14 @@
   <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+  <test_depend>cv_bridge</test_depend>
+  <test_depend>geometry_msgs</test_depend>
+  <test_depend>hri_msgs</test_depend>
+  <test_depend>python3-numpy</test_depend>
+  <test_depend>python3-opencv</test_depend>
+  <test_depend>sensor_msgs</test_depend>
+  <test_depend>std_msgs</test_depend>
+  <test_depend>tf2_ros_py</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

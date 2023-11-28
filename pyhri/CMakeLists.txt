@@ -46,13 +46,15 @@ endif()
 
 # Testing
 if(BUILD_TESTING)
+  find_package(ament_cmake_pytest REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(ament_lint_common REQUIRED)
+
   set(AMENT_LINT_AUTO_FILE_EXCLUDE
     include/pyhri/ndarray_converter.h
     src/pyhri/ndarray_converter.cpp)
   ament_lint_auto_find_test_dependencies()
 
-  find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(test_pyhri test/test_pyhri.py
     APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}
     TIMEOUT 60
