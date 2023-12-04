@@ -38,12 +38,6 @@ install(TARGETS ${PROJECT_NAME}
   DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
 )
 
-if(NOT WIN32)
-  ament_environment_hooks(
-    "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
-  )
-endif()
-
 # Testing
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
