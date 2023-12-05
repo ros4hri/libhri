@@ -32,7 +32,7 @@ ament_python_install_package(${PROJECT_NAME})
 pybind11_add_module(${PROJECT_NAME} SHARED
   src/pyhri/ndarray_converter.cpp
   src/pyhri/pyhri.cpp)
-target_include_directories(${PROJECT_NAME} PRIVATE include/)
+target_include_directories(${PROJECT_NAME} PRIVATE src/)
 ament_target_dependencies(${PROJECT_NAME} PUBLIC ${dependencies})
 install(TARGETS ${PROJECT_NAME}
   DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
@@ -45,7 +45,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_common REQUIRED)
 
   set(AMENT_LINT_AUTO_FILE_EXCLUDE
-    include/pyhri/ndarray_converter.h
+    src/pyhri/ndarray_converter.h
     src/pyhri/ndarray_converter.cpp)
   ament_lint_auto_find_test_dependencies()
 
