@@ -18,42 +18,34 @@
 #include "hri/hri.hpp"
 #include "opencv2/opencv.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp_lifecycle/lifecycle_node.hpp"
 
 using namespace std::chrono_literals;
 
-class ShowFaces : public rclcpp_lifecycle::LifecycleNode
+class ShowFaces : public rclcpp::Node
 {
 public:
   ShowFaces()
-  : rclcpp_lifecycle::LifecycleNode("show_faces")
+  : rclcpp::Node("hri_show_faces")
   {}
 
-  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn on_configure(
-    [[maybe_unused]] const rclcpp_lifecycle::State &)
+  void init()
   {
     // "shared_from_this()" cannot be used in the constructor!
     hri_listener_ = hri::HRIListener::create(shared_from_this());
-    timer_ = create_wall_timer(
-      500ms, std::bind(&ShowFaces::timer_callback, this));
-    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+    timer_ = create_wall_timer(500ms, std::bind(&ShowFaces::timer_callback, this));
   }
 
   void timer_callback()
   {
     auto faces = hri_listener_->getFaces();
-    for (auto & f : faces) {
-      auto face_id = f.first;
-      auto face = f.second;
-      if (face) {
-        if (auto cropped = face->cropped()) {
-          cv::imshow("Cropped face " + face_id, *cropped);
-        }
-        if (auto aligned = face->aligned()) {
-          cv::imshow("Aligned face " + face_id, *aligned);
-        }
-        cv::waitKey(10);
+    for (auto const & [face_id, face] : faces) {
+      if (auto cropped = face->cropped()) {
+        cv::imshow("Cropped face " + face_id, *cropped);
       }
+      if (auto aligned = face->aligned()) {
+        cv::imshow("Aligned face " + face_id, *aligned);
+      }
+      cv::waitKey(10);
     }
   }
 
@@ -66,6 +58,7 @@ int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<ShowFaces>();
+  node->init();
   rclcpp::spin(node->get_node_base_interface());
   rclcpp::shutdown();
   return 0;
