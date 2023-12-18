@@ -19,23 +19,25 @@ find_package(pybind11 REQUIRED)
 find_package(hri REQUIRED)
 find_package(rclcpp REQUIRED)
 
-set(dependencies
+set(${PROJECT_NAME}_dependencies
   builtin_interfaces
   geometry_msgs
   hri
   rclcpp
 )
-ament_export_dependencies(${dependencies})
+ament_export_dependencies(${${PROJECT_NAME}_dependencies})
 
 # Python target
-ament_python_install_package(${PROJECT_NAME})
+ament_python_install_package(${PROJECT_NAME}
+  SCRIPTS_DESTINATION lib/${PROJECT_NAME}
+)
 pybind11_add_module(${PROJECT_NAME} SHARED
   src/pyhri/ndarray_converter.cpp
   src/pyhri/pyhri.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE src/)
-ament_target_dependencies(${PROJECT_NAME} PUBLIC ${dependencies})
+ament_target_dependencies(${PROJECT_NAME} PUBLIC ${${PROJECT_NAME}_dependencies})
 install(TARGETS ${PROJECT_NAME}
-  DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
+  LIBRARY DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
 )
 
 # Testing

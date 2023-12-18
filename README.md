@@ -8,6 +8,7 @@ It contains two packages:
 - `pyhri`: the Python implementation package, wrapping the C++ one with Pybind11
 
 **Note: this branch only contains ROS 2 support. For ROS 1, check the `main` branch.**
+**Note: this repository only contains `pyhri` ROS 2 support. For ROS 1, check the `pyhri` repository.**
 
 ## Example
 
@@ -23,7 +24,7 @@ They are installed by default and can be tested by executing:
   1. `apt install ros-humble-hri-face-detect`
   2. `ros2 launch hri_face_detect face_detect.launch.py`
 - In a separate terminal, either:
-  - C++: `ros2 run hri hri_show_faces`  _or_
-  - Python: `ros2 run pyhri hri_show_faces`
+  - C++: `ros2 run hri hri_example`  _or_
+  - Python: `ros2 run pyhri pyhri_example`
 
 Note that the Python implementation actually spawns two nodes.

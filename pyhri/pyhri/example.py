@@ -21,15 +21,15 @@ from rclpy.node import Node
 
 class NodeShowFaces(Node):
     def __init__(self):
-        super().__init__('hri_show_faces')
-        self.hri_listener = HRIListener('hri_show_faces_listener')  # this creates another node
+        super().__init__('pyhri_example')
+        self.hri_listener = HRIListener('pyhri_example_hri_listener')  # this creates another node
         self.timer = self.create_timer(0.5, self.timer_callback)
 
     def timer_callback(self):
         for id, face in self.hri_listener.faces.items():
-            if (face.cropped):
+            if (face.cropped is not None):
                 cv2.imshow(f'Cropped face {id}', face.cropped)
-            if (face.aligned):
+            if (face.aligned is not None):
                 cv2.imshow(f'Aligned face {id}', face.aligned)
         cv2.waitKey(10)
 
