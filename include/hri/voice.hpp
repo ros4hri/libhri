@@ -110,6 +110,7 @@ private:
 };
 
 typedef std::shared_ptr<Voice> VoicePtr;
+typedef std::shared_ptr<const Voice> ConstVoicePtr;
 
 }  // namespace hri
 

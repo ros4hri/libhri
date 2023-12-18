@@ -83,6 +83,7 @@ private:
 };
 
 typedef std::shared_ptr<Body> BodyPtr;
+typedef std::shared_ptr<const Body> ConstBodyPtr;
 
 }  // namespace hri
 

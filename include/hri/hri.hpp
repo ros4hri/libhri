@@ -72,7 +72,7 @@ public:
 
   /** \brief Returns the list of currently detected faces, mapped to their IDs
    */
-  std::map<ID, FacePtr> getFaces() const;
+  std::map<ID, ConstFacePtr> getFaces() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new face
    * is detected.
@@ -93,7 +93,7 @@ public:
 
   /** \brief Returns the list of currently detected bodies, mapped to their IDs
    */
-  std::map<ID, BodyPtr> getBodies() const;
+  std::map<ID, ConstBodyPtr> getBodies() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new body
    * is detected.
@@ -114,7 +114,7 @@ public:
 
   /** \brief Returns the list of currently detected voices, mapped to their IDs
    */
-  std::map<ID, VoicePtr> getVoices() const;
+  std::map<ID, ConstVoicePtr> getVoices() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new voice
    * is detected.
@@ -137,7 +137,7 @@ public:
    * currently actively detected (eg, seen). The persons are mapped to their
    * IDs.
    */
-  std::map<ID, PersonPtr> getPersons() const;
+  std::map<ID, ConstPersonPtr> getPersons() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new person
    * is detected.
@@ -158,7 +158,7 @@ public:
 
   /** \brief Returns the list of currently detected persons, mapped to their IDs
    */
-  std::map<ID, PersonPtr> getTrackedPersons() const;
+  std::map<ID, ConstPersonPtr> getTrackedPersons() const;
 
   /** \brief Registers a callback function, to be invoked everytime a new person
    * is detected and actively tracked (eg, currently seen).

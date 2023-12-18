@@ -78,36 +78,36 @@ HRIListener::~HRIListener()
     node_interfaces_.get_node_logging_interface()->get_logger(), "Closing the HRI Listener");
 }
 
-std::map<ID, FacePtr> HRIListener::getFaces() const
+std::map<ID, ConstFacePtr> HRIListener::getFaces() const
 {
-  std::map<ID, FacePtr> result;
+  std::map<ID, ConstFacePtr> result;
   for (auto const & f : faces_) {
     result[f.first] = std::const_pointer_cast<Face>(f.second);
   }
   return result;
 }
 
-std::map<ID, BodyPtr> HRIListener::getBodies() const
+std::map<ID, ConstBodyPtr> HRIListener::getBodies() const
 {
-  std::map<ID, BodyPtr> result;
+  std::map<ID, ConstBodyPtr> result;
   for (auto const & f : bodies_) {
     result[f.first] = std::const_pointer_cast<Body>(f.second);
   }
   return result;
 }
 
-std::map<ID, VoicePtr> HRIListener::getVoices() const
+std::map<ID, ConstVoicePtr> HRIListener::getVoices() const
 {
-  std::map<ID, VoicePtr> result;
+  std::map<ID, ConstVoicePtr> result;
   for (auto const & f : voices_) {
     result[f.first] = std::const_pointer_cast<Voice>(f.second);
   }
   return result;
 }
 
-std::map<ID, PersonPtr> HRIListener::getPersons() const
+std::map<ID, ConstPersonPtr> HRIListener::getPersons() const
 {
-  std::map<ID, PersonPtr> result;
+  std::map<ID, ConstPersonPtr> result;
   std::vector<PersonPtr> aliased;
 
   // copy in results all the persons that are not aliased
@@ -133,9 +133,9 @@ std::map<ID, PersonPtr> HRIListener::getPersons() const
   return result;
 }
 
-std::map<ID, PersonPtr> HRIListener::getTrackedPersons() const
+std::map<ID, ConstPersonPtr> HRIListener::getTrackedPersons() const
 {
-  std::map<ID, PersonPtr> result;
+  std::map<ID, ConstPersonPtr> result;
   std::vector<PersonPtr> aliased;
 
   // copy in results all the persons that are not aliased
