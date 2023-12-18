@@ -7,7 +7,7 @@ significantly easing accessing the robot's perceptions of surrounding humans.
 
 ## Example
 
-For an example of usage, you can check the `examples/node_show_faces.cpp`.
+For an example of usage, you can check the `src/example.cpp`.
 It is installed by default and can be tested by executing:
 - In a separate terminal:
   1. `apt install ros-humble-usb-cam`
@@ -16,4 +16,4 @@ It is installed by default and can be tested by executing:
   1. `apt install ros-humble-hri-face-detect`
   2. `ros2 launch hri_face_detect face_detect.launch.py`
 - In a separate terminal:
-  2. `ros2 run show_faces`
+  2. `ros2 run hri hri_example`

@@ -79,11 +79,10 @@ install(
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 # Example target
-set(example_name show_faces)
-add_executable(${example_name} examples/node_show_faces.cpp)
-target_link_libraries(${example_name} PRIVATE ${PROJECT_NAME})
+add_executable(${PROJECT_NAME}_example src/example.cpp)
+target_link_libraries(${PROJECT_NAME}_example PRIVATE ${PROJECT_NAME})
 install(
-  TARGETS ${example_name}
+  TARGETS ${PROJECT_NAME}_example
   DESTINATION lib/${PROJECT_NAME}
 )
 
