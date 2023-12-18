@@ -201,7 +201,7 @@ class TestHRI(unittest.TestCase):
         self.spin()
         self.assertEqual(len(self.hri_listener.bodies), 0)
 
-        # we do not see the C++ reference count from Python, so we check if the desctuctor is
+        # we do not see the C++ reference count from Python, so we check if the destructor is
         # called for the shared object by checking the subscription count of /roi
         roi_b_pub = self.tester_node.create_publisher(
             NormalizedRegionOfInterest2D, '/humans/bodies/B/roi', 1)
