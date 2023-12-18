@@ -37,7 +37,7 @@ find_package(std_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 
-set(dependencies
+set(${PROJECT_NAME}_dependencies
   cv_bridge
   geometry_msgs
   hri_msgs
@@ -49,7 +49,7 @@ set(dependencies
   tf2
   tf2_ros
 )
-ament_export_dependencies(${dependencies})
+ament_export_dependencies(${${PROJECT_NAME}_dependencies})
 
 # Public library target
 add_library(${PROJECT_NAME} SHARED
@@ -60,7 +60,7 @@ add_library(${PROJECT_NAME} SHARED
   src/hri/person.cpp
   src/hri/voice.cpp
 )
-ament_target_dependencies(${PROJECT_NAME} PUBLIC ${dependencies})
+ament_target_dependencies(${PROJECT_NAME} PUBLIC ${${PROJECT_NAME}_dependencies})
 target_include_directories(${PROJECT_NAME} PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
