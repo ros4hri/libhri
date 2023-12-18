@@ -25,7 +25,7 @@ class ShowFaces : public rclcpp::Node
 {
 public:
   ShowFaces()
-  : rclcpp::Node("hri_show_faces")
+  : rclcpp::Node("hri_example")
   {}
 
   void init()
