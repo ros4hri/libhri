@@ -2,6 +2,82 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
+Port the ROS 2.This release is *not* backward compatible with series libhri-0.x!
+
+* fix version; use safer cmake variables
+* add author; rename example node
+* getters return pointers to const objects
+* change example folder location
+* add example instructions
+* invalidate non-tracked/known features
+* do not use const feature trackers
+  they do not allow the registration of feature tracker callbacks (e.g. hri::Voice::onSpeech), while the members are already private and thus protected
+* naming consistency
+* review fixes
+  - pass const objects to callbacks
+  - emplace new tracked features
+  - fix documentation
+* review polish
+  - add support for LifecycleNode
+  - feature getters return const objects
+  - avoid trivial typedefs
+  - remove legacy docgen files
+* fixez in cmake install, QoS, tests
+* pass safer weak pointer of HRIListener to Person
+* move FeatureTracker::init() to constructor
+  avoid accidental re-initialization using public init() function
+* bump version ahead of release 2.0.0
+* remove unnecessary compile local files
+* replace returned ROS messages with cpp types
+* big cleanup
+  - collect types in types.hpp
+  - comply to coding guidelines (headers reordering, renaming, ...)
+  - make all subscribed info optional
+* cleanup tests
+* group common functionalities into FeatureTracker
+* simplify the execution architecture
+  - HRIListener uses an external node for subscribing to topics
+  - FeatureTracker collects additional common members
+* do not use const pointers
+  they are deceptive, actually the callbacks are modifying the 'const' objects
+* switch license to apache 2.0
+* use shared pointers instead of weak ones
+* switch to std::optional
+* building cleanup
+  - target-based CMake
+  - add back the copyright in the license
+  - fix file naming
+  - reorder depencencies alphabetically
+* Merge main 0.6.4 into humble-devel 0.5.3
+  3ff30aa3263abe2c6e7d2500165889e3bf0a5c36 into f50816fa0f65cc71e8057c25a8edba1ccee676bc
+* Merge pull request #2 from juandpenan/humble-devel
+  Code migrated to ROS2 Humble
+* all tests passed
+* changed buffer to buffercore
+* test added
+* voice sub fixed
+* body sub fixed
+* change bodies from weak to shared
+* face callbacks fixed
+* face listener working
+* tf_listener fashon added
+* ros1 fashon
+* using namespace removed
+* header guards changed
+* testing
+* revert to weak
+* test added
+* ID error fixed
+* Merge pull request #1 from Juancams/humble-devel
+  Migrated to ROS2 Humble
+* Migrated to ROS2 Humble
+* first_commit
+* first_commit
+* Contributors: Francisco Martín Rico, Juan Diego, Juancams, Luka Juricic, Séverin Lemaignan
+
 0.6.4 (2023-07-05)
 ------------------
 * Fix Typo in voice.h
