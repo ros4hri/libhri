@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.0 (2023-12-19)
+------------------
 
 Port the ROS 2.This release is *not* backward compatible with series libhri-0.x!
 
