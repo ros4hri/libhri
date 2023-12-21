@@ -10,6 +10,12 @@ It contains two packages:
 **Note: this branch only contains ROS 2 support. For ROS 1, check the `main` branch.**
 **Note: this repository only contains `pyhri` ROS 2 support. For ROS 1, check the `pyhri` repository.**
 
+## Documentation
+
+For the `pyhri` documentation, use `print(pyhri.hri.<class>.__doc__)` and/or `help(pyhri.hri.<class>)`.
+
+The main entry point for using the library is the `HRIListener` class.
+
 ## Example
 
 For an example of usage, you can check the example:

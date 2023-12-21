@@ -31,12 +31,14 @@ ament_export_dependencies(${${PROJECT_NAME}_dependencies})
 ament_python_install_package(${PROJECT_NAME}
   SCRIPTS_DESTINATION lib/${PROJECT_NAME}
 )
-pybind11_add_module(${PROJECT_NAME} SHARED
+
+set(HRI_MODULE_NAME hri)
+pybind11_add_module(${HRI_MODULE_NAME} SHARED
   src/pyhri/ndarray_converter.cpp
   src/pyhri/pyhri.cpp)
-target_include_directories(${PROJECT_NAME} PRIVATE src/)
-ament_target_dependencies(${PROJECT_NAME} PUBLIC ${${PROJECT_NAME}_dependencies})
-install(TARGETS ${PROJECT_NAME}
+target_include_directories(${HRI_MODULE_NAME} PRIVATE src/)
+ament_target_dependencies(${HRI_MODULE_NAME} PUBLIC ${${PROJECT_NAME}_dependencies})
+install(TARGETS ${HRI_MODULE_NAME}
   LIBRARY DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
 )
 
