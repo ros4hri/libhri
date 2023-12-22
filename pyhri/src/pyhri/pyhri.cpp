@@ -300,49 +300,6 @@ PYBIND11_MODULE(hri, m) {
   skeletal_keypoint.value("LEFT_EAR", hri::SkeletalKeypoint::kLeftEar);
   skeletal_keypoint.value("RIGHT_EAR", hri::SkeletalKeypoint::kRightEar);
 
-  py::class_<hri::IntensityConfidence> intensity_confidence(m, "IntensityConfidence");
-  intensity_confidence.doc() =
-    R"(
-    A trait evaluation result.
-
-    Attributes:
-    intensity -- strenght of the trait (float [0., 1.])
-    confidence -- confidence of the evaluation itself (float [0., 1.])
-    )";
-  intensity_confidence.def(
-    py::init<float, float>(), py::arg("intensity") = 0., py::arg("confidence") = 0.);
-  intensity_confidence.def_readwrite("intensity", &hri::IntensityConfidence::intensity);
-  intensity_confidence.def_readwrite("confidence", &hri::IntensityConfidence::confidence);
-  intensity_confidence.def(
-    "__repr__", [](const hri::IntensityConfidence & obj) {
-      std::ostringstream ss;
-      ss << "hri.IntensityConfidence {intensity: " << obj.intensity << ", confidence: " <<
-        obj.confidence << "}";
-      return ss.str();
-    });
-
-  py::class_<hri::PointOfInterest> point_of_interest(m, "PointOfInterest");
-  point_of_interest.doc() =
-    R"(
-    The evaluation of the location in an image of a point of interest.
-
-    Attributes:
-    x -- relative horizontal position, starting from the left (float [0., 1.])
-    y -- relative vertical position, starting from the top (float [0., 1.])
-    c -- confidence of the evaluation itself (float [0., 1.])
-    )";
-  point_of_interest.def(
-    py::init<float, float, float>(), py::arg("x") = 0., py::arg("y") = 0., py::arg("c") = 0.);
-  point_of_interest.def_readwrite("x", &hri::PointOfInterest::x);
-  point_of_interest.def_readwrite("y", &hri::PointOfInterest::y);
-  point_of_interest.def_readwrite("c", &hri::PointOfInterest::c);
-  point_of_interest.def(
-    "__repr__", [](const hri::PointOfInterest & obj) {
-      std::ostringstream ss;
-      ss << "hri.PointOfInterest {x: " << obj.x << ", y: " << obj.y << ", c: " << obj.c << "}";
-      return ss.str();
-    });
-
   py::class_<hri::FeatureTracker, std::shared_ptr<hri::FeatureTracker>, PyFeatureTracker>
   feature_tracker(m, "FeatureTracker");
   feature_tracker.doc() =

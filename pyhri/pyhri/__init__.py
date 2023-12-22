@@ -21,9 +21,7 @@ from pyhri.hri import (
     FeatureTracker,
     Gender,
     HRIListener,
-    IntensityConfidence,
     Person,
-    PointOfInterest,
     SkeletalKeypoint,
     Voice)
 
@@ -36,8 +34,6 @@ __all__ = [
     'FeatureTracker',
     'Gender',
     'HRIListener',
-    'IntensityConfidence',
     'Person',
-    'PointOfInterest',
     'SkeletalKeypoint',
     'Voice']

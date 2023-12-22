@@ -297,6 +297,82 @@ public:
   }
 };
 
+template<>
+struct type_caster<hri::IntensityConfidence>
+{
+public:
+  PYBIND11_TYPE_CASTER(
+    hri::IntensityConfidence, const_name("hri::IntensityConfidence"));
+
+  bool load(handle py_handle, bool)
+  {
+    if (!isinstance<tuple>(py_handle)) {
+      return false;
+    }
+    const auto py_as_tuple = reinterpret_borrow<tuple>(py_handle);
+    if (py_as_tuple.size() != 2) {
+      return false;
+    }
+    for (const auto & element : py_as_tuple) {
+      if (!isinstance<float>(element)) {
+        return false;
+      }
+    }
+
+    value.intensity = py_as_tuple[0].cast<float>();
+    value.confidence = py_as_tuple[1].cast<float>();
+    return true;
+  }
+
+  static handle cast(hri::IntensityConfidence c_obj, return_value_policy, handle)
+  {
+    auto py_obj = tuple(2);
+    py_obj[0] = pybind11::cast(c_obj.intensity);
+    py_obj[1] = pybind11::cast(c_obj.confidence);
+    py_obj.inc_ref();
+    return py_obj;
+  }
+};
+
+template<>
+struct type_caster<hri::PointOfInterest>
+{
+public:
+  PYBIND11_TYPE_CASTER(
+    hri::PointOfInterest, const_name("hri::PointOfInterest"));
+
+  bool load(handle py_handle, bool)
+  {
+    if (!isinstance<tuple>(py_handle)) {
+      return false;
+    }
+    const auto py_as_tuple = reinterpret_borrow<tuple>(py_handle);
+    if (py_as_tuple.size() != 3) {
+      return false;
+    }
+    for (const auto & element : py_as_tuple) {
+      if (!isinstance<float>(element)) {
+        return false;
+      }
+    }
+
+    value.x = py_as_tuple[0].cast<float>();
+    value.y = py_as_tuple[1].cast<float>();
+    value.c = py_as_tuple[2].cast<float>();
+    return true;
+  }
+
+  static handle cast(hri::PointOfInterest c_obj, return_value_policy, handle)
+  {
+    auto py_obj = tuple(3);
+    py_obj[0] = pybind11::cast(c_obj.x);
+    py_obj[1] = pybind11::cast(c_obj.y);
+    py_obj[2] = pybind11::cast(c_obj.c);
+    py_obj.inc_ref();
+    return py_obj;
+  }
+};
+
 }  // namespace detail
 }  // namespace PYBIND11_NAMESPACE
 

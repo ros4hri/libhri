@@ -581,16 +581,16 @@ class TestHRI(unittest.TestCase):
         self.spin()
         self.assertIsNotNone(face_a.facial_action_units)
         fau = face_a.facial_action_units[FacialActionUnit.WINK]
-        self.assertAlmostEqual(fau.intensity, 0.5)
-        self.assertAlmostEqual(fau.confidence, 0.8)
+        self.assertAlmostEqual(fau[0], 0.5)
+        self.assertAlmostEqual(fau[1], 0.8)
 
         fau_msg.intensity[fau_msg.WINK] = 0.0
         fau_msg.confidence[fau_msg.WINK] = 1.0
         fau_a_pub.publish(fau_msg)
         self.spin()
         fau = face_a.facial_action_units[FacialActionUnit.WINK]
-        self.assertAlmostEqual(fau.intensity, 0.0)
-        self.assertAlmostEqual(fau.confidence, 1.0)
+        self.assertAlmostEqual(fau[0], 0.0)
+        self.assertAlmostEqual(fau[1], 1.0)
 
     def test_facial_landmarks(self):
         faces_pub = self.tester_node.create_publisher(IdsList, '/humans/faces/tracked', 1)
@@ -612,11 +612,11 @@ class TestHRI(unittest.TestCase):
         self.assertIsNotNone(face_a.facial_landmarks)
         point = face_a.facial_landmarks[FacialLandmark.NOSE]
         self.assertAlmostEqual(
-            point.x, facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].x)
+            point[0], facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].x)
         self.assertAlmostEqual(
-            point.y, facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].y)
+            point[1], facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].y)
         self.assertAlmostEqual(
-            point.c, facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].c)
+            point[2], facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].c)
 
         facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].x = 1.0
         facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].c = 0.0
@@ -624,11 +624,11 @@ class TestHRI(unittest.TestCase):
         self.spin()
         point = face_a.facial_landmarks[FacialLandmark.NOSE]
         self.assertAlmostEqual(
-            point.x, facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].x)
+            point[0], facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].x)
         self.assertAlmostEqual(
-            point.y, facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].y)
+            point[1], facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].y)
         self.assertAlmostEqual(
-            point.c, facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].c)
+            point[2], facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].c)
 
     def test_skeletal_keypoints(self):
         bodies_pub = self.tester_node.create_publisher(IdsList, '/humans/bodies/tracked', 1)
@@ -650,11 +650,11 @@ class TestHRI(unittest.TestCase):
         self.assertIsNotNone(body_a.skeleton)
         point = body_a.skeleton[SkeletalKeypoint.NOSE]
         self.assertAlmostEqual(
-            point.x, skeleton_msg.skeleton[skeleton_msg.NOSE].x)
+            point[0], skeleton_msg.skeleton[skeleton_msg.NOSE].x)
         self.assertAlmostEqual(
-            point.y, skeleton_msg.skeleton[skeleton_msg.NOSE].y)
+            point[1], skeleton_msg.skeleton[skeleton_msg.NOSE].y)
         self.assertAlmostEqual(
-            point.c, skeleton_msg.skeleton[skeleton_msg.NOSE].c)
+            point[2], skeleton_msg.skeleton[skeleton_msg.NOSE].c)
 
         skeleton_msg.skeleton[skeleton_msg.NOSE].x = 1.0
         skeleton_msg.skeleton[skeleton_msg.NOSE].c = 0.0
@@ -662,11 +662,11 @@ class TestHRI(unittest.TestCase):
         self.spin()
         point = body_a.skeleton[SkeletalKeypoint.NOSE]
         self.assertAlmostEqual(
-            point.x, skeleton_msg.skeleton[skeleton_msg.NOSE].x)
+            point[0], skeleton_msg.skeleton[skeleton_msg.NOSE].x)
         self.assertAlmostEqual(
-            point.y, skeleton_msg.skeleton[skeleton_msg.NOSE].y)
+            point[1], skeleton_msg.skeleton[skeleton_msg.NOSE].y)
         self.assertAlmostEqual(
-            point.c, skeleton_msg.skeleton[skeleton_msg.NOSE].c)
+            point[2], skeleton_msg.skeleton[skeleton_msg.NOSE].c)
 
     def test_callbacks(self):
         faces_pub = self.tester_node.create_publisher(IdsList, '/humans/faces/tracked', 1)
