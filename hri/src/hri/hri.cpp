@@ -99,42 +99,42 @@ HRIListener::~HRIListener()
     node_interfaces_.get_node_logging_interface()->get_logger(), "Closing the HRI Listener");
 }
 
-std::map<ID, ConstFacePtr> HRIListener::getFaces() const
+std::map<ID, FacePtr> HRIListener::getFaces() const
 {
-  std::map<ID, ConstFacePtr> result;
+  std::map<ID, FacePtr> result;
   for (auto const & f : faces_) {
-    result[f.first] = std::const_pointer_cast<Face>(f.second);
+    result[f.first] = f.second;
   }
   return result;
 }
 
-std::map<ID, ConstBodyPtr> HRIListener::getBodies() const
+std::map<ID, BodyPtr> HRIListener::getBodies() const
 {
-  std::map<ID, ConstBodyPtr> result;
+  std::map<ID, BodyPtr> result;
   for (auto const & f : bodies_) {
-    result[f.first] = std::const_pointer_cast<Body>(f.second);
+    result[f.first] = f.second;
   }
   return result;
 }
 
-std::map<ID, ConstVoicePtr> HRIListener::getVoices() const
+std::map<ID, VoicePtr> HRIListener::getVoices() const
 {
-  std::map<ID, ConstVoicePtr> result;
+  std::map<ID, VoicePtr> result;
   for (auto const & f : voices_) {
-    result[f.first] = std::const_pointer_cast<Voice>(f.second);
+    result[f.first] = f.second;
   }
   return result;
 }
 
-std::map<ID, ConstPersonPtr> HRIListener::getPersons() const
+std::map<ID, PersonPtr> HRIListener::getPersons() const
 {
-  std::map<ID, ConstPersonPtr> result;
+  std::map<ID, PersonPtr> result;
   std::vector<PersonPtr> aliased;
 
   // copy in results all the persons that are not aliased
   for (auto const & f : persons_) {
     if (!f.second->alias()) {
-      result[f.first] = std::const_pointer_cast<Person>(f.second);
+      result[f.first] = f.second;
     } else {
       aliased.push_back(f.second);
     }
@@ -154,15 +154,15 @@ std::map<ID, ConstPersonPtr> HRIListener::getPersons() const
   return result;
 }
 
-std::map<ID, ConstPersonPtr> HRIListener::getTrackedPersons() const
+std::map<ID, PersonPtr> HRIListener::getTrackedPersons() const
 {
-  std::map<ID, ConstPersonPtr> result;
+  std::map<ID, PersonPtr> result;
   std::vector<PersonPtr> aliased;
 
   // copy in results all the persons that are not aliased
   for (auto const & f : tracked_persons_) {
     if (!f.second->alias()) {
-      result[f.first] = std::const_pointer_cast<Person>(f.second);
+      result[f.first] = f.second;
     } else {
       aliased.push_back(f.second);
     }
@@ -338,7 +338,7 @@ void HRIListener::onTrackedFeature(
             id, node_interfaces_, callback_group_, tf_buffer_, reference_frame_));
         // invoke all the callbacks
         for (auto & cb : face_callbacks_) {
-          cb(std::const_pointer_cast<Face>(faces_[id]));
+          cb(faces_[id]);
         }
       }
       break;
@@ -349,7 +349,7 @@ void HRIListener::onTrackedFeature(
             id, node_interfaces_, callback_group_, tf_buffer_, reference_frame_));
         // invoke all the callbacks
         for (auto & cb : body_callbacks_) {
-          cb(std::const_pointer_cast<Body>(bodies_[id]));
+          cb(bodies_[id]);
         }
       }
       break;
@@ -360,7 +360,7 @@ void HRIListener::onTrackedFeature(
             id, node_interfaces_, callback_group_, tf_buffer_, reference_frame_));
         // invoke all the callbacks
         for (auto & cb : voice_callbacks_) {
-          cb(std::const_pointer_cast<Voice>(voices_[id]));
+          cb(voices_[id]);
         }
       }
       break;
@@ -371,7 +371,7 @@ void HRIListener::onTrackedFeature(
             id, node_interfaces_, callback_group_, weak_from_this(), tf_buffer_, reference_frame_));
         // invoke all the callbacks
         for (auto & cb : person_callbacks_) {
-          cb(std::const_pointer_cast<Person>(persons_[id]));
+          cb(persons_[id]);
         }
       }
       break;
@@ -382,7 +382,7 @@ void HRIListener::onTrackedFeature(
             id, node_interfaces_, callback_group_, weak_from_this(), tf_buffer_, reference_frame_));
         // invoke all the callbacks
         for (auto & cb : person_tracked_callbacks_) {
-          cb(std::const_pointer_cast<Person>(tracked_persons_[id]));
+          cb(tracked_persons_[id]);
         }
       }
       break;
