@@ -233,9 +233,15 @@ struct NodeInterfaces
     std::visit(
       [&](auto && node) {
         base = node->get_node_base_interface();
+        clock = node->get_node_clock_interface();
+        graph = node->get_node_graph_interface();
         logging = node->get_node_logging_interface();
         parameters = node->get_node_parameters_interface();
+        services = node->get_node_services_interface();
+        time_source = node->get_node_time_source_interface();
+        timers = node->get_node_timers_interface();
         topics = node->get_node_topics_interface();
+        waitables = node->get_node_waitables_interface();
       }, node_like);
   }
 
@@ -243,23 +249,62 @@ struct NodeInterfaces
   get_node_base_interface() const {return base;}
   rclcpp::node_interfaces::NodeBaseInterface::SharedPtr &
   get_node_base_interface() {return base;}
+
+  const rclcpp::node_interfaces::NodeClockInterface::SharedPtr &
+  get_node_clock_interface() const {return clock;}
+  rclcpp::node_interfaces::NodeClockInterface::SharedPtr &
+  get_node_clock_interface() {return clock;}
+
+  const rclcpp::node_interfaces::NodeGraphInterface::SharedPtr &
+  get_node_graph_interface() const {return graph;}
+  rclcpp::node_interfaces::NodeGraphInterface::SharedPtr &
+  get_node_graph_interface() {return graph;}
+
   const rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr &
   get_node_logging_interface() const {return logging;}
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr &
   get_node_logging_interface() {return logging;}
+
   const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr &
   get_node_parameters_interface() const {return parameters;}
   rclcpp::node_interfaces::NodeParametersInterface::SharedPtr &
   get_node_parameters_interface() {return parameters;}
+
+  const rclcpp::node_interfaces::NodeServicesInterface::SharedPtr &
+  get_node_services_interface() const {return services;}
+  rclcpp::node_interfaces::NodeServicesInterface::SharedPtr &
+  get_node_services_interface() {return services;}
+
+  const rclcpp::node_interfaces::NodeTimeSourceInterface::SharedPtr &
+  get_node_time_source_interface() const {return time_source;}
+  rclcpp::node_interfaces::NodeTimeSourceInterface::SharedPtr &
+  get_node_time_source_interface() {return time_source;}
+
+  const rclcpp::node_interfaces::NodeTimersInterface::SharedPtr &
+  get_node_timers_interface() const {return timers;}
+  rclcpp::node_interfaces::NodeTimersInterface::SharedPtr &
+  get_node_timers_interface() {return timers;}
+
   const rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr &
   get_node_topics_interface() const {return topics;}
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr &
   get_node_topics_interface() {return topics;}
 
+  const rclcpp::node_interfaces::NodeWaitablesInterface::SharedPtr &
+  get_node_waitables_interface() const {return waitables;}
+  rclcpp::node_interfaces::NodeWaitablesInterface::SharedPtr &
+  get_node_waitables_interface() {return waitables;}
+
   rclcpp::node_interfaces::NodeBaseInterface::SharedPtr base;
+  rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock;
+  rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph;
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging;
   rclcpp::node_interfaces::NodeParametersInterface::SharedPtr parameters;
+  rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services;
+  rclcpp::node_interfaces::NodeTimeSourceInterface::SharedPtr time_source;
+  rclcpp::node_interfaces::NodeTimersInterface::SharedPtr timers;
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics;
+  rclcpp::node_interfaces::NodeWaitablesInterface::SharedPtr waitables;
 };
 
 struct PointOfInterest
