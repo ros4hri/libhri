@@ -17,6 +17,7 @@
 
 #include <string>
 #include <map>
+#include <type_traits>
 #include <variant>
 
 #include "hri_msgs/msg/engagement_level.hpp"
@@ -208,6 +209,18 @@ enum class FeatureType
   kBody = (1u << 3),
   kVoice = (1u << 4)
 };  // note that FeatureType values can also be used as bitmasks
+
+inline FeatureType operator&(const FeatureType & lhs, const FeatureType & rhs)
+{
+  return static_cast<FeatureType>(
+    std::underlying_type<FeatureType>::type(lhs) & std::underlying_type<FeatureType>::type(rhs));
+}
+
+inline FeatureType operator|(const FeatureType & lhs, const FeatureType & rhs)
+{
+  return static_cast<FeatureType>(
+    std::underlying_type<FeatureType>::type(lhs) | std::underlying_type<FeatureType>::type(rhs));
+}
 
 enum class Gender
 {
