@@ -48,7 +48,7 @@ std::optional<geometry_msgs::msg::TransformStamped> FeatureTracker::transformFro
     auto transform = tf_buffer_.lookupTransform(reference_frame_, frame_name, tf2::TimePointZero);
     return transform;
   } catch (const tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(
+    RCLCPP_DEBUG_STREAM(
       node_interfaces_.get_node_logging_interface()->get_logger(),
       "failed to transform " << frame_name << " to " << reference_frame_ << ". " << ex.what());
     return {};

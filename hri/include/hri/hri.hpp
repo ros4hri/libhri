@@ -188,6 +188,34 @@ public:
    */
   rclcpp::CallbackGroup::SharedPtr getCallbackGroup() {return callback_group_;}
 
+  /** \brief Clears internal data, but leaves the registered callbacks
+   */
+  void clearData()
+  {
+    faces_.clear();
+    bodies_.clear();
+    voices_.clear();
+    persons_.clear();
+    tracked_persons_.clear();
+    tf_buffer_.clear();
+  }
+
+  /** \brief Clears the registered callbacks.
+   */
+  void clearCallbacks()
+  {
+    face_callbacks_.clear();
+    face_lost_callbacks_.clear();
+    body_callbacks_.clear();
+    body_lost_callbacks_.clear();
+    voice_callbacks_.clear();
+    voice_lost_callbacks_.clear();
+    person_callbacks_.clear();
+    person_lost_callbacks_.clear();
+    person_tracked_callbacks_.clear();
+    person_tracked_lost_callbacks_.clear();
+  }
+
 protected:
   explicit HRIListener(NodeLikeSharedPtr node_like);
 
