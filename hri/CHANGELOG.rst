@@ -2,6 +2,14 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add clear functions; lower missing tf log level
+* add bitwise operators to FeatureType
+* revert feature constness for getters
+* add remaining interfaces to NodeInterfaces
+* Contributors: Luka Juricic
+
 2.1.0 (2024-01-18)
 ------------------
 * add tf listener to the callback group
