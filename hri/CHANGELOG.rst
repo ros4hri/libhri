@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.0 (2024-01-18)
+------------------
 * add clear functions; lower missing tf log level
 * add bitwise operators to FeatureType
 * revert feature constness for getters
