@@ -2,6 +2,32 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
+Major new release, moved from ROS 1 to ROS 2, based on libhri + pybind11.
+
+While the overall pyhri API should not have changed in significant ways, this
+release *only works with ROS 2*!
+
+Detailed changelog:
+
+* convert IntensityConfidence and PointOfInterest to tuple
+* add documentation
+* fix version, documentation, example install
+* add pyhri example
+* move rivate headers to src
+* cleanup CMakeLists.txt
+* add test dependencies
+* add tf listener to the callback group
+* fix external code acknowledgement
+* minor adaptations to ndarray_converter
+* add external code ndarray_converter for image cast
+* add pyhri tests and align hri ones with the former
+* add pybind11 based python bindings to pyhri
+* add pyhri python bindings package
+* Contributors: Luka Juricic
+
 0.4.1 (2023-07-05)
 ------------------
 * fix voice callbacks test

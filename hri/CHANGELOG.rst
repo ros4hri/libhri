@@ -2,6 +2,14 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add tf listener to the callback group
+* add pyhri tests and align hri ones with the former
+* add pybind11 based python bindings to pyhri
+* add pyhri python bindings package
+* Contributors: Luka Juricic
+
 2.0.0 (2023-12-19)
 ------------------
 
