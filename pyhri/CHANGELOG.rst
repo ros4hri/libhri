@@ -2,8 +2,8 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.0 (2024-01-18)
+------------------
 
 Major new release, moved from ROS 1 to ROS 2, based on libhri + pybind11.
 
