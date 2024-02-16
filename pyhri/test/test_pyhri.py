@@ -30,7 +30,7 @@ import std_msgs.msg
 from tf2_ros import StaticTransformBroadcaster
 import unittest
 
-from pyhri import (
+from hri import (
     EngagementLevel, FacialActionUnit, FacialLandmark, Gender, HRIListener, SkeletalKeypoint)
 
 

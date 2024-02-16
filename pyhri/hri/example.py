@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import cv2
-from pyhri import HRIListener
+from hri import HRIListener
 import rclpy
 from rclpy.executors import SingleThreadedExecutor, ExternalShutdownException
 from rclpy.node import Node

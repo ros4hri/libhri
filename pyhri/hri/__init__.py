@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pyhri.hri import (
+from hri.hri import (
     Body,
     EngagementLevel,
     Face,
