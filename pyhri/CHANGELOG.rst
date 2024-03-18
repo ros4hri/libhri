@@ -2,8 +2,8 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.0 (2024-03-18)
+------------------
 * change python module name to hri
 * Contributors: Luka Juricic
 
