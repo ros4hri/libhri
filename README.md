@@ -12,7 +12,7 @@ It contains two packages:
 
 ## Documentation
 
-For the `pyhri` documentation, use `print(hri.hri.<class>.__doc__)` and/or `help(hri.hri.<class>)`.
+For the `pyhri` documentation, first `import hri`, then use `help(hri.<class>)`.
 
 The main entry point for using the library is the `HRIListener` class.
 
