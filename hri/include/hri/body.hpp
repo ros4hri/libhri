@@ -21,6 +21,7 @@
 
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
 #include "hri_msgs/msg/skeleton2_d.hpp"
+#include "std_msgs/msg/string.hpp"
 #include "opencv2/core.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
@@ -67,20 +68,25 @@ public:
    */
   std::optional<SkeletalKeypoints> skeleton() const {return skeleton_;}
 
+  std::optional<std::string> bodyDescription() const {return body_description_;}
+
 private:
   void onRoI(hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr msg);
   void onCropped(sensor_msgs::msg::Image::ConstSharedPtr msg);
   void onSkeleton(hri_msgs::msg::Skeleton2D::ConstSharedPtr msg);
+  void onBodyDescription(std_msgs::msg::String::ConstSharedPtr msg);
 
   void invalidate();
 
   std::optional<cv::Rect2f> roi_;
   std::optional<cv::Mat> cropped_;
   std::optional<SkeletalKeypoints> skeleton_;
+  std::optional<std::string> body_description_;
 
   rclcpp::Subscription<hri_msgs::msg::NormalizedRegionOfInterest2D>::SharedPtr roi_subscriber_;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr cropped_subscriber_;
   rclcpp::Subscription<hri_msgs::msg::Skeleton2D>::SharedPtr skeleton_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr body_description_subscriber_;
 };
 
 typedef std::shared_ptr<Body> BodyPtr;

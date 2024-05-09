@@ -46,6 +46,8 @@ Body::Body(
   rclcpp::SubscriptionOptions options;
   options.callback_group = callback_group_;
   auto default_qos = rclcpp::SystemDefaultsQoS();
+  rclcpp::QoS latched_qos(1);
+  latched_qos.transient_local();
 
   roi_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::NormalizedRegionOfInterest2D>(
     node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
@@ -59,6 +61,11 @@ Body::Body(
     node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
     kNs_ + "/skeleton2d", default_qos,
     bind(&Body::onSkeleton, this, std::placeholders::_1), options);
+
+  body_description_subscriber_ = rclcpp::create_subscription<std_msgs::msg::String>(
+    node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
+    kNs_ + "/urdf", latched_qos,
+    bind(&Body::onBodyDescription, this, std::placeholders::_1), options);
 }
 
 Body::~Body()
@@ -87,6 +94,11 @@ void Body::onSkeleton(const hri_msgs::msg::Skeleton2D::ConstSharedPtr msg)
     auto & kp = msg->skeleton[i];
     (*skeleton_)[static_cast<SkeletalKeypoint>(i)] = PointOfInterest{kp.x, kp.y, kp.c};
   }
+}
+
+void Body::onBodyDescription(const std_msgs::msg::String::ConstSharedPtr msg)
+{
+  body_description_ = msg->data;
 }
 
 void Body::invalidate()
