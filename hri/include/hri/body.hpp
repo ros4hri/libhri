@@ -68,6 +68,11 @@ public:
    */
   std::optional<SkeletalKeypoints> skeleton() const {return skeleton_;}
 
+  /** \brief Returns the body kinematic description in URDF format.
+   *
+   * The body kinematic description follows the template defined in
+   * http://www.ros.org/reps/rep-0155.html#kinematic-model-of-the-human
+   */
   std::optional<std::string> bodyDescription() const {return body_description_;}
 
 private:
