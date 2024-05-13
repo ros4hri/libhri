@@ -2,6 +2,12 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* adding doxygen documentation
+* adding body description support for Body objects
+* Contributors: lorenzoferrini
+
 2.3.0 (2024-03-18)
 ------------------
 
