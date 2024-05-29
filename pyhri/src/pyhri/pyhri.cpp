@@ -34,8 +34,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/utilities.hpp"
 
-#include "pyhri/ndarray_converter.h"
 #include "pyhri/converters.hpp"
+#include "pyhri/ndarray_converter.h"
 
 namespace py = pybind11;
 
@@ -46,7 +46,8 @@ class PyFeatureTracker : public hri::FeatureTracker
 {
 public:
   using hri::FeatureTracker::FeatureTracker;
-  std::optional<geometry_msgs::msg::TransformStamped> transform() const override
+  std::optional<geometry_msgs::msg::TransformStamped>
+  transform() const override
   {
     PYBIND11_OVERRIDE(
       // cppcheck-suppress[syntaxError] trailing comma is required for 0 arg function overrides
@@ -64,8 +65,8 @@ public:
 class PyHRIListener : public hri::HRIListener
 {
 public:
-  [[nodiscard]] static std::shared_ptr<PyHRIListener> create(
-    std::string node_name, bool auto_spin)
+  [[nodiscard]] static std::shared_ptr<PyHRIListener>
+  create(std::string node_name, bool auto_spin)
   {
     if (!rclcpp::ok()) {
       rclcpp::init(0, NULL);
@@ -74,7 +75,10 @@ public:
       new PyHRIListener(rclcpp::Node::make_shared(node_name), auto_spin));
   }
 
-  void spin_some(std::chrono::nanoseconds timeout) {executor_->spin_some(timeout);}
+  void spin_some(std::chrono::nanoseconds timeout)
+  {
+    executor_->spin_some(timeout);
+  }
 
 protected:
   explicit PyHRIListener(rclcpp::Node::SharedPtr node, bool auto_spin)
@@ -95,15 +99,15 @@ private:
 
 constexpr char pybind_enum_doc[]{
   R"(
-  This is an enumeration class but different from enum.Enum.
+This is an enumeration class but different from enum.Enum.
 
-  For a basic usage, see
-  https://pybind11.readthedocs.io/en/stable/classes.html#enumerations-and-internal-types.
-  For some insights on the differences with enum.Enum, see
-  https://github.com/pybind/pybind11/issues/2332.
+For a basic usage, see
+https://pybind11.readthedocs.io/en/stable/classes.html#enumerations-and-internal-types.
+For some insights on the differences with enum.Enum, see
+https://github.com/pybind/pybind11/issues/2332.
 
-  Notably, the object is not iterable, you can use use `__members__` method instead.
-  )"};
+Notably, the object is not iterable, you can use use `__members__` method instead.
+)"};
 
 PYBIND11_MODULE(hri, m) {
   m.doc() =
@@ -112,12 +116,13 @@ PYBIND11_MODULE(hri, m) {
 
     Each exported object is documented, to view it use `print(<class>.__doc__)` and/or
     `help(<class)`.
-    The main entry point for its usage is `HRIListener` class.
+    The main entry point for its usage is :py:class:`HRIListener` class.
     )";
 
   NDArrayConverter::init_numpy();
 
-  py::enum_<hri::EngagementLevel> engagement_level(m, "EngagementLevel", pybind_enum_doc);
+  py::enum_<hri::EngagementLevel> engagement_level(m, "EngagementLevel",
+    pybind_enum_doc);
   engagement_level.value("DISENGAGED", hri::EngagementLevel::kDisengaged);
   engagement_level.value("ENGAGING", hri::EngagementLevel::kEngaging);
   engagement_level.value("ENGAGED", hri::EngagementLevel::kEngaged);
@@ -136,7 +141,9 @@ PYBIND11_MODULE(hri, m) {
   fau.value("UPPER_LID_RAISER", hri::FacialActionUnit::kUpperLidRaiser);
   fau.value("CHEEK_RAISER", hri::FacialActionUnit::kCheeckRaiser);
   fau.value("LID_TIGHTENER", hri::FacialActionUnit::kLidTightener);
-  fau.value("LIPS_TOWARD_EACH_OTHER", hri::FacialActionUnit::kLipsTowardEachOther);
+  fau.value(
+    "LIPS_TOWARD_EACH_OTHER",
+    hri::FacialActionUnit::kLipsTowardEachOther);
   fau.value("NOSE_WRINKLER", hri::FacialActionUnit::kNoseWrinkler);
   fau.value("UPPER_LIP_RAISER", hri::FacialActionUnit::kUpperLipRaiser);
   fau.value("NASOLABIAL_DEEPENER", hri::FacialActionUnit::kNasolabialDeepener);
@@ -174,10 +181,16 @@ PYBIND11_MODULE(hri, m) {
   fau.value(
     "EYES_POSITIONED_TO_LOOK_AT_OTHER_PERSON",
     hri::FacialActionUnit::kEyesPositionedToLookAtOtherPerson);
-  fau.value("BROWS_AND_FOREHEAD_NOT_VISIBLE", hri::FacialActionUnit::kBrownsAndForeheadNotVisible);
+  fau.value(
+    "BROWS_AND_FOREHEAD_NOT_VISIBLE",
+    hri::FacialActionUnit::kBrownsAndForeheadNotVisible);
   fau.value("EYES_NOT_VISIBLE", hri::FacialActionUnit::kEyesNotVisible);
-  fau.value("LOWER_FACE_NOT_VISIBLE", hri::FacialActionUnit::kLowerFaceNotVisible);
-  fau.value("ENTIRE_FACE_NOT_VISIBLE", hri::FacialActionUnit::kEntireFaceNotVisible);
+  fau.value(
+    "LOWER_FACE_NOT_VISIBLE",
+    hri::FacialActionUnit::kLowerFaceNotVisible);
+  fau.value(
+    "ENTIRE_FACE_NOT_VISIBLE",
+    hri::FacialActionUnit::kEntireFaceNotVisible);
   fau.value("UNSOCIABLE", hri::FacialActionUnit::kUnsociable);
   fau.value("JAW_THRUST", hri::FacialActionUnit::kJawThrust);
   fau.value("JAW_SIDEWAYS", hri::FacialActionUnit::kJawSideways);
@@ -201,14 +214,17 @@ PYBIND11_MODULE(hri, m) {
   fau.value("SWALLOW", hri::FacialActionUnit::kSwallow);
   fau.value("CHEWING", hri::FacialActionUnit::kChewing);
   fau.value("SHOULDER_SHRUG", hri::FacialActionUnit::kShoulderShrug);
-  fau.value("HEAD_SHAKE_BACK_AND_FORTH", hri::FacialActionUnit::kHeadShakeBackAndForth);
+  fau.value(
+    "HEAD_SHAKE_BACK_AND_FORTH",
+    hri::FacialActionUnit::kHeadShakeBackAndForth);
   fau.value("HEAD_NOD_UP_AND_DOWN", hri::FacialActionUnit::kHeadNodUpAndDown);
   fau.value("FLASH", hri::FacialActionUnit::kFlash);
   fau.value("PARTIAL_FLASH", hri::FacialActionUnit::kPartialFlash);
   fau.value("SHIVER_TREMBLE", hri::FacialActionUnit::kShiverTremble);
   fau.value("FAST_UP_DOWN_LOOK", hri::FacialActionUnit::kFastUpDownLook);
 
-  py::enum_<hri::FacialLandmark> facial_landmark(m, "FacialLandmark", pybind_enum_doc);
+  py::enum_<hri::FacialLandmark> facial_landmark(m, "FacialLandmark",
+    pybind_enum_doc);
   facial_landmark.value("RIGHT_EAR", hri::FacialLandmark::kRightEar);
   facial_landmark.value("RIGHT_PROFILE_1", hri::FacialLandmark::kRightProfile1);
   facial_landmark.value("RIGHT_PROFILE_2", hri::FacialLandmark::kRightProfile2);
@@ -226,29 +242,51 @@ PYBIND11_MODULE(hri, m) {
   facial_landmark.value("LEFT_PROFILE_5", hri::FacialLandmark::kLeftProfile5);
   facial_landmark.value("LEFT_PROFILE_6", hri::FacialLandmark::kLeftProfile6);
   facial_landmark.value("LEFT_PROFILE_7", hri::FacialLandmark::kLeftProfile7);
-  facial_landmark.value("RIGHT_EYEBROW_OUTSIDE", hri::FacialLandmark::kRightEyebrowOutside);
+  facial_landmark.value(
+    "RIGHT_EYEBROW_OUTSIDE",
+    hri::FacialLandmark::kRightEyebrowOutside);
   facial_landmark.value("RIGHT_EYEBROW_1", hri::FacialLandmark::kRightEyebrow1);
   facial_landmark.value("RIGHT_EYEBROW_2", hri::FacialLandmark::kRightEyebrow2);
   facial_landmark.value("RIGHT_EYEBROW_3", hri::FacialLandmark::kRightEyebrow3);
-  facial_landmark.value("RIGHT_EYEBROW_INSIDE", hri::FacialLandmark::kRightEyebrowInside);
-  facial_landmark.value("RIGHT_EYE_OUTSIDE", hri::FacialLandmark::kRightEyeOutside);
+  facial_landmark.value(
+    "RIGHT_EYEBROW_INSIDE",
+    hri::FacialLandmark::kRightEyebrowInside);
+  facial_landmark.value(
+    "RIGHT_EYE_OUTSIDE",
+    hri::FacialLandmark::kRightEyeOutside);
   facial_landmark.value("RIGHT_EYE_TOP_1", hri::FacialLandmark::kRightEyeTop1);
   facial_landmark.value("RIGHT_EYE_TOP_2", hri::FacialLandmark::kRightEyeTop2);
-  facial_landmark.value("RIGHT_EYE_INSIDE", hri::FacialLandmark::kRightEyeInside);
-  facial_landmark.value("RIGHT_EYE_BOTTOM_1", hri::FacialLandmark::kRightEyeBottom1);
-  facial_landmark.value("RIGHT_EYE_BOTTOM_2", hri::FacialLandmark::kRightEyeBottom2);
+  facial_landmark.value(
+    "RIGHT_EYE_INSIDE",
+    hri::FacialLandmark::kRightEyeInside);
+  facial_landmark.value(
+    "RIGHT_EYE_BOTTOM_1",
+    hri::FacialLandmark::kRightEyeBottom1);
+  facial_landmark.value(
+    "RIGHT_EYE_BOTTOM_2",
+    hri::FacialLandmark::kRightEyeBottom2);
   facial_landmark.value("RIGHT_PUPIL", hri::FacialLandmark::kRightPupil);
-  facial_landmark.value("LEFT_EYEBROW_OUTSIDE", hri::FacialLandmark::kLeftEyebrowOutside);
+  facial_landmark.value(
+    "LEFT_EYEBROW_OUTSIDE",
+    hri::FacialLandmark::kLeftEyebrowOutside);
   facial_landmark.value("LEFT_EYEBROW_1", hri::FacialLandmark::kLeftEyebrow1);
   facial_landmark.value("LEFT_EYEBROW_2", hri::FacialLandmark::kLeftEyebrow2);
   facial_landmark.value("LEFT_EYEBROW_3", hri::FacialLandmark::kLeftEyebrow3);
-  facial_landmark.value("LEFT_EYEBROW_INSIDE", hri::FacialLandmark::kLeftEyebrowInside);
-  facial_landmark.value("LEFT_EYE_OUTSIDE", hri::FacialLandmark::kLeftEyeOutside);
+  facial_landmark.value(
+    "LEFT_EYEBROW_INSIDE",
+    hri::FacialLandmark::kLeftEyebrowInside);
+  facial_landmark.value(
+    "LEFT_EYE_OUTSIDE",
+    hri::FacialLandmark::kLeftEyeOutside);
   facial_landmark.value("LEFT_EYE_TOP_1", hri::FacialLandmark::kLeftEyeTop1);
   facial_landmark.value("LEFT_EYE_TOP_2", hri::FacialLandmark::kLeftEyeTop2);
   facial_landmark.value("LEFT_EYE_INSIDE", hri::FacialLandmark::kLeftEyeInside);
-  facial_landmark.value("LEFT_EYE_BOTTOM_1", hri::FacialLandmark::kLeftEyeBottom1);
-  facial_landmark.value("LEFT_EYE_BOTTOM_2", hri::FacialLandmark::kLeftEyeBottom2);
+  facial_landmark.value(
+    "LEFT_EYE_BOTTOM_1",
+    hri::FacialLandmark::kLeftEyeBottom1);
+  facial_landmark.value(
+    "LEFT_EYE_BOTTOM_2",
+    hri::FacialLandmark::kLeftEyeBottom2);
   facial_landmark.value("LEFT_PUPIL", hri::FacialLandmark::kLeftPupil);
   facial_landmark.value("SELLION", hri::FacialLandmark::kSellion);
   facial_landmark.value("NOSE_1", hri::FacialLandmark::kNose1);
@@ -259,34 +297,79 @@ PYBIND11_MODULE(hri, m) {
   facial_landmark.value("NOSTRIL_3", hri::FacialLandmark::kNostril3);
   facial_landmark.value("NOSTRIL_4", hri::FacialLandmark::kNostril4);
   facial_landmark.value("NOSTRIL_5", hri::FacialLandmark::kNostril5);
-  facial_landmark.value("MOUTH_OUTER_RIGHT", hri::FacialLandmark::kMouthOuterRight);
-  facial_landmark.value("MOUTH_OUTER_TOP_1", hri::FacialLandmark::kMouthOuterTop1);
-  facial_landmark.value("MOUTH_OUTER_TOP_2", hri::FacialLandmark::kMouthOuterTop2);
-  facial_landmark.value("MOUTH_OUTER_TOP_3", hri::FacialLandmark::kMouthOuterTop3);
-  facial_landmark.value("MOUTH_OUTER_TOP_4", hri::FacialLandmark::kMouthOuterTop4);
-  facial_landmark.value("MOUTH_OUTER_TOP_5", hri::FacialLandmark::kMouthOuterTop5);
-  facial_landmark.value("MOUTH_OUTER_LEFT", hri::FacialLandmark::kMouthOuterLeft);
-  facial_landmark.value("MOUTH_OUTER_BOTTOM_1", hri::FacialLandmark::kMouthOuterBottom1);
-  facial_landmark.value("MOUTH_OUTER_BOTTOM_2", hri::FacialLandmark::kMouthOuterBottom2);
-  facial_landmark.value("MOUTH_OUTER_BOTTOM_3", hri::FacialLandmark::kMouthOuterBottom3);
-  facial_landmark.value("MOUTH_OUTER_BOTTOM_4", hri::FacialLandmark::kMouthOuterBottom4);
-  facial_landmark.value("MOUTH_OUTER_BOTTOM_5", hri::FacialLandmark::kMouthOuterBottom5);
-  facial_landmark.value("MOUTH_INNER_RIGHT", hri::FacialLandmark::kMouthInnerRight);
-  facial_landmark.value("MOUTH_INNER_TOP_1", hri::FacialLandmark::kMouthInnerTop1);
-  facial_landmark.value("MOUTH_INNER_TOP_2", hri::FacialLandmark::kMouthInnerTop2);
-  facial_landmark.value("MOUTH_INNER_TOP_3", hri::FacialLandmark::kMouthInnerTop3);
-  facial_landmark.value("MOUTH_INNER_LEFT", hri::FacialLandmark::kMouthInnerLeft);
-  facial_landmark.value("MOUTH_INNER_BOTTOM_1", hri::FacialLandmark::kMouthInnerBottom1);
-  facial_landmark.value("MOUTH_INNER_BOTTOM_2", hri::FacialLandmark::kMouthInnerBottom2);
-  facial_landmark.value("MOUTH_INNER_BOTTOM_3", hri::FacialLandmark::kMouthInnerBottom3);
+  facial_landmark.value(
+    "MOUTH_OUTER_RIGHT",
+    hri::FacialLandmark::kMouthOuterRight);
+  facial_landmark.value(
+    "MOUTH_OUTER_TOP_1",
+    hri::FacialLandmark::kMouthOuterTop1);
+  facial_landmark.value(
+    "MOUTH_OUTER_TOP_2",
+    hri::FacialLandmark::kMouthOuterTop2);
+  facial_landmark.value(
+    "MOUTH_OUTER_TOP_3",
+    hri::FacialLandmark::kMouthOuterTop3);
+  facial_landmark.value(
+    "MOUTH_OUTER_TOP_4",
+    hri::FacialLandmark::kMouthOuterTop4);
+  facial_landmark.value(
+    "MOUTH_OUTER_TOP_5",
+    hri::FacialLandmark::kMouthOuterTop5);
+  facial_landmark.value(
+    "MOUTH_OUTER_LEFT",
+    hri::FacialLandmark::kMouthOuterLeft);
+  facial_landmark.value(
+    "MOUTH_OUTER_BOTTOM_1",
+    hri::FacialLandmark::kMouthOuterBottom1);
+  facial_landmark.value(
+    "MOUTH_OUTER_BOTTOM_2",
+    hri::FacialLandmark::kMouthOuterBottom2);
+  facial_landmark.value(
+    "MOUTH_OUTER_BOTTOM_3",
+    hri::FacialLandmark::kMouthOuterBottom3);
+  facial_landmark.value(
+    "MOUTH_OUTER_BOTTOM_4",
+    hri::FacialLandmark::kMouthOuterBottom4);
+  facial_landmark.value(
+    "MOUTH_OUTER_BOTTOM_5",
+    hri::FacialLandmark::kMouthOuterBottom5);
+  facial_landmark.value(
+    "MOUTH_INNER_RIGHT",
+    hri::FacialLandmark::kMouthInnerRight);
+  facial_landmark.value(
+    "MOUTH_INNER_TOP_1",
+    hri::FacialLandmark::kMouthInnerTop1);
+  facial_landmark.value(
+    "MOUTH_INNER_TOP_2",
+    hri::FacialLandmark::kMouthInnerTop2);
+  facial_landmark.value(
+    "MOUTH_INNER_TOP_3",
+    hri::FacialLandmark::kMouthInnerTop3);
+  facial_landmark.value(
+    "MOUTH_INNER_LEFT",
+    hri::FacialLandmark::kMouthInnerLeft);
+  facial_landmark.value(
+    "MOUTH_INNER_BOTTOM_1",
+    hri::FacialLandmark::kMouthInnerBottom1);
+  facial_landmark.value(
+    "MOUTH_INNER_BOTTOM_2",
+    hri::FacialLandmark::kMouthInnerBottom2);
+  facial_landmark.value(
+    "MOUTH_INNER_BOTTOM_3",
+    hri::FacialLandmark::kMouthInnerBottom3);
 
-  py::enum_<hri::SkeletalKeypoint> skeletal_keypoint(m, "SkeletalKeypoint", pybind_enum_doc);
+  py::enum_<hri::SkeletalKeypoint> skeletal_keypoint(m, "SkeletalKeypoint",
+    pybind_enum_doc);
   skeletal_keypoint.value("NOSE", hri::SkeletalKeypoint::kNose);
   skeletal_keypoint.value("NECK", hri::SkeletalKeypoint::kNeck);
-  skeletal_keypoint.value("RIGHT_SHOULDER", hri::SkeletalKeypoint::kRightShoulder);
+  skeletal_keypoint.value(
+    "RIGHT_SHOULDER",
+    hri::SkeletalKeypoint::kRightShoulder);
   skeletal_keypoint.value("RIGHT_ELBOW", hri::SkeletalKeypoint::kRightElbow);
   skeletal_keypoint.value("RIGHT_WRIST", hri::SkeletalKeypoint::kRightWrist);
-  skeletal_keypoint.value("LEFT_SHOULDER", hri::SkeletalKeypoint::kLeftShoulder);
+  skeletal_keypoint.value(
+    "LEFT_SHOULDER",
+    hri::SkeletalKeypoint::kLeftShoulder);
   skeletal_keypoint.value("LEFT_ELBOW", hri::SkeletalKeypoint::kLeftElbow);
   skeletal_keypoint.value("LEFT_WRIST", hri::SkeletalKeypoint::kLeftWrist);
   skeletal_keypoint.value("RIGHT_HIP", hri::SkeletalKeypoint::kRightHip);
@@ -300,86 +383,101 @@ PYBIND11_MODULE(hri, m) {
   skeletal_keypoint.value("LEFT_EAR", hri::SkeletalKeypoint::kLeftEar);
   skeletal_keypoint.value("RIGHT_EAR", hri::SkeletalKeypoint::kRightEar);
 
-  py::class_<hri::FeatureTracker, std::shared_ptr<hri::FeatureTracker>, PyFeatureTracker>
+  py::class_<hri::FeatureTracker, std::shared_ptr<hri::FeatureTracker>,
+    PyFeatureTracker>
   feature_tracker(m, "FeatureTracker");
   feature_tracker.doc() =
     R"(
     The generic feature instance being tracked.
 
-    This class should be created and managed only by HRIListener, it is exposed only for read access
-    purposes.
-    All its properties may return None if not available.
+    This class should be created and managed only by :py:class`HRIListener`, it is exposed
+    only for read access purposes. All its properties may return None if not
+    available.
 
     Properties:
-    id -- unique ID of this feature (str)
-    ns -- fully-qualified topic namespace under which this feature is published (str)
-    frame -- name of the tf frame that correspond to this feature (str)
-    transform -- feature stamped 3D transform (geometry_msgs.msg.TransformStamped)
-    valid -- whether the feature is still 'valid', i.e., existing (bool)
+
+    - :py:attr:`id` -- unique ID of this feature (str)
+    - :py:attr:`ns` -- fully-qualified topic namespace under which this feature
+      is published (str)
+    - :py:attr:`frame` -- name of the tf frame that correspond to this feature (str)
+    - :py:attr:`transform` -- feature stamped 3D transform
+      (geometry_msgs.msg.TransformStamped)
+    - :py:attr:`valid` -- whether the feature is still 'valid', i.e., existing (bool)
     )";
   feature_tracker.def_property_readonly(
-    "id", &hri::FeatureTracker::id, "Unique ID of this feature");
+    "id", &hri::FeatureTracker::id,
+    "Unique ID of this feature");
   feature_tracker.def_property_readonly(
     "ns", &hri::FeatureTracker::ns,
     "Fully-qualified topic namespace under which this feature is published");
   feature_tracker.def_property_readonly(
-    "frame", &hri::FeatureTracker::frame, "Name of the tf frame that correspond to this feature");
+    "frame", &hri::FeatureTracker::frame,
+    "Name of the tf frame that correspond to this feature");
   feature_tracker.def_property_readonly(
     "transform", &PyPubFeatureTracker::transform,
     "Feature stamped 3D transform (geometry_msgs.msg.TransformStamped)");
   feature_tracker.def_property_readonly(
-    "valid", &PyPubFeatureTracker::valid, "Whether the feature is still 'valid', i.e., existing");
+    "valid", &PyPubFeatureTracker::valid,
+    "Whether the feature is still 'valid', i.e., existing");
   feature_tracker.def(py::self < py::self);
 
-  py::class_<hri::Body, std::shared_ptr<hri::Body>> body(m, "Body", feature_tracker);
+  py::class_<hri::Body, std::shared_ptr<hri::Body>> body(m, "Body",
+    feature_tracker);
   body.doc() =
     R"(
     The body feature instance being tracked.
 
-    This class should be created and managed only by HRIListener, it is exposed only for read access
+    This class should be created and managed only by :py:class`HRIListener`, it is exposed only for read access
     purposes.
-    It inherits from FeatureTracker, check its documentation for additional properties.
+    It inherits from :py:class:`FeatureTracker`, check its documentation for additional properties.
     All its properties may return None if not available.
 
     Properties:
-    roi -- normalized 2D region of interest (RoI) of the body (Tuple (x,y,width,height))
-    cropped -- body image, cropped from the source image (numpy.ndarray)
-    skeleton -- 2D skeleton keypoints (Dict[SkeletalKeypoint, PointOfInterest])
+
+    - :py:attr:`roi` -- normalized 2D region of interest (RoI) of the body (Tuple (x,y,width,height))
+    - :py:attr:`cropped` -- body image, cropped from the source image (numpy.ndarray)
+    - :py:attr:`skeleton` -- 2D skeleton keypoints (Dict[SkeletalKeypoint, PointOfInterest])
     )";
   body.def_property_readonly(
     "roi", &hri::Body::roi,
-    "Normalized 2D region of interest (RoI) of the body (Tuple (x,y,width,height))");
+    "Normalized 2D region of interest (RoI) of the "
+    "body (Tuple (x,y,width,height))");
   body.def_property_readonly(
-    "cropped", &hri::Body::cropped, "Body image, cropped from the source image (numpy.ndarray)");
+    "cropped", &hri::Body::cropped,
+    "Body image, cropped from the source image (numpy.ndarray)");
   body.def_property_readonly(
     "skeleton", &hri::Body::skeleton,
     "2D skeleton keypoints (Dict[SkeletalKeypoint, PointOfInterest])");
 
-  py::class_<hri::Face, std::shared_ptr<hri::Face>> face(m, "Face", feature_tracker);
+  py::class_<hri::Face, std::shared_ptr<hri::Face>> face(m, "Face",
+    feature_tracker);
   face.doc() =
     R"(
     The face feature instance being tracked.
 
-    This class should be created and managed only by HRIListener, it is exposed only for read access
+    This class should be created and managed only by :py:class`HRIListener`, it is exposed only for read access
     purposes.
-    It inherits from FeatureTracker, check its documentation for additional properties.
+    It inherits from :py:class:`FeatureTracker`, check its documentation for additional properties.
     All its properties may return None if not available.
 
     Properties:
-    roi -- normalized 2D region of interest (RoI) of the face (Tuple (x,y,width,height))
-    cropped -- face image, cropped from the source image (numpy.ndarray)
-    aligned -- face image, cropped and aligned from the source image (numpy.ndarray)
-    facial_landmarks -- facial landmarks (Dict[FacialLandmark, PointOfInterest])
-    facial_action_units -- facial action units (Dict[FacialActionUnit, IntensityConfidence])
-    age -- person's age in years (float)
-    gender -- person's gender (Gender)
-    gaze_transform -- gaze's stamped 3D transform (geometry_msgs.msg.TransformStamped)
+
+    - :py:attr:`roi` -- normalized 2D region of interest (RoI) of the face (Tuple (x,y,width,height))
+    - :py:attr:`cropped` -- face image, cropped from the source image (numpy.ndarray)
+    - :py:attr:`aligned` -- face image, cropped and aligned from the source image (numpy.ndarray)
+    - :py:attr:`facial_landmarks` -- facial landmarks (Dict[FacialLandmark, PointOfInterest])
+    - :py:attr:`facial_action_units` -- facial action units (Dict[FacialActionUnit, IntensityConfidence])
+    - :py:attr:`age` -- person's age in years (float)
+    - :py:attr:`gender` -- person's gender (Gender)
+    - :py:attr:`gaze_transform` -- gaze's stamped 3D transform (geometry_msgs.msg.TransformStamped)
     )";
   face.def_property_readonly(
     "roi", &hri::Face::roi,
-    "Normalized 2D region of interest (RoI) of the face (Tuple (x,y,width,height))");
+    "Normalized 2D region of interest (RoI) of the "
+    "face (Tuple (x,y,width,height))");
   face.def_property_readonly(
-    "cropped", &hri::Face::cropped, "Face image, cropped from the source image (numpy.ndarray)");
+    "cropped", &hri::Face::cropped,
+    "Face image, cropped from the source image (numpy.ndarray)");
   face.def_property_readonly(
     "aligned", &hri::Face::aligned,
     "Face image, cropped and aligned from the source image (numpy.ndarray)");
@@ -390,79 +488,96 @@ PYBIND11_MODULE(hri, m) {
     "facial_action_units", &hri::Face::facialActionUnits,
     "Facial action units (Dict[FacialActionUnit, IntensityConfidence])");
   face.def_property_readonly(
-    "age", &hri::Face::age, "Person's age in years (float)");
+    "age", &hri::Face::age,
+    "Person's age in years (float)");
   face.def_property_readonly(
-    "gender", &hri::Face::gender, "Person's gender (Gender)");
+    "gender", &hri::Face::gender,
+    "Person's gender (Gender)");
   face.def_property_readonly(
     "gaze_transform", &hri::Face::gazeTransform,
     "Gaze's stamped 3D transform (geometry_msgs.msg.TransformStamped)");
 
-  py::class_<hri::Voice, std::shared_ptr<hri::Voice>> voice(m, "Voice", feature_tracker);
+  py::class_<hri::Voice, std::shared_ptr<hri::Voice>> voice(m, "Voice",
+    feature_tracker);
   voice.doc() =
     R"(
     The voice feature instance being tracked.
 
-    This class should be created and managed only by HRIListener, it is exposed only for read access
+    This class should be created and managed only by :py:class`HRIListener`, it is exposed only for read access
     purposes.
-    It inherits from FeatureTracker, check its documentation for additional properties.
+    It inherits from :py:class:`FeatureTracker`, check its documentation for additional properties.
     All its properties may return None if not available.
 
     Properties:
-    is_speaking -- whether speech is currently detected in this voice (bool)
-    speech -- last recognised final sentence (str)
-    incremental_speech -- last recognised incremental sentence (str)
+
+    - :py:attr:`is_speaking` -- whether speech is currently detected in this voice (bool)
+    - :py:attr:`speech` -- last recognised final sentence (str)
+    - :py:attr:`incremental_speech` -- last recognised incremental sentence (str)
 
     Methods (use `help(Voice)` to see the signatures):
-    on_speaking -- registers a callback function, to be invoked everytime speech is detected
-    on_speech -- registers a callback function, to be invoked everytime a final sentence is detected
-    on_incremental_speech -- registers a callback function, to be invoked everytime an incremental
-                             sentence is detected
+
+    - :py:meth:`on_speaking` -- registers a callback function, to be invoked everytime speech is detected
+    - :py:meth:`on_speech` -- registers a callback function, to be invoked everytime a final sentence is detected
+    - :py:meth:`on_incremental_speech` -- registers a callback function, to be invoked everytime an incremental
+      sentence is detected
     )";
   voice.def_property_readonly(
     "is_speaking", &hri::Voice::isSpeaking,
     "Whether speech is currently detected in this voice (bool)");
   voice.def_property_readonly(
-    "speech", &hri::Voice::speech, "Last recognised final sentence (str)");
+    "speech", &hri::Voice::speech,
+    "Last recognised final sentence (str)");
   voice.def_property_readonly(
-    "incremental_speech", &hri::Voice::incrementalSpeech,
+    "incremental_speech",
+    &hri::Voice::incrementalSpeech,
     "Last recognised incremental sentence (str)");
   voice.def(
     "on_speaking", &hri::Voice::onSpeaking, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime speech is detected");
+    "Registers a callback function, to be invoked everytime speech is "
+    "detected");
   voice.def(
     "on_speech", &hri::Voice::onSpeech, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime a final sentence is detected");
+    "Registers a callback function, to be invoked everytime a final "
+    "sentence is detected");
   voice.def(
-    "on_incremental_speech", &hri::Voice::onIncrementalSpeech, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime san incremental sentence is detected");
+    "on_incremental_speech", &hri::Voice::onIncrementalSpeech,
+    py::arg("callback"),
+    "Registers a callback function, to be invoked everytime san "
+    "incremental sentence is detected");
 
-  py::class_<hri::Person, std::shared_ptr<hri::Person>> person(m, "Person", feature_tracker);
+  py::class_<hri::Person, std::shared_ptr<hri::Person>> person(m, "Person",
+    feature_tracker);
   person.doc() =
     R"(
     The person feature instance being tracked or known.
 
-    This class should be created and managed only by HRIListener, it is exposed only for read access
+    This class should be created and managed only by :py:class`HRIListener`, it is exposed only for read access
     purposes.
-    It inherits from FeatureTracker, check its documentation for additional properties.
+    It inherits from :py:class:`FeatureTracker`, check its documentation for additional properties.
     All its properties may return None if not available.
 
     Properties:
-    face -- face associated with the person (Face)
-    body -- body associated with the person (Body)
-    voice -- voice associated with the person (Voice)
-    anonymous -- whether the person has not been identified yet (bool)
-    engagement_status -- current engagement status with the robot (EngagementLevel)
-    location_confidence -- confidence of the person transform estimate (float [0., 1.])
-    alias -- ID of another Person object associated with the same person (str)
+
+    - :py:meth:`face` -- face associated with the person (Face)
+    - :py:meth:`body` -- body associated with the person (Body)
+    - :py:meth:`voice` -- voice associated with the person (Voice)
+    - :py:meth:`anonymous` -- whether the person has not been identified yet (bool)
+    - :py:meth:`engagement_status` -- current engagement status with the robot (EngagementLevel)
+    - :py:meth:`location_confidence` -- confidence of the person transform estimate (float [0., 1.])
+    - :py:meth:`alias` -- ID of another Person object associated with the same person (str)
     )";
   person.def_property_readonly(
-    "face", &hri::Person::face, "Face associated with the person (Face)");
+    "face", &hri::Person::face,
+    "Face associated with the person (Face)");
   person.def_property_readonly(
-    "body", &hri::Person::body, "Body associated with the person (Body)");
+    "body", &hri::Person::body,
+    "Body associated with the person (Body)");
   person.def_property_readonly(
-    "voice", &hri::Person::voice, "Voice associated with the person (Voice)");
+    "voice", &hri::Person::voice,
+    "Voice associated with the person (Voice)");
   person.def_property_readonly(
-    "anonymous", &hri::Person::anonymous, "Whether the person has not been identified yet (bool)");
+    "anonymous", &hri::Person::anonymous,
+    "Whether the person has not been identified yet (bool)");
   person.def_property_readonly(
     "engagement_status", &hri::Person::engagementStatus,
     "Current engagement status with the robot (EngagementLevel)");
@@ -475,93 +590,121 @@ PYBIND11_MODULE(hri, m) {
   // overrides the TrackedFeature one
   person.def_property_readonly("transform", &hri::Person::transform);
 
-  py::class_<PyHRIListener, std::shared_ptr<PyHRIListener>> hri_listener(m, "HRIListener");
+  py::class_<PyHRIListener, std::shared_ptr<PyHRIListener>> hri_listener(
+    m, "HRIListener");
   hri_listener.doc() =
     R"(
     Main entry point to the library.
 
-    The class must be instantiated through the factory function `create`.
+    The class must be instantiated through the factory function ``create``.
     I will spawn a ROS node and use it to subscribe to all the ROS4HRI topics.
     The tracked features information can be accessed in Python native objects throught this object
     properties.
 
     Properties:
-    faces -- currently tracked faces (Dict[str, Face])
-    bodies -- currently tracked bodies (Dict[str, Body])
-    voices -- currently tracked voices (Dict[str, Voice])
-    persons -- currently known persons (Dict[str, Person])
-    tracked_persons -- currently tracked persons (Dict[str, Person])
+
+    - :py:attr:`faces`: currently tracked faces (Dict[str, Face])
+    - :py:attr:`bodies`: currently tracked bodies (Dict[str, Body])
+    - :py:attr:`voices`: currently tracked voices (Dict[str, Voice])
+    - :py:attr:`persons`: currently known persons (Dict[str, Person])
+    - :py:attr:`tracked_persons`: currently tracked persons (Dict[str, Person])
 
     Methods (use `help(HRIListener)` to see the signatures):
-    create -- generate the class, selecting the spawned node name and whether it spins automatically
-    on_face -- registers a callback function, to be invoked everytime a new face is tracked
-    on_body -- registers a callback function, to be invoked everytime a new body is tracked
-    on_voice -- registers a callback function, to be invoked everytime a new voice is tracked
-    on_person -- registers a callback function, to be invoked everytime a new person is known
-    on_tracked_person -- registers a callback function, to be invoked everytime a new person is
-                         tracked
-    on_face_lost -- registers a callback function, to be invoked everytime a tracked face is lost
-    on_body_lost -- registers a callback function, to be invoked everytime a tracked body is lost
-    on_voice_lost -- registers a callback function, to be invoked everytime a tracked voice is lost
-    on_person_lost -- registers a callback function, to be invoked everytime a known person is
-                      forgotten
-    on_tracked_person_lost -- registers a callback function, to be invoked everytime a tracked
-                              person is lost
-    set_reference_frame -- selects the reference frame for all the `transform` properties
-    spin_some -- if the class node does not spin automatically, this function must be called
-                 regularly to manually spin it
+
+    - :py:meth:`create` -- generate the class, selecting the spawned node name and whether it spins automatically
+    - :py:meth:`on_face` -- registers a callback function, to be invoked everytime a new face is tracked
+    - :py:meth:`on_body` -- registers a callback function, to be invoked everytime a new body is tracked
+    - :py:meth:`on_voice` -- registers a callback function, to be invoked everytime a new voice is tracked
+    - :py:meth:`on_person` -- registers a callback function, to be invoked everytime a new person is known
+    - :py:meth:`on_tracked_person` -- registers a callback function, to be invoked everytime a new person is
+      tracked
+    - :py:meth:`on_face_lost` -- registers a callback function, to be invoked everytime a tracked face is lost
+    - :py:meth:`on_body_lost` -- registers a callback function, to be invoked everytime a tracked body is lost
+    - :py:meth:`on_voice_lost` -- registers a callback function, to be invoked everytime a tracked voice is lost
+    - :py:meth:`on_person_lost` -- registers a callback function, to be invoked everytime a known person is
+      forgotten
+    - :py:meth:`on_tracked_person_lost` -- registers a callback function, to be invoked everytime a tracked
+      person is lost
+    - :py:meth:`set_reference_frame` -- selects the reference frame for all the `transform` properties
+    - :py:meth:`spin_some` -- if the class node does not spin automatically, this function must be called
+      regularly to manually spin it
     )";
   hri_listener.def(
-    py::init(&PyHRIListener::create), py::arg("node_name"), py::arg("auto_spin") = true,
-    "Generate the class, selecting the spawned node name and whether it spins automatically");
+    py::init(&PyHRIListener::create), py::arg("node_name"),
+    py::arg("auto_spin") = true,
+    "Generate the class, selecting the spawned node name and "
+    "whether it spins automatically");
   hri_listener.def_property_readonly(
-    "faces", &hri::HRIListener::getFaces, "Currently tracked faces (Dict[str, Face])");
+    "faces", &hri::HRIListener::getFaces,
+    "Currently tracked faces (Dict[str, Face])");
   hri_listener.def_property_readonly(
-    "bodies", &hri::HRIListener::getBodies, "Currently tracked bodies (Dict[str, Body])");
+    "bodies", &hri::HRIListener::getBodies,
+    "Currently tracked bodies (Dict[str, Body])");
   hri_listener.def_property_readonly(
-    "voices", &hri::HRIListener::getVoices, "Currently tracked voices (Dict[str, Voice])");
+    "voices", &hri::HRIListener::getVoices,
+    "Currently tracked voices (Dict[str, Voice])");
   hri_listener.def_property_readonly(
-    "persons", &hri::HRIListener::getPersons, "Currently known persons (Dict[str, Person])");
+    "persons", &hri::HRIListener::getPersons,
+    "Currently known persons (Dict[str, Person])");
   hri_listener.def_property_readonly(
     "tracked_persons", &hri::HRIListener::getTrackedPersons,
     "Currently tracked persons (Dict[str, Person])");
   hri_listener.def(
     "on_face", &hri::HRIListener::onFace, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime a new face is tracked");
+    "Registers a callback function, to be invoked everytime a "
+    "new face is tracked");
   hri_listener.def(
     "on_body", &hri::HRIListener::onBody, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime a new body is tracked");
+    "Registers a callback function, to be invoked everytime a "
+    "new body is tracked");
   hri_listener.def(
     "on_voice", &hri::HRIListener::onVoice, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime a new voice is tracked");
+    "Registers a callback function, to be invoked everytime a "
+    "new voice is tracked");
   hri_listener.def(
-    "on_person", &hri::HRIListener::onPerson, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime a new person is known");
+    "on_person", &hri::HRIListener::onPerson,
+    py::arg("callback"),
+    "Registers a callback function, to be invoked everytime a "
+    "new person is known");
   hri_listener.def(
-    "on_tracked_person", &hri::HRIListener::onTrackedPerson, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime a new person is tracked");
+    "on_tracked_person", &hri::HRIListener::onTrackedPerson,
+    py::arg("callback"),
+    "Registers a callback function, to be invoked everytime a "
+    "new person is tracked");
   hri_listener.def(
-    "on_face_lost", &hri::HRIListener::onFaceLost, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime a tracked face is lost");
+    "on_face_lost", &hri::HRIListener::onFaceLost,
+    py::arg("callback"),
+    "Registers a callback function, to be invoked everytime a "
+    "tracked face is lost");
   hri_listener.def(
-    "on_body_lost", &hri::HRIListener::onBodyLost, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime a tracked body is lost");
+    "on_body_lost", &hri::HRIListener::onBodyLost,
+    py::arg("callback"),
+    "Registers a callback function, to be invoked everytime a "
+    "tracked body is lost");
   hri_listener.def(
-    "on_voice_lost", &hri::HRIListener::onVoiceLost, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime a tracked voice is lost");
+    "on_voice_lost", &hri::HRIListener::onVoiceLost,
+    py::arg("callback"),
+    "Registers a callback function, to be invoked everytime a "
+    "tracked voice is lost");
   hri_listener.def(
-    "on_person_lost", &hri::HRIListener::onPersonLost, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime a known person is forgotten");
+    "on_person_lost", &hri::HRIListener::onPersonLost,
+    py::arg("callback"),
+    "Registers a callback function, to be invoked everytime a "
+    "known person is forgotten");
   hri_listener.def(
-    "on_tracked_person_lost", &hri::HRIListener::onTrackedPersonLost, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime a tracked person is lost");
+    "on_tracked_person_lost",
+    &hri::HRIListener::onTrackedPersonLost, py::arg("callback"),
+    "Registers a callback function, to be invoked everytime a "
+    "tracked person is lost");
   hri_listener.def(
-    "set_reference_frame", &hri::HRIListener::setReferenceFrame, py::arg("frame"),
+    "set_reference_frame", &hri::HRIListener::setReferenceFrame,
+    py::arg("frame"),
     "Selects the reference frame for all the `transform` properties");
   hri_listener.def(
     "spin_some", &PyHRIListener::spin_some, py::arg("timeout"),
-    "If the class node does not spin automatically, this function must be called regularly to "
+    "If the class node does not spin automatically, this "
+    "function must be called regularly to "
     "manually spin it");
-}
+}  // NOLINT(readability/fn_size)
 
 }  // namespace pyhri
