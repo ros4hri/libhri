@@ -20,7 +20,7 @@ The main entry point for using the library is the `HRIListener` class.
 
 For an example of usage, you can check the example:
 - C++: [`hri/src/example.cpp`](hri/src/example.cpp) _or_
-- Python: [`pyhri/pyhri/example.py`](pyhri/pyhri/example.py)
+- Python: [`pyhri/hri/example.py`](pyhri/hri/example.py)
 
 They are installed by default and can be tested by executing:
 
