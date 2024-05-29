@@ -19,15 +19,16 @@ The main entry point for using the library is the `HRIListener` class.
 ## Example
 
 For an example of usage, you can check the example:
-- C++: `hri/src/example.cpp` _or_
-- Python: `pyhri/pyhri/example.py`
+- C++: [`hri/src/example.cpp`](hri/src/example.cpp) _or_
+- Python: [`pyhri/pyhri/example.py`](pyhri/pyhri/example.py)
 
 They are installed by default and can be tested by executing:
+
 - In a separate terminal:
   1. `apt install ros-humble-usb-cam`
   2. `ros2 run usb_cam usb_cam_node_exe`
 - In a separate terminal:
-  1. `apt install ros-humble-hri-face-detect`
+  1. install [`hri-face-detect`](https://github.com/ros4hri/hri_face_detect/)
   2. `ros2 launch hri_face_detect face_detect.launch.py`
 - In a separate terminal, either:
   - C++: `ros2 run hri hri_example`  _or_
