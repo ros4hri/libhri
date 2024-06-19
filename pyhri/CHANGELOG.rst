@@ -2,8 +2,8 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.1 (2024-06-19)
+------------------
 * add PyHRIListener destructor
 * [doc] minor fixes
 * various improvement to the pyhri documentation

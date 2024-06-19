@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.1 (2024-06-19)
+------------------
 * [doc] minor fixes
 * Contributors: Séverin Lemaignan
 
