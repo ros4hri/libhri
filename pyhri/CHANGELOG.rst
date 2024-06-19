@@ -2,6 +2,14 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add PyHRIListener destructor
+* [doc] minor fixes
+* various improvement to the pyhri documentation
+  running  should yield a correct API documentation
+* Contributors: Luka Juricic, Séverin Lemaignan
+
 2.4.0 (2024-05-13)
 ------------------
 

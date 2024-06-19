@@ -2,6 +2,11 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [doc] minor fixes
+* Contributors: Séverin Lemaignan
+
 2.4.0 (2024-05-13)
 ------------------
 * adding doxygen documentation
