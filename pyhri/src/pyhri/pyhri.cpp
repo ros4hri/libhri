@@ -75,6 +75,14 @@ public:
       new PyHRIListener(rclcpp::Node::make_shared(node_name), auto_spin));
   }
 
+  ~PyHRIListener() override
+  {
+    executor_->cancel();
+    if (thread_) {
+      thread_->join();
+    }
+  }
+
   void spin_some(std::chrono::nanoseconds timeout)
   {
     executor_->spin_some(timeout);
