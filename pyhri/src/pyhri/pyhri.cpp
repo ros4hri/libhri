@@ -78,7 +78,7 @@ public:
   ~PyHRIListener() override
   {
     executor_->cancel();
-    if (thread_) {
+    if (thread_ && thread_->joinable()) {
       thread_->join();
     }
   }
