@@ -990,6 +990,52 @@ TEST_F(HRITest, PeopleLocation)
   EXPECT_TRUE(p1->transform()) << "location confidence > 0 => a transform should be available";
 }
 
+TEST_F(HRITest, GazeTransform)
+{
+  auto tracked_faces_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/faces/tracked", 1);
+  auto tester_executor = rclcpp::executors::SingleThreadedExecutor();
+  auto static_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(tester_node_);
+  auto faces_ids_msg = hri_msgs::msg::IdsList();
+  auto transform_msg = geometry_msgs::msg::TransformStamped();
+
+  hri_listener_->setReferenceFrame("base_link");
+  transform_msg.header.stamp = tester_node_->now();
+  transform_msg.header.frame_id = "world";
+  transform_msg.child_frame_id = "base_link";
+  transform_msg.transform.translation.x = -1.0;
+  transform_msg.transform.translation.y = 0.0;
+  transform_msg.transform.translation.z = 0.0;
+  transform_msg.transform.rotation.w = 1.0;
+  static_broadcaster->sendTransform(transform_msg);
+  tester_executor.spin_node_once(tester_node_);
+  spin();
+
+  faces_ids_msg.ids = {"f1"};
+  tracked_faces_pub->publish(faces_ids_msg);
+  spin();
+  auto f1 = hri_listener_->getFaces()["f1"];
+  EXPECT_FALSE(f1->gazeTransform()) << "no gaze transform should be available yet";
+
+  transform_msg.child_frame_id = "gaze_f1";
+  transform_msg.transform.translation.x += 2.0;
+  static_broadcaster->sendTransform(transform_msg);
+  tester_executor.spin_node_once(tester_node_);
+  spin();
+  ASSERT_TRUE(f1->gazeTransform()) << "the gaze transform should be available";
+  auto t = f1->gazeTransform().value();
+  EXPECT_EQ(t.child_frame_id, "gaze_f1");
+  EXPECT_EQ(t.header.frame_id, "base_link");
+  EXPECT_FLOAT_EQ(t.transform.translation.x, 2.0f);
+
+  hri_listener_->setReferenceFrame("gaze_f1");
+  ASSERT_TRUE(f1->gazeTransform());
+  t = f1->gazeTransform().value();
+  EXPECT_EQ(t.child_frame_id, "gaze_f1");
+  EXPECT_EQ(t.header.frame_id, "gaze_f1");
+  EXPECT_FLOAT_EQ(t.transform.translation.x, 0.f);
+}
+
 // TODO(LJU): missing quite a few tests, should have at least a basic one for each topic subscribed
 
 int main(int argc, char ** argv)

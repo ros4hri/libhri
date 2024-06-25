@@ -890,6 +890,49 @@ class TestHRI(unittest.TestCase):
         self.assertIsNotNone(
             p1.transform, 'location confidence > 0 => a transform should be available')
 
+    def test_gaze_transform(self):
+        tracked_faces_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/faces/tracked', 1)
+        tester_executor = SingleThreadedExecutor(context=self.context)
+        tester_executor.add_node(self.tester_node)
+        static_broadcaster = StaticTransformBroadcaster(self.tester_node)
+        transform_msg = TransformStamped()
+
+        self.hri_listener.set_reference_frame('base_link')
+        transform_msg.header.stamp = self.tester_node.get_clock().now().to_msg()
+        transform_msg.header.frame_id = 'world'
+        transform_msg.child_frame_id = 'base_link'
+        transform_msg.transform.translation.x = -1.0
+        transform_msg.transform.translation.y = 0.0
+        transform_msg.transform.translation.z = 0.0
+        transform_msg.transform.rotation.w = 1.0
+        static_broadcaster.sendTransform(transform_msg)
+        tester_executor.spin_once(1.)
+        self.spin()
+
+        tracked_faces_pub.publish(IdsList(ids=['f1']))
+        self.spin()
+        f1 = self.hri_listener.faces['f1']
+        self.assertIsNone(f1.gaze_transform, 'no gaze transform should be available')
+
+        transform_msg.child_frame_id = 'gaze_f1'
+        transform_msg.transform.translation.x = transform_msg.transform.translation.x + 2.0
+        static_broadcaster.sendTransform(transform_msg)
+        tester_executor.spin_once(1.)
+        self.spin()
+        self.assertIsNotNone(f1.gaze_transform, 'the gaze transform should be available')
+        t = f1.gaze_transform
+        self.assertEqual(t.child_frame_id, 'gaze_f1')
+        self.assertEqual(t.header.frame_id, 'base_link')
+        self.assertAlmostEqual(t.transform.translation.x, 2.0)
+
+        self.hri_listener.set_reference_frame('gaze_f1')
+        self.assertIsNotNone(f1.gaze_transform)
+        t = f1.gaze_transform
+        self.assertEqual(t.child_frame_id, 'gaze_f1')
+        self.assertEqual(t.header.frame_id, 'gaze_f1')
+        self.assertAlmostEqual(t.transform.translation.x, 0.)
+
 
 if __name__ == '__main__':
     unittest.main()
