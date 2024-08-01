@@ -263,7 +263,7 @@ class TestHRI(unittest.TestCase):
         voice_a_speech_pub = self.tester_node.create_publisher(
             LiveSpeech, '/humans/voices/A/speech', 1)
 
-        def cb(_):
+        def cb(*_):
             nonlocal cb_triggered
             cb_triggered = True
 
@@ -295,15 +295,18 @@ class TestHRI(unittest.TestCase):
         self.assertFalse(self.hri_listener.voices['A'].is_speaking)
 
         cb_triggered = False
-        voice_a_speech_pub.publish(LiveSpeech(final='test speech'))
+        voice_a_speech_pub.publish(LiveSpeech(locale='en_GB', final='test speech'))
         self.spin()
         self.assertTrue(cb_triggered)
+        self.assertEqual(self.hri_listener.voices['A'].locale, 'en_GB')
         self.assertEqual(self.hri_listener.voices['A'].speech, 'test speech')
 
         cb_triggered = False
-        voice_a_speech_pub.publish(LiveSpeech(incremental='test speech incremental'))
+        voice_a_speech_pub.publish(
+            LiveSpeech(locale='en_US', incremental='test speech incremental'))
         self.spin()
         self.assertTrue(cb_triggered)
+        self.assertEqual(self.hri_listener.voices['A'].locale, 'en_US')
         self.assertEqual(
             self.hri_listener.voices['A'].incremental_speech, 'test speech incremental')
 

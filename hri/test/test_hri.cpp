@@ -307,10 +307,10 @@ TEST_F(HRITest, GetVoiceCallbacks)
   hri_listener_->onVoice(
     [&](hri::VoicePtr voice) {
       cb_triggered = true;
-      voice->onSpeaking([&]([[maybe_unused]] bool speaking) {cb_triggered = true;});
+      voice->onSpeaking([&](bool) {cb_triggered = true;});
       voice->onIncrementalSpeech(
-        [&]([[maybe_unused]] const std::string & speech) {cb_triggered = true;});
-      voice->onSpeech([&]([[maybe_unused]] const std::string & speech) {cb_triggered = true;});
+        [&](const std::string &, const std::string &) {cb_triggered = true;});
+      voice->onSpeech([&](const std::string &, const std::string &) {cb_triggered = true;});
     });
 
   cb_triggered = false;
@@ -334,17 +334,21 @@ TEST_F(HRITest, GetVoiceCallbacks)
   EXPECT_FALSE(hri_listener_->getVoices()["A"]->isSpeaking().value());
 
   cb_triggered = false;
+  speech_msg.locale = "en_GB";
   speech_msg.final = "test speech";
   voice_a_speech_pub->publish(speech_msg);
   spin();
   EXPECT_TRUE(cb_triggered);
+  EXPECT_EQ(hri_listener_->getVoices()["A"]->locale().value(), "en_GB");
   EXPECT_EQ(hri_listener_->getVoices()["A"]->speech().value(), "test speech");
 
   cb_triggered = false;
+  speech_msg.locale = "en_US";
   speech_msg.incremental = "test speech incremental";
   voice_a_speech_pub->publish(speech_msg);
   spin();
   EXPECT_TRUE(cb_triggered);
+  EXPECT_EQ(hri_listener_->getVoices()["A"]->locale().value(), "en_US");
   EXPECT_EQ(
     hri_listener_->getVoices()["A"]->incrementalSpeech().value(), "test speech incremental");
 }

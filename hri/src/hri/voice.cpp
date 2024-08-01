@@ -61,17 +61,19 @@ Voice::~Voice()
 
 void Voice::onSpeech_(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg)
 {
+  locale_ = msg->locale;
+
   if (msg->incremental.size() > 0) {
     incremental_speech_ = msg->incremental;
     for (auto cb : incremental_speech_callbacks_) {
-      cb(msg->incremental);
+      cb(msg->incremental, msg->locale);
     }
   }
 
   if (msg->final.size() > 0) {
     speech_ = msg->final;
     for (auto cb : speech_callbacks_) {
-      cb(msg->final);
+      cb(msg->final, msg->locale);
     }
   }
 }
@@ -91,6 +93,7 @@ void Voice::invalidate()
   is_speaking_.reset();
   speech_.reset();
   incremental_speech_.reset();
+  locale_.reset();
   FeatureTracker::invalidate();
 }
 

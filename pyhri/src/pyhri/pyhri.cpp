@@ -521,6 +521,7 @@ PYBIND11_MODULE(hri, m) {
     - :py:attr:`is_speaking` -- whether speech is currently detected in this voice (bool)
     - :py:attr:`speech` -- last recognised final sentence (str)
     - :py:attr:`incremental_speech` -- last recognised incremental sentence (str)
+    - :py:attr:`locale` -- last recognised speech locale (str)
 
     Methods (use `help(Voice)` to see the signatures):
 
@@ -539,6 +540,10 @@ PYBIND11_MODULE(hri, m) {
     "incremental_speech",
     &hri::Voice::incrementalSpeech,
     "Last recognised incremental sentence (str)");
+  voice.def_property_readonly(
+    "locale",
+    &hri::Voice::locale,
+    "Last recognised speech locale (str)");
   voice.def(
     "on_speaking", &hri::Voice::onSpeaking, py::arg("callback"),
     "Registers a callback function, to be invoked everytime speech is "
