@@ -87,6 +87,15 @@ public:
     speech_callbacks_.push_back(callback);
   }
 
+  /** \deprecated
+   * Use void onSpeech(std::function<void(const std::string &, const std::string &)> callback).
+   */
+  void onSpeech(std::function<void(const std::string &)> callback)
+  {
+    speech_callbacks_.push_back(
+      [callback](const std::string & text, const std::string &) {callback(text);});
+  }
+
   /** \brief Registers a callback function, to be invoked everytime speech any speech is detected.
    *
    * The callback will be triggered every time the speech recogniser returns a result,
@@ -100,6 +109,15 @@ public:
   void onIncrementalSpeech(std::function<void(const std::string &, const std::string &)> callback)
   {
     incremental_speech_callbacks_.push_back(callback);
+  }
+
+  /** \deprecated
+   * Use void onSpeech(std::function<void(const std::string &, const std::string &)> callback).
+   */
+  void onIncrementalSpeech(std::function<void(const std::string &)> callback)
+  {
+    incremental_speech_callbacks_.push_back(
+      [callback](const std::string & text, const std::string &) {callback(text);});
   }
 
 private:

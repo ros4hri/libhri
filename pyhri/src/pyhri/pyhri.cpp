@@ -549,14 +549,30 @@ PYBIND11_MODULE(hri, m) {
     "Registers a callback function, to be invoked everytime speech is "
     "detected");
   voice.def(
-    "on_speech", &hri::Voice::onSpeech, py::arg("callback"),
-    "Registers a callback function, to be invoked everytime a final "
-    "sentence is detected");
-  voice.def(
-    "on_incremental_speech", &hri::Voice::onIncrementalSpeech,
+    "on_speech",
+    static_cast<void (hri::Voice::*)(
+      std::function<void(const std::string &)>)>(&hri::Voice::onSpeech),
     py::arg("callback"),
-    "Registers a callback function, to be invoked everytime san "
-    "incremental sentence is detected");
+    "Deprecated");
+  voice.def(
+    "on_speech",
+    static_cast<void (hri::Voice::*)(
+      std::function<void(const std::string &, const std::string &)>)>(&hri::Voice::onSpeech),
+    py::arg("callback"),
+    "Registers a callback function, to be invoked everytime a final sentence is detected");
+  voice.def(
+    "on_incremental_speech",
+    static_cast<void (hri::Voice::*)(
+      std::function<void(const std::string &)>)>(&hri::Voice::onIncrementalSpeech),
+    py::arg("callback"),
+    "Deprecated");
+  voice.def(
+    "on_incremental_speech",
+    static_cast<void (hri::Voice::*)(
+      std::function<void(const std::string &, const std::string &)>)>(
+      &hri::Voice::onIncrementalSpeech),
+    py::arg("callback"),
+    "Registers a callback function, to be invoked everytime an incremental sentence is detected");
 
   py::class_<hri::Person, std::shared_ptr<hri::Person>> person(m, "Person",
     feature_tracker);
