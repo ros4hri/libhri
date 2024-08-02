@@ -2,6 +2,13 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* readd deprecated function signatures
+* add voice locale
+* add tests for gaze transform
+* Contributors: Luka Juricic
+
 2.4.1 (2024-06-19)
 ------------------
 * [doc] minor fixes
