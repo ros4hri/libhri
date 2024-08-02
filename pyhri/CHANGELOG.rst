@@ -2,8 +2,8 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.5.0 (2024-08-02)
+------------------
 * readd deprecated function signatures
 * add voice locale
 * add tests for gaze transform
