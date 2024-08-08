@@ -66,13 +66,17 @@ class PyHRIListener : public hri::HRIListener
 {
 public:
   [[nodiscard]] static std::shared_ptr<PyHRIListener>
-  create(std::string node_name, bool auto_spin)
+  create(std::string node_name, bool auto_spin, bool use_sim_time)
   {
     if (!rclcpp::ok()) {
       rclcpp::init(0, NULL);
     }
+    auto options = rclcpp::NodeOptions();
+    if (use_sim_time) {
+      options.append_parameter_override("use_sim_time", rclcpp::ParameterValue(true));
+    }
     return std::shared_ptr<PyHRIListener>(
-      new PyHRIListener(rclcpp::Node::make_shared(node_name), auto_spin));
+      new PyHRIListener(rclcpp::Node::make_shared(node_name, options), auto_spin));
   }
 
   ~PyHRIListener() override
@@ -660,7 +664,7 @@ PYBIND11_MODULE(hri, m) {
     )";
   hri_listener.def(
     py::init(&PyHRIListener::create), py::arg("node_name"),
-    py::arg("auto_spin") = true,
+    py::arg("auto_spin") = true, py::arg("use_sim_time") = false,
     "Generate the class, selecting the spawned node name and "
     "whether it spins automatically");
   hri_listener.def_property_readonly(
