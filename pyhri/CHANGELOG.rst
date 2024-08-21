@@ -2,8 +2,8 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.5.1 (2024-08-21)
+------------------
 * disable some CMAKE optimization
   avoid parallel compilation warning with pybind
 * add use_sim_time option to pyhri
