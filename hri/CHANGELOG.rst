@@ -2,6 +2,9 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.5.0 (2024-08-02)
 ------------------
 * readd deprecated function signatures

@@ -2,6 +2,13 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* disable some CMAKE optimization
+  avoid parallel compilation warning with pybind
+* add use_sim_time option to pyhri
+* Contributors: Luka Juricic, Séverin Lemaignan
+
 2.5.0 (2024-08-02)
 ------------------
 * readd deprecated function signatures
