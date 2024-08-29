@@ -10,9 +10,14 @@
   <author email="severin.lemaignan@pal-robotics.com">Séverin Lemaignan</author>
   <author email="luka.juricic@pal-robotics.com">Luka Juricic</author>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <depend>cv_bridge</depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>tf2</build_depend>
+
+  <exec_depend>cv_bridge</exec_depend>
+  <exec_depend>tf2</exec_depend>
+
   <depend>geometry_msgs</depend>
   <depend>hri_msgs</depend>
   <depend>libopencv-dev</depend>
@@ -20,7 +25,6 @@
   <depend>rclcpp_lifecycle</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
-  <depend>tf2</depend>
   <depend>tf2_ros</depend>
   
   <test_depend>ament_lint_auto</test_depend>

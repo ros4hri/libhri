@@ -20,50 +20,38 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
 
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
 # Dependencies
-find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_auto REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)  # Find python before pybind11
-find_package(pybind11_vendor REQUIRED)
+ament_auto_find_build_dependencies() # ${PROJECT_NAME}_FOUND_INCLUDE_DIRS ${PROJECT_NAME}_FOUND_BUILD_DEPENDS}
 find_package(pybind11 REQUIRED)
-find_package(hri REQUIRED)
-find_package(rclcpp REQUIRED)
-
-set(${PROJECT_NAME}_dependencies
-  builtin_interfaces
-  geometry_msgs
-  hri
-  rclcpp
-)
-ament_export_dependencies(${${PROJECT_NAME}_dependencies})
 
 # Python target
-ament_python_install_package(hri
-  PACKAGE_DIR hri
-  SCRIPTS_DESTINATION lib/hri
+set(HRI_MODULE_NAME hri)
+ament_python_install_package(${HRI_MODULE_NAME}
+  PACKAGE_DIR ${HRI_MODULE_NAME}
+  SCRIPTS_DESTINATION lib/${HRI_MODULE_NAME}
 )
 
-set(HRI_MODULE_NAME hri)
 pybind11_add_module(${HRI_MODULE_NAME} SHARED
   src/pyhri/ndarray_converter.cpp
   src/pyhri/pyhri.cpp)
-target_include_directories(${HRI_MODULE_NAME} PRIVATE src/)
-ament_target_dependencies(${HRI_MODULE_NAME} PUBLIC ${${PROJECT_NAME}_dependencies})
+target_include_directories(${HRI_MODULE_NAME} PRIVATE
+  src/
+  ${PROJECT_NAME}_FOUND_INCLUDE_DIRS
+)
+ament_target_dependencies(${HRI_MODULE_NAME} PUBLIC ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
 install(TARGETS ${HRI_MODULE_NAME}
-  LIBRARY DESTINATION "${PYTHON_INSTALL_DIR}/hri"
+  LIBRARY DESTINATION "${PYTHON_INSTALL_DIR}/${HRI_MODULE_NAME}"
 )
 
 # Testing
 if(BUILD_TESTING)
-  find_package(ament_cmake_pytest REQUIRED)
-  find_package(ament_lint_auto REQUIRED)
-  find_package(ament_lint_common REQUIRED)
+  ament_auto_find_test_dependencies()
 
   set(AMENT_LINT_AUTO_FILE_EXCLUDE
     src/pyhri/ndarray_converter.h
@@ -76,4 +64,4 @@ if(BUILD_TESTING)
   )
 endif()
 
-ament_package()
+ament_auto_package()

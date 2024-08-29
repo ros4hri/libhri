@@ -7,14 +7,18 @@
   <maintainer email="luka.juricic@pal-robotics.com">Luka Juricic</maintainer>
   <license>Apache License 2.0</license>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
 
   <build_depend>pybind11_vendor</build_depend>
 
+  <exec_depend>python3-opencv</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+
   <depend>builtin_interfaces</depend>
   <depend>geometry_msgs</depend>
   <depend>hri</depend>
+  <depend>libopencv-dev</depend>
   <depend>rclcpp</depend>
 
   <test_depend>ament_cmake_pytest</test_depend>
