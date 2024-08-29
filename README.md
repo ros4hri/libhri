@@ -32,6 +32,6 @@ They are installed by default and can be tested by executing:
   2. `ros2 launch hri_face_detect face_detect.launch.py`
 - In a separate terminal, either:
   - C++: `ros2 run hri hri_example`  _or_
-  - Python: `ros2 run pyhri pyhri_example`
+  - Python: `ros2 run hri pyhri_example`
 
 Note that the Python implementation actually spawns two nodes.
