@@ -133,12 +133,38 @@ PYBIND11_MODULE(hri, m) {
 
   NDArrayConverter::init_numpy();
 
-  py::enum_<hri::EngagementLevel> engagement_level(m, "EngagementLevel",
-    pybind_enum_doc);
+  py::enum_<hri::EngagementLevel> engagement_level(m, "EngagementLevel", pybind_enum_doc);
   engagement_level.value("DISENGAGED", hri::EngagementLevel::kDisengaged);
   engagement_level.value("ENGAGING", hri::EngagementLevel::kEngaging);
   engagement_level.value("ENGAGED", hri::EngagementLevel::kEngaged);
   engagement_level.value("DISENGAGING", hri::EngagementLevel::kDisengaging);
+
+  py::enum_<hri::Expression> expression(m, "Expression", pybind_enum_doc);
+  expression.value("NEUTRAL", hri::Expression::kNeutral);
+  expression.value("ANGRY", hri::Expression::kAngry);
+  expression.value("SAD", hri::Expression::kSad);
+  expression.value("HAPPY", hri::Expression::kHappy);
+  expression.value("SURPRISED", hri::Expression::kSurprised);
+  expression.value("DISGUSTED", hri::Expression::kDisgusted);
+  expression.value("SCARED", hri::Expression::kScared);
+  expression.value("PLEADING", hri::Expression::kPleading);
+  expression.value("VULNERABLE", hri::Expression::kVulnerable);
+  expression.value("DESPAIRED", hri::Expression::kDespaired);
+  expression.value("GUILTY", hri::Expression::kGuilty);
+  expression.value("DISAPPOINTED", hri::Expression::kDisappointed);
+  expression.value("EMBARRASSED", hri::Expression::kEmbarrassed);
+  expression.value("HORRIFIED", hri::Expression::kHorrified);
+  expression.value("SKEPTICAL", hri::Expression::kSkeptical);
+  expression.value("ANNOYED", hri::Expression::kAnnoyed);
+  expression.value("FURIOUS", hri::Expression::kFurious);
+  expression.value("SUSPICIOUS", hri::Expression::kSuspicious);
+  expression.value("REJECTED", hri::Expression::kRejected);
+  expression.value("BORED", hri::Expression::kBored);
+  expression.value("TIRED", hri::Expression::kTired);
+  expression.value("ASLEEP", hri::Expression::kAsleep);
+  expression.value("CONFUSED", hri::Expression::kConfused);
+  expression.value("AMAZED", hri::Expression::kAmazed);
+  expression.value("EXCITED", hri::Expression::kExcited);
 
   py::enum_<hri::Gender> gender(m, "Gender", pybind_enum_doc);
   gender.value("FEMALE", hri::Gender::kFemale);
@@ -153,9 +179,7 @@ PYBIND11_MODULE(hri, m) {
   fau.value("UPPER_LID_RAISER", hri::FacialActionUnit::kUpperLidRaiser);
   fau.value("CHEEK_RAISER", hri::FacialActionUnit::kCheeckRaiser);
   fau.value("LID_TIGHTENER", hri::FacialActionUnit::kLidTightener);
-  fau.value(
-    "LIPS_TOWARD_EACH_OTHER",
-    hri::FacialActionUnit::kLipsTowardEachOther);
+  fau.value("LIPS_TOWARD_EACH_OTHER", hri::FacialActionUnit::kLipsTowardEachOther);
   fau.value("NOSE_WRINKLER", hri::FacialActionUnit::kNoseWrinkler);
   fau.value("UPPER_LIP_RAISER", hri::FacialActionUnit::kUpperLipRaiser);
   fau.value("NASOLABIAL_DEEPENER", hri::FacialActionUnit::kNasolabialDeepener);
@@ -193,16 +217,10 @@ PYBIND11_MODULE(hri, m) {
   fau.value(
     "EYES_POSITIONED_TO_LOOK_AT_OTHER_PERSON",
     hri::FacialActionUnit::kEyesPositionedToLookAtOtherPerson);
-  fau.value(
-    "BROWS_AND_FOREHEAD_NOT_VISIBLE",
-    hri::FacialActionUnit::kBrownsAndForeheadNotVisible);
+  fau.value("BROWS_AND_FOREHEAD_NOT_VISIBLE", hri::FacialActionUnit::kBrownsAndForeheadNotVisible);
   fau.value("EYES_NOT_VISIBLE", hri::FacialActionUnit::kEyesNotVisible);
-  fau.value(
-    "LOWER_FACE_NOT_VISIBLE",
-    hri::FacialActionUnit::kLowerFaceNotVisible);
-  fau.value(
-    "ENTIRE_FACE_NOT_VISIBLE",
-    hri::FacialActionUnit::kEntireFaceNotVisible);
+  fau.value("LOWER_FACE_NOT_VISIBLE", hri::FacialActionUnit::kLowerFaceNotVisible);
+  fau.value("ENTIRE_FACE_NOT_VISIBLE", hri::FacialActionUnit::kEntireFaceNotVisible);
   fau.value("UNSOCIABLE", hri::FacialActionUnit::kUnsociable);
   fau.value("JAW_THRUST", hri::FacialActionUnit::kJawThrust);
   fau.value("JAW_SIDEWAYS", hri::FacialActionUnit::kJawSideways);
@@ -226,17 +244,14 @@ PYBIND11_MODULE(hri, m) {
   fau.value("SWALLOW", hri::FacialActionUnit::kSwallow);
   fau.value("CHEWING", hri::FacialActionUnit::kChewing);
   fau.value("SHOULDER_SHRUG", hri::FacialActionUnit::kShoulderShrug);
-  fau.value(
-    "HEAD_SHAKE_BACK_AND_FORTH",
-    hri::FacialActionUnit::kHeadShakeBackAndForth);
+  fau.value("HEAD_SHAKE_BACK_AND_FORTH", hri::FacialActionUnit::kHeadShakeBackAndForth);
   fau.value("HEAD_NOD_UP_AND_DOWN", hri::FacialActionUnit::kHeadNodUpAndDown);
   fau.value("FLASH", hri::FacialActionUnit::kFlash);
   fau.value("PARTIAL_FLASH", hri::FacialActionUnit::kPartialFlash);
   fau.value("SHIVER_TREMBLE", hri::FacialActionUnit::kShiverTremble);
   fau.value("FAST_UP_DOWN_LOOK", hri::FacialActionUnit::kFastUpDownLook);
 
-  py::enum_<hri::FacialLandmark> facial_landmark(m, "FacialLandmark",
-    pybind_enum_doc);
+  py::enum_<hri::FacialLandmark> facial_landmark(m, "FacialLandmark", pybind_enum_doc);
   facial_landmark.value("RIGHT_EAR", hri::FacialLandmark::kRightEar);
   facial_landmark.value("RIGHT_PROFILE_1", hri::FacialLandmark::kRightProfile1);
   facial_landmark.value("RIGHT_PROFILE_2", hri::FacialLandmark::kRightProfile2);
@@ -254,51 +269,29 @@ PYBIND11_MODULE(hri, m) {
   facial_landmark.value("LEFT_PROFILE_5", hri::FacialLandmark::kLeftProfile5);
   facial_landmark.value("LEFT_PROFILE_6", hri::FacialLandmark::kLeftProfile6);
   facial_landmark.value("LEFT_PROFILE_7", hri::FacialLandmark::kLeftProfile7);
-  facial_landmark.value(
-    "RIGHT_EYEBROW_OUTSIDE",
-    hri::FacialLandmark::kRightEyebrowOutside);
+  facial_landmark.value("RIGHT_EYEBROW_OUTSIDE", hri::FacialLandmark::kRightEyebrowOutside);
   facial_landmark.value("RIGHT_EYEBROW_1", hri::FacialLandmark::kRightEyebrow1);
   facial_landmark.value("RIGHT_EYEBROW_2", hri::FacialLandmark::kRightEyebrow2);
   facial_landmark.value("RIGHT_EYEBROW_3", hri::FacialLandmark::kRightEyebrow3);
-  facial_landmark.value(
-    "RIGHT_EYEBROW_INSIDE",
-    hri::FacialLandmark::kRightEyebrowInside);
-  facial_landmark.value(
-    "RIGHT_EYE_OUTSIDE",
-    hri::FacialLandmark::kRightEyeOutside);
+  facial_landmark.value("RIGHT_EYEBROW_INSIDE", hri::FacialLandmark::kRightEyebrowInside);
+  facial_landmark.value("RIGHT_EYE_OUTSIDE", hri::FacialLandmark::kRightEyeOutside);
   facial_landmark.value("RIGHT_EYE_TOP_1", hri::FacialLandmark::kRightEyeTop1);
   facial_landmark.value("RIGHT_EYE_TOP_2", hri::FacialLandmark::kRightEyeTop2);
-  facial_landmark.value(
-    "RIGHT_EYE_INSIDE",
-    hri::FacialLandmark::kRightEyeInside);
-  facial_landmark.value(
-    "RIGHT_EYE_BOTTOM_1",
-    hri::FacialLandmark::kRightEyeBottom1);
-  facial_landmark.value(
-    "RIGHT_EYE_BOTTOM_2",
-    hri::FacialLandmark::kRightEyeBottom2);
+  facial_landmark.value("RIGHT_EYE_INSIDE", hri::FacialLandmark::kRightEyeInside);
+  facial_landmark.value("RIGHT_EYE_BOTTOM_1", hri::FacialLandmark::kRightEyeBottom1);
+  facial_landmark.value("RIGHT_EYE_BOTTOM_2", hri::FacialLandmark::kRightEyeBottom2);
   facial_landmark.value("RIGHT_PUPIL", hri::FacialLandmark::kRightPupil);
-  facial_landmark.value(
-    "LEFT_EYEBROW_OUTSIDE",
-    hri::FacialLandmark::kLeftEyebrowOutside);
+  facial_landmark.value("LEFT_EYEBROW_OUTSIDE", hri::FacialLandmark::kLeftEyebrowOutside);
   facial_landmark.value("LEFT_EYEBROW_1", hri::FacialLandmark::kLeftEyebrow1);
   facial_landmark.value("LEFT_EYEBROW_2", hri::FacialLandmark::kLeftEyebrow2);
   facial_landmark.value("LEFT_EYEBROW_3", hri::FacialLandmark::kLeftEyebrow3);
-  facial_landmark.value(
-    "LEFT_EYEBROW_INSIDE",
-    hri::FacialLandmark::kLeftEyebrowInside);
-  facial_landmark.value(
-    "LEFT_EYE_OUTSIDE",
-    hri::FacialLandmark::kLeftEyeOutside);
+  facial_landmark.value("LEFT_EYEBROW_INSIDE", hri::FacialLandmark::kLeftEyebrowInside);
+  facial_landmark.value("LEFT_EYE_OUTSIDE", hri::FacialLandmark::kLeftEyeOutside);
   facial_landmark.value("LEFT_EYE_TOP_1", hri::FacialLandmark::kLeftEyeTop1);
   facial_landmark.value("LEFT_EYE_TOP_2", hri::FacialLandmark::kLeftEyeTop2);
   facial_landmark.value("LEFT_EYE_INSIDE", hri::FacialLandmark::kLeftEyeInside);
-  facial_landmark.value(
-    "LEFT_EYE_BOTTOM_1",
-    hri::FacialLandmark::kLeftEyeBottom1);
-  facial_landmark.value(
-    "LEFT_EYE_BOTTOM_2",
-    hri::FacialLandmark::kLeftEyeBottom2);
+  facial_landmark.value("LEFT_EYE_BOTTOM_1", hri::FacialLandmark::kLeftEyeBottom1);
+  facial_landmark.value("LEFT_EYE_BOTTOM_2", hri::FacialLandmark::kLeftEyeBottom2);
   facial_landmark.value("LEFT_PUPIL", hri::FacialLandmark::kLeftPupil);
   facial_landmark.value("SELLION", hri::FacialLandmark::kSellion);
   facial_landmark.value("NOSE_1", hri::FacialLandmark::kNose1);
@@ -309,79 +302,34 @@ PYBIND11_MODULE(hri, m) {
   facial_landmark.value("NOSTRIL_3", hri::FacialLandmark::kNostril3);
   facial_landmark.value("NOSTRIL_4", hri::FacialLandmark::kNostril4);
   facial_landmark.value("NOSTRIL_5", hri::FacialLandmark::kNostril5);
-  facial_landmark.value(
-    "MOUTH_OUTER_RIGHT",
-    hri::FacialLandmark::kMouthOuterRight);
-  facial_landmark.value(
-    "MOUTH_OUTER_TOP_1",
-    hri::FacialLandmark::kMouthOuterTop1);
-  facial_landmark.value(
-    "MOUTH_OUTER_TOP_2",
-    hri::FacialLandmark::kMouthOuterTop2);
-  facial_landmark.value(
-    "MOUTH_OUTER_TOP_3",
-    hri::FacialLandmark::kMouthOuterTop3);
-  facial_landmark.value(
-    "MOUTH_OUTER_TOP_4",
-    hri::FacialLandmark::kMouthOuterTop4);
-  facial_landmark.value(
-    "MOUTH_OUTER_TOP_5",
-    hri::FacialLandmark::kMouthOuterTop5);
-  facial_landmark.value(
-    "MOUTH_OUTER_LEFT",
-    hri::FacialLandmark::kMouthOuterLeft);
-  facial_landmark.value(
-    "MOUTH_OUTER_BOTTOM_1",
-    hri::FacialLandmark::kMouthOuterBottom1);
-  facial_landmark.value(
-    "MOUTH_OUTER_BOTTOM_2",
-    hri::FacialLandmark::kMouthOuterBottom2);
-  facial_landmark.value(
-    "MOUTH_OUTER_BOTTOM_3",
-    hri::FacialLandmark::kMouthOuterBottom3);
-  facial_landmark.value(
-    "MOUTH_OUTER_BOTTOM_4",
-    hri::FacialLandmark::kMouthOuterBottom4);
-  facial_landmark.value(
-    "MOUTH_OUTER_BOTTOM_5",
-    hri::FacialLandmark::kMouthOuterBottom5);
-  facial_landmark.value(
-    "MOUTH_INNER_RIGHT",
-    hri::FacialLandmark::kMouthInnerRight);
-  facial_landmark.value(
-    "MOUTH_INNER_TOP_1",
-    hri::FacialLandmark::kMouthInnerTop1);
-  facial_landmark.value(
-    "MOUTH_INNER_TOP_2",
-    hri::FacialLandmark::kMouthInnerTop2);
-  facial_landmark.value(
-    "MOUTH_INNER_TOP_3",
-    hri::FacialLandmark::kMouthInnerTop3);
-  facial_landmark.value(
-    "MOUTH_INNER_LEFT",
-    hri::FacialLandmark::kMouthInnerLeft);
-  facial_landmark.value(
-    "MOUTH_INNER_BOTTOM_1",
-    hri::FacialLandmark::kMouthInnerBottom1);
-  facial_landmark.value(
-    "MOUTH_INNER_BOTTOM_2",
-    hri::FacialLandmark::kMouthInnerBottom2);
-  facial_landmark.value(
-    "MOUTH_INNER_BOTTOM_3",
-    hri::FacialLandmark::kMouthInnerBottom3);
+  facial_landmark.value("MOUTH_OUTER_RIGHT", hri::FacialLandmark::kMouthOuterRight);
+  facial_landmark.value("MOUTH_OUTER_TOP_1", hri::FacialLandmark::kMouthOuterTop1);
+  facial_landmark.value("MOUTH_OUTER_TOP_2", hri::FacialLandmark::kMouthOuterTop2);
+  facial_landmark.value("MOUTH_OUTER_TOP_3", hri::FacialLandmark::kMouthOuterTop3);
+  facial_landmark.value("MOUTH_OUTER_TOP_4", hri::FacialLandmark::kMouthOuterTop4);
+  facial_landmark.value("MOUTH_OUTER_TOP_5", hri::FacialLandmark::kMouthOuterTop5);
+  facial_landmark.value("MOUTH_OUTER_LEFT", hri::FacialLandmark::kMouthOuterLeft);
+  facial_landmark.value("MOUTH_OUTER_BOTTOM_1", hri::FacialLandmark::kMouthOuterBottom1);
+  facial_landmark.value("MOUTH_OUTER_BOTTOM_2", hri::FacialLandmark::kMouthOuterBottom2);
+  facial_landmark.value("MOUTH_OUTER_BOTTOM_3", hri::FacialLandmark::kMouthOuterBottom3);
+  facial_landmark.value("MOUTH_OUTER_BOTTOM_4", hri::FacialLandmark::kMouthOuterBottom4);
+  facial_landmark.value("MOUTH_OUTER_BOTTOM_5", hri::FacialLandmark::kMouthOuterBottom5);
+  facial_landmark.value("MOUTH_INNER_RIGHT", hri::FacialLandmark::kMouthInnerRight);
+  facial_landmark.value("MOUTH_INNER_TOP_1", hri::FacialLandmark::kMouthInnerTop1);
+  facial_landmark.value("MOUTH_INNER_TOP_2", hri::FacialLandmark::kMouthInnerTop2);
+  facial_landmark.value("MOUTH_INNER_TOP_3", hri::FacialLandmark::kMouthInnerTop3);
+  facial_landmark.value("MOUTH_INNER_LEFT", hri::FacialLandmark::kMouthInnerLeft);
+  facial_landmark.value("MOUTH_INNER_BOTTOM_1", hri::FacialLandmark::kMouthInnerBottom1);
+  facial_landmark.value("MOUTH_INNER_BOTTOM_2", hri::FacialLandmark::kMouthInnerBottom2);
+  facial_landmark.value("MOUTH_INNER_BOTTOM_3", hri::FacialLandmark::kMouthInnerBottom3);
 
-  py::enum_<hri::SkeletalKeypoint> skeletal_keypoint(m, "SkeletalKeypoint",
-    pybind_enum_doc);
+  py::enum_<hri::SkeletalKeypoint> skeletal_keypoint(m, "SkeletalKeypoint", pybind_enum_doc);
   skeletal_keypoint.value("NOSE", hri::SkeletalKeypoint::kNose);
   skeletal_keypoint.value("NECK", hri::SkeletalKeypoint::kNeck);
-  skeletal_keypoint.value(
-    "RIGHT_SHOULDER",
-    hri::SkeletalKeypoint::kRightShoulder);
+  skeletal_keypoint.value("RIGHT_SHOULDER", hri::SkeletalKeypoint::kRightShoulder);
   skeletal_keypoint.value("RIGHT_ELBOW", hri::SkeletalKeypoint::kRightElbow);
   skeletal_keypoint.value("RIGHT_WRIST", hri::SkeletalKeypoint::kRightWrist);
-  skeletal_keypoint.value(
-    "LEFT_SHOULDER",
-    hri::SkeletalKeypoint::kLeftShoulder);
+  skeletal_keypoint.value("LEFT_SHOULDER", hri::SkeletalKeypoint::kLeftShoulder);
   skeletal_keypoint.value("LEFT_ELBOW", hri::SkeletalKeypoint::kLeftElbow);
   skeletal_keypoint.value("LEFT_WRIST", hri::SkeletalKeypoint::kLeftWrist);
   skeletal_keypoint.value("RIGHT_HIP", hri::SkeletalKeypoint::kRightHip);
@@ -481,6 +429,9 @@ PYBIND11_MODULE(hri, m) {
     - :py:attr:`facial_action_units` -- facial action units (Dict[FacialActionUnit, IntensityConfidence])
     - :py:attr:`age` -- person's age in years (float)
     - :py:attr:`gender` -- person's gender (Gender)
+    - :py:attr:`expression` -- person's expression as discrete state (Expression)
+    - :py:attr:`expression_va` -- person's expression in circumplex model space (Tuple (valence, arousal))
+    - :py:attr:`expression_confidence` -- person's expression confidence (float)
     - :py:attr:`gaze_transform` -- gaze's stamped 3D transform (geometry_msgs.msg.TransformStamped)
     )";
   face.def_property_readonly(
@@ -508,7 +459,15 @@ PYBIND11_MODULE(hri, m) {
   face.def_property_readonly(
     "gaze_transform", &hri::Face::gazeTransform,
     "Gaze's stamped 3D transform (geometry_msgs.msg.TransformStamped)");
-
+  face.def_property_readonly(
+    "expression", &hri::Face::expression,
+    "Face expression as a discrete state");
+  face.def_property_readonly(
+    "expression_va", &hri::Face::expressionVA,
+    "Face expression as a continuous value in the circumplex model space (ExpressionVA)");
+  face.def_property_readonly(
+    "expression_confidence", &hri::Face::expressionConfidence,
+    "Person's expression confidence");
   py::class_<hri::Voice, std::shared_ptr<hri::Voice>> voice(m, "Voice",
     feature_tracker);
   voice.doc() =

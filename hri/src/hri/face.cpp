@@ -19,10 +19,12 @@
 
 #include "cv_bridge/cv_bridge.h"
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "hri_msgs/msg/expression.hpp"
 #include "hri_msgs/msg/facial_action_units.hpp"
 #include "hri_msgs/msg/facial_landmarks.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
 #include "hri_msgs/msg/soft_biometrics.hpp"
+#include "magic_enum.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
 
@@ -74,6 +76,15 @@ Face::Face(
   facial_action_units_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::FacialActionUnits>(
     node_interfaces_.get_node_parameters_interface(), node_interfaces_.get_node_topics_interface(),
     kNs_ + "/facs", default_qos, bind(&Face::onFacs, this, std::placeholders::_1), options);
+
+  // Add subscription for the expression topic
+  expression_subscriber_ = rclcpp::create_subscription<hri_msgs::msg::Expression>(
+    node_interfaces_.get_node_parameters_interface(),
+    node_interfaces_.get_node_topics_interface(),
+    kNs_ + "/expression",
+    default_qos,
+    bind(&Face::onExpression, this, std::placeholders::_1),
+    options);
 }
 
 Face::~Face()
@@ -132,6 +143,22 @@ void Face::onFacs(hri_msgs::msg::FacialActionUnits::ConstSharedPtr msg)
   }
 }
 
+// New method to handle the expression topic
+void Face::onExpression(const hri_msgs::msg::Expression::ConstSharedPtr msg)
+{
+  auto expression = magic_enum::enum_cast<Expression>(
+    "k" + msg->expression, magic_enum::case_insensitive);
+  if (!expression) {
+    RCLCPP_WARN_STREAM(
+      node_interfaces_.get_node_logging_interface()->get_logger(),
+      "Received invalid expression: " << msg->expression);
+  }
+
+  expression_ = expression;
+  expression_va_ = ExpressionVA{msg->valence, msg->arousal};
+  expression_confidence_ = msg->confidence;
+}
+
 std::optional<geometry_msgs::msg::TransformStamped> Face::gazeTransform() const
 {
   return transformFromReference(gazeFrame());
@@ -145,6 +172,7 @@ void Face::invalidate()
   landmarks_subscriber_.reset();
   softbiometrics_subscriber_.reset();
   facial_action_units_subscriber_.reset();
+  expression_subscriber_.reset();
   roi_.reset();
   cropped_.reset();
   aligned_.reset();
@@ -152,6 +180,9 @@ void Face::invalidate()
   age_.reset();
   gender_.reset();
   facial_action_units_.reset();
+  expression_.reset();
+  expression_va_.reset();
+  expression_confidence_.reset();
   FeatureTracker::invalidate();
 }
 

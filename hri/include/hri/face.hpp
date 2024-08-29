@@ -20,6 +20,7 @@
 #include <string>
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "hri_msgs/msg/expression.hpp"
 #include "hri_msgs/msg/facial_action_units.hpp"
 #include "hri_msgs/msg/facial_landmarks.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
@@ -34,7 +35,8 @@
 
 namespace hri
 {
-// TODO(LJU): possibly subscribe also to the /frontalized and /expression sub-topics
+
+// TODO(LJU): possibly subscribe also to the /frontalized sub-topic
 class Face : public FeatureTracker, public std::enable_shared_from_this<Face>
 {
   friend class HRIListener;  // for invalidate()
@@ -97,6 +99,18 @@ public:
    */
   std::optional<Gender> gender() const {return gender_;}
 
+  /** \brief The face expression as a discrete state.
+   */
+  std::optional<Expression> expression() const {return expression_;}
+
+  /** \brief The face expression as a continuous value in the circumplex model space.
+   */
+  std::optional<ExpressionVA> expressionVA() const {return expression_va_;}
+
+  /** \brief The confidence of the face expression estimation.
+   */
+  std::optional<float> expressionConfidence() const {return expression_confidence_;}
+
   /** \brief Returns the (stamped) 3D transform of the gaze (if available).
    */
   std::optional<geometry_msgs::msg::TransformStamped> gazeTransform() const;
@@ -108,6 +122,7 @@ private:
   void onLandmarks(hri_msgs::msg::FacialLandmarks::ConstSharedPtr msg);
   void onSoftBiometrics(hri_msgs::msg::SoftBiometrics::ConstSharedPtr msg);
   void onFacs(hri_msgs::msg::FacialActionUnits::ConstSharedPtr msg);
+  void onExpression(hri_msgs::msg::Expression::ConstSharedPtr msg);
 
   void invalidate();
 
@@ -118,6 +133,9 @@ private:
   std::optional<float> age_;
   std::optional<Gender> gender_;
   std::optional<FacialActionUnits> facial_action_units_;
+  std::optional<Expression> expression_;
+  std::optional<ExpressionVA> expression_va_;
+  std::optional<float> expression_confidence_;
 
   rclcpp::Subscription<hri_msgs::msg::NormalizedRegionOfInterest2D>::SharedPtr roi_subscriber_;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr cropped_subscriber_;
@@ -125,6 +143,7 @@ private:
   rclcpp::Subscription<hri_msgs::msg::FacialLandmarks>::SharedPtr landmarks_subscriber_;
   rclcpp::Subscription<hri_msgs::msg::SoftBiometrics>::SharedPtr softbiometrics_subscriber_;
   rclcpp::Subscription<hri_msgs::msg::FacialActionUnits>::SharedPtr facial_action_units_subscriber_;
+  rclcpp::Subscription<hri_msgs::msg::Expression>::SharedPtr expression_subscriber_;
 
   const std::string kGazeFrame_;
 };

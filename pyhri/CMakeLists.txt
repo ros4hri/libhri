@@ -29,6 +29,7 @@ find_package(ament_cmake_python REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)  # Find python before pybind11
 ament_auto_find_build_dependencies() # ${PROJECT_NAME}_FOUND_INCLUDE_DIRS ${PROJECT_NAME}_FOUND_BUILD_DEPENDS}
 find_package(pybind11 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 # Python target
 set(HRI_MODULE_NAME hri)
@@ -45,6 +46,7 @@ target_include_directories(${HRI_MODULE_NAME} PRIVATE
   ${PROJECT_NAME}_FOUND_INCLUDE_DIRS
 )
 ament_target_dependencies(${HRI_MODULE_NAME} PUBLIC ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
+target_link_libraries(${HRI_MODULE_NAME} PRIVATE ${OpenCV_LIBRARIES})
 install(TARGETS ${HRI_MODULE_NAME}
   LIBRARY DESTINATION "${PYTHON_INSTALL_DIR}/${HRI_MODULE_NAME}"
 )

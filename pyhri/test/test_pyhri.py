@@ -20,6 +20,7 @@ from hri_msgs.msg import (
     FacialActionUnits, FacialLandmarks, IdsList, LiveSpeech, NormalizedRegionOfInterest2D,
     Skeleton2D, SoftBiometrics)
 from hri_msgs.msg import EngagementLevel as EngagementLevelMsg
+from hri_msgs.msg import Expression as ExpressionMsg
 import numpy as np
 import rclpy
 from rclpy.context import Context
@@ -31,7 +32,8 @@ from tf2_ros import StaticTransformBroadcaster
 import unittest
 
 from hri import (
-    EngagementLevel, FacialActionUnit, FacialLandmark, Gender, HRIListener, SkeletalKeypoint)
+    EngagementLevel, Expression, FacialActionUnit, FacialLandmark, Gender, HRIListener,
+    SkeletalKeypoint)
 
 
 class TestHRI(unittest.TestCase):
@@ -525,6 +527,43 @@ class TestHRI(unittest.TestCase):
         softbiometrics_pub.publish(softbiometrics_msg)
         self.spin()
         self.assertIsNone(face.gender)
+
+    def test_expression(self):
+        # Create publishers
+        faces_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/faces/tracked', 1)
+        face_pub = self.tester_node.create_publisher(
+            std_msgs.msg.String, '/humans/persons/p1/face_id', self.latching_qos)
+        expression_pub = self.tester_node.create_publisher(
+            ExpressionMsg, '/humans/faces/f1/expression', 1)
+
+        # Publish a face ID
+        faces_pub.publish(IdsList(ids=['f1']))
+        self.spin()
+        self.assertEqual(len(self.hri_listener.faces), 1)
+
+        # Test reception of an expression and its confidence
+        expression_msg = ExpressionMsg(expression=ExpressionMsg.ANGRY, confidence=0.9)
+        expression_pub.publish(expression_msg)
+        face_pub.publish(std_msgs.msg.String(data='f1'))
+        self.spin()
+        face = self.hri_listener.faces['f1']
+        self.assertIsNotNone(face.expression)
+        self.assertEqual(face.expression, Expression.ANGRY)
+        self.assertAlmostEqual(face.expression_confidence, 0.9)
+
+        # Test reception of an expression change
+        expression_msg.expression = ExpressionMsg.SAD
+        expression_pub.publish(expression_msg)
+        self.spin()
+        self.assertEqual(face.expression, Expression.SAD)
+
+        # Test valence and arousal reception
+        expression_pub.publish(ExpressionMsg(valence=-0.8, arousal=0.4))
+        self.spin()
+        self.assertIsNotNone(face.expression_va)
+        self.assertAlmostEqual(face.expression_va[0], -0.8)
+        self.assertAlmostEqual(face.expression_va[1], 0.4)
 
     def test_engagement_level(self):
         tracked_persons_pub = self.tester_node.create_publisher(

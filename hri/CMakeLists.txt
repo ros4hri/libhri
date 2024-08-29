@@ -28,6 +28,7 @@ find_package(OpenCV REQUIRED)
 
 # Targets
 ament_auto_add_library(${PROJECT_NAME} SHARED DIRECTORY src/hri)
+target_link_libraries(${PROJECT_NAME} magic_enum::magic_enum)
 
 ament_auto_add_executable(${PROJECT_NAME}_example src/example.cpp)
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES})

@@ -24,6 +24,7 @@
 #include "hri/person.hpp"
 #include "hri/voice.hpp"
 #include "hri_msgs/msg/engagement_level.hpp"
+#include "hri_msgs/msg/expression.hpp"
 #include "hri_msgs/msg/ids_list.hpp"
 #include "hri_msgs/msg/live_speech.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
@@ -611,6 +612,50 @@ TEST_F(HRITest, SoftBiometrics)
   softbiometrics_pub->publish(softbiometrics_msg);
   spin();
   EXPECT_FALSE(face->gender());
+}
+
+TEST_F(HRITest, GetFacesExpression)
+{
+  auto faces_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/faces/tracked", 1);
+  auto expression_pub = tester_node_->create_publisher<hri_msgs::msg::Expression>(
+    "/humans/faces/A/expression", 1);
+  auto ids_msg = hri_msgs::msg::IdsList();
+  auto expression_msg = hri_msgs::msg::Expression();
+
+  // Publish a face ID
+  ids_msg.ids = {"A"};
+  faces_pub->publish(ids_msg);
+  spin();
+  ASSERT_EQ(expression_pub->get_subscription_count(), 1U);
+  auto face_ = hri_listener_->getFaces()["A"];
+
+  // Test reception of an expression and its confidence
+  expression_msg.expression = hri_msgs::msg::Expression::HAPPY;
+  expression_msg.confidence = 0.9;
+  expression_pub->publish(expression_msg);
+  spin();
+  ASSERT_TRUE(face_->expression().has_value());
+  EXPECT_EQ(face_->expression().value(), hri::Expression::kHappy);
+  ASSERT_TRUE(face_->expressionConfidence().has_value());
+  EXPECT_FLOAT_EQ(face_->expressionConfidence().value(), 0.9f);
+
+  // Test reception of an expression change
+  expression_msg.expression = hri_msgs::msg::Expression::SAD;
+  expression_pub->publish(expression_msg);
+  spin();
+  ASSERT_TRUE(face_->expression().has_value());
+  EXPECT_EQ(face_->expression().value(), hri::Expression::kSad);
+
+  // Test valence and arousal reception
+  expression_msg = hri_msgs::msg::Expression();
+  expression_msg.valence = -0.8;
+  expression_msg.arousal = 0.4;
+  expression_pub->publish(expression_msg);
+  spin();
+  ASSERT_TRUE(face_->expressionVA().has_value());
+  EXPECT_FLOAT_EQ(face_->expressionVA().value().valence, -0.8f);
+  EXPECT_FLOAT_EQ(face_->expressionVA().value().arousal, 0.4f);
 }
 
 TEST_F(HRITest, EngagementLevel)

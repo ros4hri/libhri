@@ -45,6 +45,41 @@ enum class EngagementLevel
   kDisengaging = hri_msgs::msg::EngagementLevel::DISENGAGING
 };
 
+enum class Expression
+{
+  kNeutral,
+  kAngry,
+  kSad,
+  kHappy,
+  kSurprised,
+  kDisgusted,
+  kScared,
+  kPleading,
+  kVulnerable,
+  kDespaired,
+  kGuilty,
+  kDisappointed,
+  kEmbarrassed,
+  kHorrified,
+  kSkeptical,
+  kAnnoyed,
+  kFurious,
+  kSuspicious,
+  kRejected,
+  kBored,
+  kTired,
+  kAsleep,
+  kConfused,
+  kAmazed,
+  kExcited,
+};
+
+struct ExpressionVA
+{
+  float valence;
+  float arousal;
+};
+
 enum class FacialActionUnit
 {
   kNeutralFace = hri_msgs::msg::FacialActionUnits::NEUTRAL_FACE,

@@ -15,6 +15,7 @@
 from hri.hri import (
     Body,
     EngagementLevel,
+    Expression,
     Face,
     FacialActionUnit,
     FacialLandmark,
@@ -28,6 +29,7 @@ from hri.hri import (
 __all__ = [
     'Body',
     'EngagementLevel',
+    'Expression',
     'Face',
     'FacialActionUnit',
     'FacialLandmark',

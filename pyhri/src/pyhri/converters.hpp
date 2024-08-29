@@ -298,6 +298,43 @@ public:
 };
 
 template<>
+struct type_caster<hri::ExpressionVA>
+{
+public:
+  PYBIND11_TYPE_CASTER(
+    hri::ExpressionVA, const_name("hri::ExpressionVA"));
+
+  bool load(handle py_handle, bool)
+  {
+    if (!isinstance<tuple>(py_handle)) {
+      return false;
+    }
+    const auto py_as_tuple = reinterpret_borrow<tuple>(py_handle);
+    if (py_as_tuple.size() != 2) {
+      return false;
+    }
+    for (const auto & element : py_as_tuple) {
+      if (!isinstance<float>(element)) {
+        return false;
+      }
+    }
+
+    value.valence = py_as_tuple[0].cast<float>();
+    value.arousal = py_as_tuple[1].cast<float>();
+    return true;
+  }
+
+  static handle cast(hri::ExpressionVA c_obj, return_value_policy, handle)
+  {
+    auto py_obj = tuple(2);
+    py_obj[0] = pybind11::cast(c_obj.valence);
+    py_obj[1] = pybind11::cast(c_obj.arousal);
+    py_obj.inc_ref();
+    return py_obj;
+  }
+};
+
+template<>
 struct type_caster<hri::IntensityConfidence>
 {
 public:
