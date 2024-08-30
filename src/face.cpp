@@ -30,6 +30,7 @@
 
 #include <cv_bridge/cv_bridge.h>
 #include "hri_msgs/SoftBiometrics.h"
+#include "hri_msgs/Expression.h"
 
 using namespace std;
 using namespace hri;
@@ -68,6 +69,9 @@ void Face::init()
 
   softbiometrics_subscriber_ = node_.subscribe<hri_msgs::SoftBiometrics>(
       ns_ + "/softbiometrics", 1, bind(&Face::onSoftBiometrics, this, _1));
+
+  expression_subscriber_ = node_.subscribe<hri_msgs::Expression>(
+      ns_ + "/expression", 1, bind(&Face::onExpression, this, _1));
 }
 
 void Face::onRoI(hri_msgs::NormalizedRegionOfInterest2DConstPtr roi)
@@ -135,6 +139,45 @@ boost::optional<Gender> Face::gender() const
     return boost::optional<Gender>();
 
   return static_cast<Gender>(softbiometrics_->gender);
+}
+
+void Face::onExpression(hri_msgs::ExpressionConstPtr msg)
+{
+// Map the string to the enum manually
+if (msg->expression == hri_msgs::Expression::NEUTRAL) expression_ = kNeutral;
+else if (msg->expression == hri_msgs::Expression::ANGRY) expression_ = kAngry;
+else if (msg->expression == hri_msgs::Expression::SAD) expression_ = kSad;
+else if (msg->expression == hri_msgs::Expression::HAPPY) expression_ = kHappy;
+else if (msg->expression == hri_msgs::Expression::SURPRISED) expression_ = kSurprised;
+else if (msg->expression == hri_msgs::Expression::DISGUSTED) expression_ = kDisgusted;
+else if (msg->expression == hri_msgs::Expression::SCARED) expression_ = kScared;
+else if (msg->expression == hri_msgs::Expression::PLEADING) expression_ = kPleading;
+else if (msg->expression == hri_msgs::Expression::VULNERABLE) expression_ = kVulnerable;
+else if (msg->expression == hri_msgs::Expression::DESPAIRED) expression_ = kDespaired;
+else if (msg->expression == hri_msgs::Expression::GUILTY) expression_ = kGuilty;
+else if (msg->expression == hri_msgs::Expression::DISAPPOINTED) expression_ = kDisappointed;
+else if (msg->expression == hri_msgs::Expression::EMBARRASSED) expression_ = kEmbarrassed;
+else if (msg->expression == hri_msgs::Expression::HORRIFIED) expression_ = kHorrified;
+else if (msg->expression == hri_msgs::Expression::SKEPTICAL) expression_ = kSkeptical;
+else if (msg->expression == hri_msgs::Expression::ANNOYED) expression_ = kAnnoyed;
+else if (msg->expression == hri_msgs::Expression::FURIOUS) expression_ = kFurious;
+else if (msg->expression == hri_msgs::Expression::SUSPICIOUS) expression_ = kSuspicious;
+else if (msg->expression == hri_msgs::Expression::REJECTED) expression_ = kRejected;
+else if (msg->expression == hri_msgs::Expression::BORED) expression_ = kBored;
+else if (msg->expression == hri_msgs::Expression::TIRED) expression_ = kTired;
+else if (msg->expression == hri_msgs::Expression::ASLEEP) expression_ = kAsleep;
+else if (msg->expression == hri_msgs::Expression::CONFUSED) expression_ = kConfused;
+else if (msg->expression == hri_msgs::Expression::AMAZED) expression_ = kAmazed;
+else if (msg->expression == hri_msgs::Expression::EXCITED) expression_ = kExcited;
+else
+{
+    ROS_WARN_STREAM("Received invalid expression: " << msg->expression);
+    return;
+}
+
+  // Store valence and arousal
+  expression_va_ = ExpressionVA{msg->valence, msg->arousal};
+  expression_confidence_ = msg->confidence;
 }
 
 boost::optional<geometry_msgs::TransformStamped> Face::transform() const

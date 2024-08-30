@@ -40,7 +40,8 @@
 #include "hri_msgs/IdsList.h"
 #include "hri_msgs/LiveSpeech.h"
 #include "hri_msgs/NormalizedRegionOfInterest2D.h"
-#include "hri_msgs/SoftBiometrics.h"
+#include "hri_msgs/Expression.h"
+#include "hri_msgs/IdsList.h"
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Bool.h"
@@ -1030,6 +1031,55 @@ TEST(libhri, PeopleLocation)
   spinner.stop();
 }
 
+TEST(libhri, GetFacesExpression)
+{
+
+  NodeHandle nh;
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  HRIListener hri_listener;
+
+  hri_msgs::IdsList ids_msg;
+  hri_msgs::Expression expression_msg;
+
+  auto expression_pub = nh.advertise<hri_msgs::Expression>("/humans/faces/A/expression", 1);
+  auto faces_pub = nh.advertise<hri_msgs::IdsList>("/humans/faces/tracked", 1);
+
+  // Publish a face ID
+  ids_msg.ids = {"A"};
+  faces_pub.publish(ids_msg);
+  WAIT;
+  // Test reception of an expression and its confidence
+  expression_msg.expression = hri_msgs::Expression::HAPPY;
+  expression_msg.confidence = 0.9;
+  expression_pub.publish(expression_msg);
+  WAIT;
+  auto p = hri_listener.getFaces()["A"].lock();
+  ASSERT_TRUE(*(p->expression()));
+  EXPECT_EQ(*(p->expression()), hri::FaceExpression::kHappy);
+  ASSERT_TRUE(*(p->expressionConfidence()));
+  EXPECT_FLOAT_EQ(*(p->expressionConfidence()), 0.9);
+
+  // Test reception of an expression change
+  expression_msg.expression = hri_msgs::Expression::SAD;
+  expression_pub.publish(expression_msg);
+  WAIT;
+  ASSERT_TRUE(*(p->expression()));
+  EXPECT_EQ(*(p->expression()), hri::FaceExpression::kSad);
+
+  // Test valence and arousal reception
+  expression_msg.valence = -0.8;
+  expression_msg.arousal = 0.4;
+  expression_pub.publish(expression_msg);
+  WAIT;
+  ASSERT_TRUE(p->expressionVA());
+  const hri::ExpressionVA& exprVA = *p->expressionVA();
+  EXPECT_FLOAT_EQ(exprVA.valence, -0.8);
+  EXPECT_FLOAT_EQ(exprVA.arousal, 0.4);
+  spinner.stop();
+}
 TEST(libhri, SpeechCallbacks)
 {
   NodeHandle nh;

@@ -34,6 +34,7 @@
 #include <hri_msgs/NormalizedRegionOfInterest2D.h>
 #include <hri_msgs/FacialLandmarks.h>
 #include <hri_msgs/SoftBiometrics.h>
+#include <hri_msgs/Expression.h>
 #include <sensor_msgs/Image.h>
 #include <memory>
 #include <boost/optional.hpp>
@@ -60,6 +61,41 @@ enum Gender
   FEMALE = 1,
   MALE = 2,
   OTHER = 3
+};
+
+enum FaceExpression
+{
+  kNeutral,
+  kAngry,
+  kSad,
+  kHappy,
+  kSurprised,
+  kDisgusted,
+  kScared,
+  kPleading,
+  kVulnerable,
+  kDespaired,
+  kGuilty,
+  kDisappointed,
+  kEmbarrassed,
+  kHorrified,
+  kSkeptical,
+  kAnnoyed,
+  kFurious,
+  kSuspicious,
+  kRejected,
+  kBored,
+  kTired,
+  kAsleep,
+  kConfused,
+  kAmazed,
+  kExcited,
+};
+
+struct ExpressionVA
+{
+  float valence;
+  float arousal;
 };
 
 // the tf prefixes follow REP-155
@@ -165,6 +201,18 @@ public:
    */
   boost::optional<Gender> gender() const;
 
+  /** \brief The face expression as a discrete state.
+   */
+
+  boost::optional<FaceExpression> expression() const { return expression_; }
+  /** \brief The face expression as a continuous value in the circumplex model space.
+   */
+  boost::optional<ExpressionVA> expressionVA() const {return expression_va_;}
+
+  /** \brief The confidence of the face expression estimation.
+   */
+  boost::optional<float> expressionConfidence() const {return expression_confidence_;}
+
   /** \brief Returns the (stamped) 3D transform of the face (if available).
    */
   boost::optional<geometry_msgs::TransformStamped> transform() const;
@@ -198,6 +246,11 @@ private:
   void onSoftBiometrics(hri_msgs::SoftBiometricsConstPtr biometrics);
   hri_msgs::SoftBiometricsConstPtr softbiometrics_;
 
+  ros::Subscriber expression_subscriber_;
+  void onExpression(hri_msgs::ExpressionConstPtr msg);
+  FaceExpression expression_;
+  ExpressionVA expression_va_;
+  float expression_confidence_;
 
   std::array<IntensityConfidence, 99> facial_action_units_;
 
