@@ -2,8 +2,8 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.6.0 (2024-09-09)
+------------------
 * add face expression
 * change build to ament_cmake_auto
 * Contributors: Luka Juricic
