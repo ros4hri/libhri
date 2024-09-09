@@ -2,6 +2,12 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add face expression
+* change build to ament_cmake_auto
+* Contributors: Luka Juricic
+
 2.5.1 (2024-08-21)
 ------------------
 * disable some CMAKE optimization
