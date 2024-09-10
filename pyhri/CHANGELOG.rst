@@ -2,6 +2,11 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* bring back dependencies on tf2 and cv_bridge as <depends> so that <build_export_depend> is implied
+* Contributors: Séverin Lemaignan
+
 2.6.0 (2024-09-09)
 ------------------
 * add face expression
