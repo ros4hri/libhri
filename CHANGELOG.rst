@@ -2,6 +2,12 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix build warnings
+* expression for noetic
+* Contributors: Luka Juricic, Sara Cooper
+
 0.6.4 (2023-07-05)
 ------------------
 * Fix Typo in voice.h
