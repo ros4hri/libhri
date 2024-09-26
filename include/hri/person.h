@@ -129,10 +129,12 @@ protected:
   // is destroyed after all pointers to this person are released.
   const HRIListener* listener_;
 
-  void tfCallback(const geometry_msgs::TransformStampedConstPtr& transform_ptr)
+  void tfCallback(const geometry_msgs::TransformStampedConstPtr &)
   {
     ROS_WARN("got tf transform!");
   }
+
+  hri_msgs::EngagementLevelConstPtr _engagement_status;
 
   // if non-empty, this person 'does not exist' and is instead an alias to
   // another person.  hri::getPersons and hri::getTrackedPersons will returns
@@ -141,11 +143,7 @@ protected:
 
   boost::optional<bool> _anonymous;
 
-  hri_msgs::EngagementLevelConstPtr _engagement_status;
-
   float _loc_confidence;
-
-  std::string _reference_frame;
 
   ros::Subscriber face_id_subscriber_;
   ros::Subscriber body_id_subscriber_;
@@ -156,6 +154,7 @@ protected:
   ros::Subscriber loc_confidence_subscriber_;
 
   tf2_ros::Buffer* _tf_buffer_ptr;
+  std::string _reference_frame;
 };
 
 typedef std::shared_ptr<Person> PersonPtr;

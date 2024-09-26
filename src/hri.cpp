@@ -31,6 +31,7 @@
 #include <functional>
 #include <iterator>
 #include <memory>
+#include <stdexcept>
 #include <tuple>
 #include <utility>
 #include "hri/body.h"
@@ -245,6 +246,9 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
         current_ids.insert(kv.first);
       }
       break;
+    case FeatureType::invalid:
+      throw std::runtime_error("Using invalid feature type");
+      break;
   }
 
 
@@ -355,6 +359,9 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
         }
       }
       break;
+    case FeatureType::invalid:
+      throw std::runtime_error("Using invalid feature type");
+      break;
   }
 
   switch (feature)
@@ -428,6 +435,9 @@ void HRIListener::onTrackedFeature(FeatureType feature, hri_msgs::IdsListConstPt
           cb(person);
         }
       }
+      break;
+    case FeatureType::invalid:
+      throw std::runtime_error("Using invalid feature type");
       break;
   }
 }

@@ -189,7 +189,7 @@ boost::optional<geometry_msgs::TransformStamped> Face::transform() const
 
     return transform;
   }
-  catch (tf2::LookupException)
+  catch (const tf2::LookupException &)
   {
     ROS_WARN_STREAM("failed to transform the face frame " << frame() << " to " << _reference_frame
                                                           << ". Are the frames published?");
@@ -206,7 +206,7 @@ boost::optional<geometry_msgs::TransformStamped> Face::gazeTransform() const
 
     return transform;
   }
-  catch (tf2::LookupException)
+  catch (const tf2::LookupException &)
   {
     ROS_WARN_STREAM("failed to transform the gaze frame " << frame() << " to " << _reference_frame
                                                           << ". Are the frames published?");

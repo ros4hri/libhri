@@ -129,8 +129,8 @@ private:
   void onSkeleton(hri_msgs::Skeleton2DConstPtr skeleton);
   std::vector<SkeletonPoint> skeleton_;
 
-  std::string _reference_frame;
   tf2_ros::Buffer* _tf_buffer_ptr;
+  std::string _reference_frame;
 };
 
 typedef std::shared_ptr<Body> BodyPtr;

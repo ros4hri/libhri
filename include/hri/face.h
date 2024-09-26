@@ -254,8 +254,8 @@ private:
 
   std::array<IntensityConfidence, 99> facial_action_units_;
 
-  std::string _reference_frame;
   tf2_ros::Buffer* _tf_buffer_ptr;
+  std::string _reference_frame;
 };
 
 typedef std::shared_ptr<Face> FacePtr;

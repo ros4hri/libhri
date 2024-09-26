@@ -126,8 +126,8 @@ public:
   void init() override;
 
 private:
-  std::string _reference_frame;
   tf2_ros::Buffer* _tf_buffer_ptr;
+  std::string _reference_frame;
 
   bool _is_speaking;
   std::string _speech;

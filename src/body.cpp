@@ -100,7 +100,7 @@ boost::optional<geometry_msgs::TransformStamped> Body::transform() const
 
     return transform;
   }
-  catch (tf2::LookupException)
+  catch (const tf2::LookupException &)
   {
     ROS_WARN_STREAM("failed to transform the body frame " << frame() << " to " << _reference_frame
                                                           << ". Are the frames published?");

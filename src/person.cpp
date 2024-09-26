@@ -152,7 +152,7 @@ boost::optional<geometry_msgs::TransformStamped> Person::transform() const
 
     return transform;
   }
-  catch (tf2::LookupException)
+  catch (const tf2::LookupException &)
   {
     ROS_WARN_STREAM("failed to transform person frame " << frame() << " to " << _reference_frame
                                                         << ". Are the frames published?");

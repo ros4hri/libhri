@@ -114,11 +114,9 @@ public:
 
 protected:
   ID id_;
-
+  ros::NodeHandle node_;
   // topic namespace under which this feature is advertised
   std::string ns_;
-
-  ros::NodeHandle node_;
 };
 
 }  // namespace hri
