@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.0 (2024-09-26)
+------------------
 * fix build warnings
 * expression for noetic
 * Contributors: Luka Juricic, Sara Cooper
