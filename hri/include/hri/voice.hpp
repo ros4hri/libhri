@@ -16,6 +16,7 @@
 #define HRI__VOICE_HPP_
 
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <vector>
@@ -120,6 +121,16 @@ public:
       [callback](const std::string & text, const std::string &) {callback(text);});
   }
 
+  /** \brief Clears the registered callbacks.
+   */
+  void clearCallbacks()
+  {
+    std::lock_guard<std::mutex> lock(callbacks_lock_);
+    is_speaking_callbacks_.clear();
+    speech_callbacks_.clear();
+    incremental_speech_callbacks_.clear();
+  }
+
 private:
   void onSpeech_(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg);
   void onIsSpeaking(std_msgs::msg::Bool::ConstSharedPtr msg);
@@ -131,6 +142,7 @@ private:
   std::optional<std::string> incremental_speech_;
   std::optional<std::string> locale_;
 
+  std::mutex callbacks_lock_;
   std::vector<std::function<void(bool)>> is_speaking_callbacks_;
   std::vector<std::function<void(const std::string &, const std::string &)>> speech_callbacks_;
   std::vector<std::function<void(const std::string &, const std::string &)>>

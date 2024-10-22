@@ -57,6 +57,7 @@ Voice::~Voice()
 {
   RCLCPP_DEBUG_STREAM(
     node_interfaces_.get_node_logging_interface()->get_logger(), "Deleting voice " << kId_);
+  invalidate();
 }
 
 void Voice::onSpeech_(hri_msgs::msg::LiveSpeech::ConstSharedPtr msg)
@@ -90,9 +91,7 @@ void Voice::invalidate()
 {
   is_speaking_subscriber_.reset();
   speech_subscriber_.reset();
-  is_speaking_.reset();
-  speech_.reset();
-  incremental_speech_.reset();
+  clearCallbacks();
   locale_.reset();
   FeatureTracker::invalidate();
 }

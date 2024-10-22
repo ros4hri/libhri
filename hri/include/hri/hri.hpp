@@ -18,6 +18,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -204,16 +205,31 @@ public:
    */
   void clearCallbacks()
   {
-    face_callbacks_.clear();
-    face_lost_callbacks_.clear();
-    body_callbacks_.clear();
-    body_lost_callbacks_.clear();
-    voice_callbacks_.clear();
-    voice_lost_callbacks_.clear();
-    person_callbacks_.clear();
-    person_lost_callbacks_.clear();
-    person_tracked_callbacks_.clear();
-    person_tracked_lost_callbacks_.clear();
+    {
+      std::lock_guard<std::mutex> lock(face_callbacks_lock_);
+      face_callbacks_.clear();
+      face_lost_callbacks_.clear();
+    }
+    {
+      std::lock_guard<std::mutex> lock(face_callbacks_lock_);
+      body_callbacks_.clear();
+      body_lost_callbacks_.clear();
+    }
+    {
+      std::lock_guard<std::mutex> lock(voice_callbacks_lock_);
+      voice_callbacks_.clear();
+      voice_lost_callbacks_.clear();
+    }
+    {
+      std::lock_guard<std::mutex> lock(persons_callbacks_lock_);
+      person_callbacks_.clear();
+      person_lost_callbacks_.clear();
+    }
+    {
+      std::lock_guard<std::mutex> lock(persons_tracked_callbacks_lock_);
+      person_tracked_callbacks_.clear();
+      person_tracked_lost_callbacks_.clear();
+    }
   }
 
 protected:
@@ -229,21 +245,27 @@ private:
     rclcpp::Subscription<hri_msgs::msg::IdsList>::SharedPtr> feature_subscribers_;
 
   std::map<ID, FacePtr> faces_;
+  std::mutex face_callbacks_lock_;
   std::vector<std::function<void(FacePtr)>> face_callbacks_;
   std::vector<std::function<void(ID)>> face_lost_callbacks_;
 
   std::map<ID, BodyPtr> bodies_;
+  std::mutex body_callbacks_lock_;
   std::vector<std::function<void(BodyPtr)>> body_callbacks_;
   std::vector<std::function<void(ID)>> body_lost_callbacks_;
 
   std::map<ID, VoicePtr> voices_;
+  std::mutex voice_callbacks_lock_;
   std::vector<std::function<void(VoicePtr)>> voice_callbacks_;
   std::vector<std::function<void(ID)>> voice_lost_callbacks_;
 
   std::map<ID, PersonPtr> persons_;
+  std::mutex persons_callbacks_lock_;
   std::vector<std::function<void(PersonPtr)>> person_callbacks_;
   std::vector<std::function<void(ID)>> person_lost_callbacks_;
+
   std::map<ID, PersonPtr> tracked_persons_;
+  std::mutex persons_tracked_callbacks_lock_;
   std::vector<std::function<void(PersonPtr)>> person_tracked_callbacks_;
   std::vector<std::function<void(ID)>> person_tracked_lost_callbacks_;
 

@@ -72,6 +72,7 @@ Body::~Body()
 {
   RCLCPP_DEBUG_STREAM(
     node_interfaces_.get_node_logging_interface()->get_logger(), "Deleting body " << kId_);
+  invalidate();
 }
 
 void Body::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr msg)

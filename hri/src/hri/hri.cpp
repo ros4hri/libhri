@@ -97,6 +97,8 @@ HRIListener::~HRIListener()
 {
   RCLCPP_DEBUG_STREAM(
     node_interfaces_.get_node_logging_interface()->get_logger(), "Closing the HRI Listener");
+  feature_subscribers_.clear();
+  clearCallbacks();
 }
 
 std::map<ID, FacePtr> HRIListener::getFaces() const
@@ -252,6 +254,7 @@ void HRIListener::onTrackedFeature(
         faces_.erase(id);
 
         // invoke all the callbacks
+        std::lock_guard<std::mutex> lock(face_callbacks_lock_);
         for (auto & cb : face_lost_callbacks_) {
           cb(id);
         }
@@ -263,6 +266,7 @@ void HRIListener::onTrackedFeature(
         bodies_.erase(id);
 
         // invoke all the callbacks
+        std::lock_guard<std::mutex> lock(body_callbacks_lock_);
         for (auto & cb : body_lost_callbacks_) {
           cb(id);
         }
@@ -274,6 +278,7 @@ void HRIListener::onTrackedFeature(
         voices_.erase(id);
 
         // invoke all the callbacks
+        std::lock_guard<std::mutex> lock(voice_callbacks_lock_);
         for (auto & cb : voice_lost_callbacks_) {
           cb(id);
         }
@@ -297,6 +302,7 @@ void HRIListener::onTrackedFeature(
         }
 
         // invoke all the callbacks
+        std::lock_guard<std::mutex> lock(persons_callbacks_lock_);
         for (auto & cb : person_lost_callbacks_) {
           cb(id);
         }
@@ -320,6 +326,7 @@ void HRIListener::onTrackedFeature(
         }
 
         // invoke all the callbacks
+        std::lock_guard<std::mutex> lock(persons_tracked_callbacks_lock_);
         for (auto & cb : person_tracked_lost_callbacks_) {
           cb(id);
         }
@@ -337,6 +344,7 @@ void HRIListener::onTrackedFeature(
           id, std::make_shared<Face>(
             id, node_interfaces_, callback_group_, tf_buffer_, reference_frame_));
         // invoke all the callbacks
+        std::lock_guard<std::mutex> lock(face_callbacks_lock_);
         for (auto & cb : face_callbacks_) {
           cb(faces_[id]);
         }
@@ -348,6 +356,7 @@ void HRIListener::onTrackedFeature(
           id, std::make_shared<Body>(
             id, node_interfaces_, callback_group_, tf_buffer_, reference_frame_));
         // invoke all the callbacks
+        std::lock_guard<std::mutex> lock(body_callbacks_lock_);
         for (auto & cb : body_callbacks_) {
           cb(bodies_[id]);
         }
@@ -359,6 +368,7 @@ void HRIListener::onTrackedFeature(
           id, std::make_shared<Voice>(
             id, node_interfaces_, callback_group_, tf_buffer_, reference_frame_));
         // invoke all the callbacks
+        std::lock_guard<std::mutex> lock(voice_callbacks_lock_);
         for (auto & cb : voice_callbacks_) {
           cb(voices_[id]);
         }
@@ -370,6 +380,7 @@ void HRIListener::onTrackedFeature(
           id, std::make_shared<Person>(
             id, node_interfaces_, callback_group_, weak_from_this(), tf_buffer_, reference_frame_));
         // invoke all the callbacks
+        std::lock_guard<std::mutex> lock(persons_callbacks_lock_);
         for (auto & cb : person_callbacks_) {
           cb(persons_[id]);
         }
@@ -381,6 +392,7 @@ void HRIListener::onTrackedFeature(
           id, std::make_shared<Person>(
             id, node_interfaces_, callback_group_, weak_from_this(), tf_buffer_, reference_frame_));
         // invoke all the callbacks
+        std::lock_guard<std::mutex> lock(persons_tracked_callbacks_lock_);
         for (auto & cb : person_tracked_callbacks_) {
           cb(tracked_persons_[id]);
         }

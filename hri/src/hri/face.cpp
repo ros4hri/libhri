@@ -91,6 +91,7 @@ Face::~Face()
 {
   RCLCPP_DEBUG_STREAM(
     node_interfaces_.get_node_logging_interface()->get_logger(), "Deleting face " << kId_);
+  invalidate();
 }
 
 void Face::onRoI(const hri_msgs::msg::NormalizedRegionOfInterest2D::ConstSharedPtr msg)
