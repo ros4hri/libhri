@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.6.2 (2024-10-28)
+------------------
 * more robust destroyers
 * Contributors: Luka Juricic
 
