@@ -2,6 +2,9 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.6.1 (2024-09-10)
 ------------------
 * bring back dependencies on tf2 and cv_bridge as <depends> so that <build_export_depend> is implied

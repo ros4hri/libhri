@@ -2,6 +2,11 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* more robust destroyers
+* Contributors: Luka Juricic
+
 2.6.1 (2024-09-10)
 ------------------
 * bring back dependencies on tf2 and cv_bridge as <depends> so that <build_export_depend> is implied
