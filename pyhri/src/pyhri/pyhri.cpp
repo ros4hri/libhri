@@ -87,9 +87,9 @@ public:
     }
   }
 
-  void spin_some(std::chrono::nanoseconds timeout)
+  void spin_all(std::chrono::nanoseconds timeout)
   {
-    executor_->spin_some(timeout);
+    executor_->spin_all(timeout);
   }
 
 protected:
@@ -618,7 +618,7 @@ PYBIND11_MODULE(hri, m) {
     - :py:meth:`on_tracked_person_lost` -- registers a callback function, to be invoked everytime a tracked
       person is lost
     - :py:meth:`set_reference_frame` -- selects the reference frame for all the `transform` properties
-    - :py:meth:`spin_some` -- if the class node does not spin automatically, this function must be called
+    - :py:meth:`spin_all` -- if the class node does not spin automatically, this function must be called
       regularly to manually spin it
     )";
   hri_listener.def(
@@ -693,7 +693,7 @@ PYBIND11_MODULE(hri, m) {
     py::arg("frame"),
     "Selects the reference frame for all the `transform` properties");
   hri_listener.def(
-    "spin_some", &PyHRIListener::spin_some, py::arg("timeout"),
+    "spin_all", &PyHRIListener::spin_all, py::arg("timeout"),
     "If the class node does not spin automatically, this "
     "function must be called regularly to "
     "manually spin it");

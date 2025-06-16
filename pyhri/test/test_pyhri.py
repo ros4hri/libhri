@@ -67,7 +67,7 @@ class TestHRI(unittest.TestCase):
         return super().tearDown()
 
     def spin(self, hri_timeout_ms=100):
-        self.hri_listener.spin_some(timedelta(milliseconds=hri_timeout_ms))
+        self.hri_listener.spin_all(timedelta(milliseconds=hri_timeout_ms))
 
     def test_get_faces(self):
         faces_pub = self.tester_node.create_publisher(IdsList, '/humans/faces/tracked', 1)

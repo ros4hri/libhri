@@ -72,7 +72,7 @@ protected:
 
   void spin(std::chrono::nanoseconds hri_timeout = 100ms)
   {
-    hri_executor_->spin_some(hri_timeout);
+    hri_executor_->spin_all(hri_timeout);
   }
 
   const rclcpp::QoS kQoSLatched_{rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable()};
