@@ -92,6 +92,11 @@ public:
     executor_->spin_all(timeout);
   }
 
+  void spin_some(std::chrono::nanoseconds timeout)
+  {
+    executor_->spin_some(timeout);
+  }
+
 protected:
   explicit PyHRIListener(rclcpp::Node::SharedPtr node, bool auto_spin)
   : hri::HRIListener(node), node_(node)
@@ -694,9 +699,19 @@ PYBIND11_MODULE(hri, m) {
     "Selects the reference frame for all the `transform` properties");
   hri_listener.def(
     "spin_all", &PyHRIListener::spin_all, py::arg("timeout"),
-    "If the class node does not spin automatically, this "
-    "function must be called regularly to "
-    "manually spin it");
+    "If the class node does not spin automatically, "
+    "this function must be called regularly to manually spin it. "
+    "Internally calls rclcpp::executors::SingleThreadedExecutor::spin_all()");
+  hri_listener.def(
+    "spin_some",
+    [](pybind11::object & self, std::chrono::nanoseconds timeout)
+    {
+      PyErr_WarnEx(PyExc_DeprecationWarning, "spin_some() is deprecated", 1);
+      return self.attr("spin_all")(timeout);
+    },
+    py::arg("timeout"),
+    "This function is deprecated, use `spin_all` instead. "
+    "Internally calls rclcpp::executors::SingleThreadedExecutor::spin_some()");
 }  // NOLINT(readability/fn_size)
 
 }  // namespace pyhri
