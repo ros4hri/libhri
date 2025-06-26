@@ -2,6 +2,12 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* re-introduce spin_some as deprecated function
+* in pyhri, spin manually with spin_all instead of spin_some
+* Contributors: Luka Juricic
+
 2.6.2 (2024-10-28)
 ------------------
 

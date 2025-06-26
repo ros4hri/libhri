@@ -2,6 +2,11 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* in pyhri, spin manually with spin_all instead of spin_some
+* Contributors: Luka Juricic
+
 2.6.2 (2024-10-28)
 ------------------
 * more robust destroyers
