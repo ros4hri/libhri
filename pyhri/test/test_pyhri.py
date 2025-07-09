@@ -54,7 +54,8 @@ class TestHRI(unittest.TestCase):
         return super().tearDownClass()
 
     def setUp(self) -> None:
-        self.tester_node = rclpy.create_node('tester_node', context=self.context)
+        self.tester_node = rclpy.create_node(
+            'tester_node', context=self.context)
         self.hri_listener = HRIListener('hri_node', False)
         return super().setUp()
 
@@ -70,7 +71,8 @@ class TestHRI(unittest.TestCase):
         self.hri_listener.spin_all(timedelta(milliseconds=hri_timeout_ms))
 
     def test_get_faces(self):
-        faces_pub = self.tester_node.create_publisher(IdsList, '/humans/faces/tracked', 1)
+        faces_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/faces/tracked', 1)
 
         self.assertEqual(faces_pub.get_subscription_count(), 1)
         self.assertEqual(len(self.hri_listener.faces), 0)
@@ -115,7 +117,8 @@ class TestHRI(unittest.TestCase):
         self.assertEqual(faces_pub.get_subscription_count(), 0)
 
     def test_get_faces_roi(self):
-        faces_pub = self.tester_node.create_publisher(IdsList, '/humans/faces/tracked', 1)
+        faces_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/faces/tracked', 1)
         roi_a_pub = self.tester_node.create_publisher(
             NormalizedRegionOfInterest2D, '/humans/faces/A/roi', 1)
         roi_b_pub = self.tester_node.create_publisher(
@@ -169,7 +172,8 @@ class TestHRI(unittest.TestCase):
         self.assertAlmostEqual(face_b.roi[0], 0.2)
 
     def test_get_bodies(self):
-        bodies_pub = self.tester_node.create_publisher(IdsList, '/humans/bodies/tracked', 1)
+        bodies_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/bodies/tracked', 1)
 
         self.assertEqual(bodies_pub.get_subscription_count(), 1)
         self.assertEqual(len(self.hri_listener.bodies), 0)
@@ -214,7 +218,8 @@ class TestHRI(unittest.TestCase):
         self.assertEqual(bodies_pub.get_subscription_count(), 0)
 
     def test_get_voices(self):
-        voices_pub = self.tester_node.create_publisher(IdsList, '/humans/voices/tracked', 1)
+        voices_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/voices/tracked', 1)
 
         self.assertEqual(voices_pub.get_subscription_count(), 1)
         self.assertEqual(len(self.hri_listener.voices), 0)
@@ -259,7 +264,8 @@ class TestHRI(unittest.TestCase):
         self.assertEqual(voices_pub.get_subscription_count(), 0)
 
     def test_voice_callbacks(self):
-        voices_pub = self.tester_node.create_publisher(IdsList, '/humans/voices/tracked', 1)
+        voices_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/voices/tracked', 1)
         voice_a_is_speaking_pub = self.tester_node.create_publisher(
             std_msgs.msg.Bool, '/humans/voices/A/is_speaking', 1)
         voice_a_speech_pub = self.tester_node.create_publisher(
@@ -297,7 +303,8 @@ class TestHRI(unittest.TestCase):
         self.assertFalse(self.hri_listener.voices['A'].is_speaking)
 
         cb_triggered = False
-        voice_a_speech_pub.publish(LiveSpeech(locale='en_GB', final='test speech'))
+        voice_a_speech_pub.publish(LiveSpeech(
+            locale='en_GB', final='test speech'))
         self.spin()
         self.assertTrue(cb_triggered)
         self.assertEqual(self.hri_listener.voices['A'].locale, 'en_GB')
@@ -313,7 +320,8 @@ class TestHRI(unittest.TestCase):
             self.hri_listener.voices['A'].incremental_speech, 'test speech incremental')
 
     def test_get_known_persons(self):
-        persons_pub = self.tester_node.create_publisher(IdsList, '/humans/persons/known', 1)
+        persons_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/persons/known', 1)
 
         self.assertEqual(persons_pub.get_subscription_count(), 1)
         self.assertEqual(len(self.hri_listener.persons), 0)
@@ -406,7 +414,8 @@ class TestHRI(unittest.TestCase):
     def test_person_attributes(self):
         tracked_persons_pub = self.tester_node.create_publisher(
             IdsList, '/humans/persons/tracked', 1)
-        faces_pub = self.tester_node.create_publisher(IdsList, '/humans/faces/tracked', 1)
+        faces_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/faces/tracked', 1)
         p1_face_pub = self.tester_node.create_publisher(
             std_msgs.msg.String, '/humans/persons/p1/face_id', self.latching_qos)
 
@@ -414,7 +423,8 @@ class TestHRI(unittest.TestCase):
         faces_pub.publish(IdsList(ids=['f1', 'f2']))
         self.spin()
         p1 = self.hri_listener.tracked_persons['p1']
-        self.assertFalse(p1.anonymous, 'By default, persons are not supposed to be anonymous')
+        self.assertFalse(
+            p1.anonymous, 'By default, persons are not supposed to be anonymous')
         self.assertIsNone(p1.face)
 
         p1_face_pub.publish(std_msgs.msg.String(data='f1'))
@@ -468,7 +478,8 @@ class TestHRI(unittest.TestCase):
         self.spin()
         self.assertEqual(len(self.hri_listener.tracked_persons), 2)
         p2 = self.hri_listener.tracked_persons['p2']
-        self.assertEqual(p1, p2, 'p2 should now point to the same person as p1')
+        self.assertEqual(
+            p1, p2, 'p2 should now point to the same person as p1')
         self.assertEqual(p2.face.id, 'f1', "p2's face now points to f1")
 
         # remove the alias
@@ -476,7 +487,8 @@ class TestHRI(unittest.TestCase):
         self.spin()
         p2 = self.hri_listener.tracked_persons['p2']
         self.assertNotEqual(p1, p2, 'p2 is not anymore the same person as p1')
-        self.assertEqual(p2.face.id, 'f2', "p2's face should still points to its former f2 face")
+        self.assertEqual(p2.face.id, 'f2',
+                         "p2's face should still points to its former f2 face")
 
         # republish the alias
         p2_alias_pub.publish(std_msgs.msg.String(data='p1'))
@@ -543,7 +555,8 @@ class TestHRI(unittest.TestCase):
         self.assertEqual(len(self.hri_listener.faces), 1)
 
         # Test reception of an expression and its confidence
-        expression_msg = ExpressionMsg(expression=ExpressionMsg.ANGRY, confidence=0.9)
+        expression_msg = ExpressionMsg(
+            expression=ExpressionMsg.ANGRY, confidence=0.9)
         expression_pub.publish(expression_msg)
         face_pub.publish(std_msgs.msg.String(data='f1'))
         self.spin()
@@ -565,6 +578,33 @@ class TestHRI(unittest.TestCase):
         self.assertAlmostEqual(face.expression_va[0], -0.8)
         self.assertAlmostEqual(face.expression_va[1], 0.4)
 
+    def test_is_speaking(self):
+        # Create publishers
+        faces_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/faces/tracked', 1)
+        face_pub = self.tester_node.create_publisher(
+            std_msgs.msg.String, '/humans/persons/p1/face_id', self.latching_qos)
+        is_speaking_pub = self.tester_node.create_publisher(
+            std_msgs.msg.Bool, '/humans/faces/f1/is_speaking', 1)
+
+        # Publish a face ID
+        faces_pub.publish(IdsList(ids=['f1']))
+        self.spin()
+        self.assertEqual(len(self.hri_listener.faces), 1)
+
+        # Test reception of an is_speaking message
+        is_speaking_pub.publish(std_msgs.msg.Bool(data=True))
+        face_pub.publish(std_msgs.msg.String(data='f1'))
+        self.spin()
+        face = self.hri_listener.faces['f1']
+        self.assertIsNotNone(face.is_speaking)
+        self.assertEqual(face.is_speaking, True)
+
+        # Test reception of an is_speaking change
+        is_speaking_pub.publish(std_msgs.msg.Bool(data=False))
+        self.spin()
+        self.assertEqual(face.is_speaking, False)
+
     def test_engagement_level(self):
         tracked_persons_pub = self.tester_node.create_publisher(
             IdsList, '/humans/persons/tracked', 1)
@@ -574,21 +614,25 @@ class TestHRI(unittest.TestCase):
         tracked_persons_pub.publish(IdsList(ids=['p1']))
         self.spin()
         p1 = self.hri_listener.tracked_persons['p1']
-        engagement_pub.publish(EngagementLevelMsg(level=EngagementLevelMsg.DISENGAGED))
+        engagement_pub.publish(EngagementLevelMsg(
+            level=EngagementLevelMsg.DISENGAGED))
         self.spin()
         self.assertIsNotNone(p1.engagement_status)
         self.assertEqual(p1.engagement_status, EngagementLevel.DISENGAGED)
 
-        engagement_pub.publish(EngagementLevelMsg(level=EngagementLevelMsg.ENGAGED))
+        engagement_pub.publish(EngagementLevelMsg(
+            level=EngagementLevelMsg.ENGAGED))
         self.spin()
         self.assertEqual(p1.engagement_status, EngagementLevel.ENGAGED)
 
-        engagement_pub.publish(EngagementLevelMsg(level=EngagementLevelMsg.UNKNOWN))
+        engagement_pub.publish(EngagementLevelMsg(
+            level=EngagementLevelMsg.UNKNOWN))
         self.spin()
         self.assertIsNone(p1.engagement_status)
 
     def test_image(self):
-        faces_pub = self.tester_node.create_publisher(IdsList, '/humans/faces/tracked', 1)
+        faces_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/faces/tracked', 1)
         face_cropped_a_pub = self.tester_node.create_publisher(
             Image, '/humans/faces/A/cropped', 1)
         image = np.random.randint(0, 255, size=(64, 64, 3), dtype=np.uint8)
@@ -606,7 +650,8 @@ class TestHRI(unittest.TestCase):
         self.assertAlmostEqual(cv2.norm(face_a.cropped, image), 0.)
 
     def test_facial_action_units(self):
-        faces_pub = self.tester_node.create_publisher(IdsList, '/humans/faces/tracked', 1)
+        faces_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/faces/tracked', 1)
         fau_a_pub = self.tester_node.create_publisher(
             FacialActionUnits, '/humans/faces/A/facs', 1)
         fau_msg = FacialActionUnits()
@@ -635,7 +680,8 @@ class TestHRI(unittest.TestCase):
         self.assertAlmostEqual(fau[1], 1.0)
 
     def test_facial_landmarks(self):
-        faces_pub = self.tester_node.create_publisher(IdsList, '/humans/faces/tracked', 1)
+        faces_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/faces/tracked', 1)
         facial_landmarks_a_pub = self.tester_node.create_publisher(
             FacialLandmarks, '/humans/faces/A/landmarks', 1)
         facial_landmarks_msg = FacialLandmarks()
@@ -673,7 +719,8 @@ class TestHRI(unittest.TestCase):
             point[2], facial_landmarks_msg.landmarks[facial_landmarks_msg.NOSE].c)
 
     def test_skeletal_keypoints(self):
-        bodies_pub = self.tester_node.create_publisher(IdsList, '/humans/bodies/tracked', 1)
+        bodies_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/bodies/tracked', 1)
         body_keypoints_a_pub = self.tester_node.create_publisher(
             Skeleton2D, '/humans/bodies/A/skeleton2d', 1)
         skeleton_msg = Skeleton2D()
@@ -711,10 +758,14 @@ class TestHRI(unittest.TestCase):
             point[2], skeleton_msg.skeleton[skeleton_msg.NOSE].c)
 
     def test_callbacks(self):
-        faces_pub = self.tester_node.create_publisher(IdsList, '/humans/faces/tracked', 1)
-        bodies_pub = self.tester_node.create_publisher(IdsList, '/humans/bodies/tracked', 1)
-        voices_pub = self.tester_node.create_publisher(IdsList, '/humans/voices/tracked', 1)
-        persons_pub = self.tester_node.create_publisher(IdsList, '/humans/persons/known', 1)
+        faces_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/faces/tracked', 1)
+        bodies_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/bodies/tracked', 1)
+        voices_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/voices/tracked', 1)
+        persons_pub = self.tester_node.create_publisher(
+            IdsList, '/humans/persons/known', 1)
         tracked_persons_pub = self.tester_node.create_publisher(
             IdsList, '/humans/persons/tracked', 1)
 
@@ -846,8 +897,10 @@ class TestHRI(unittest.TestCase):
         self.assertEqual(voice_lost_cb_invoked, old_voice_lost_cb_invoked)
         self.assertEqual(person_cb_invoked, old_person_cb_invoked + 2)
         self.assertEqual(person_lost_cb_invoked, old_person_lost_cb_invoked)
-        self.assertEqual(tracked_person_cb_invoked, old_tracked_person_cb_invoked + 1)
-        self.assertEqual(tracked_person_lost_cb_invoked, old_tracked_person_lost_cb_invoked)
+        self.assertEqual(tracked_person_cb_invoked,
+                         old_tracked_person_cb_invoked + 1)
+        self.assertEqual(tracked_person_lost_cb_invoked,
+                         old_tracked_person_lost_cb_invoked)
 
         old_voice_cb_invoked = voice_cb_invoked
         old_voice_lost_cb_invoked = voice_lost_cb_invoked
@@ -862,9 +915,12 @@ class TestHRI(unittest.TestCase):
         self.assertEqual(voice_cb_invoked, old_voice_cb_invoked)
         self.assertEqual(voice_lost_cb_invoked, old_voice_lost_cb_invoked + 3)
         self.assertEqual(person_cb_invoked, old_person_cb_invoked)
-        self.assertEqual(person_lost_cb_invoked, old_person_lost_cb_invoked + 2)
-        self.assertEqual(tracked_person_cb_invoked, old_tracked_person_cb_invoked)
-        self.assertEqual(tracked_person_lost_cb_invoked, old_tracked_person_lost_cb_invoked + 1)
+        self.assertEqual(person_lost_cb_invoked,
+                         old_person_lost_cb_invoked + 2)
+        self.assertEqual(tracked_person_cb_invoked,
+                         old_tracked_person_cb_invoked)
+        self.assertEqual(tracked_person_lost_cb_invoked,
+                         old_tracked_person_lost_cb_invoked + 1)
 
     def test_people_location(self):
         tracked_persons_pub = self.tester_node.create_publisher(
@@ -955,14 +1011,16 @@ class TestHRI(unittest.TestCase):
         tracked_faces_pub.publish(IdsList(ids=['f1']))
         self.spin()
         f1 = self.hri_listener.faces['f1']
-        self.assertIsNone(f1.gaze_transform, 'no gaze transform should be available')
+        self.assertIsNone(f1.gaze_transform,
+                          'no gaze transform should be available')
 
         transform_msg.child_frame_id = 'gaze_f1'
         transform_msg.transform.translation.x = transform_msg.transform.translation.x + 2.0
         static_broadcaster.sendTransform(transform_msg)
         tester_executor.spin_once(1.)
         self.spin()
-        self.assertIsNotNone(f1.gaze_transform, 'the gaze transform should be available')
+        self.assertIsNotNone(
+            f1.gaze_transform, 'the gaze transform should be available')
         t = f1.gaze_transform
         self.assertEqual(t.child_frame_id, 'gaze_f1')
         self.assertEqual(t.header.frame_id, 'base_link')

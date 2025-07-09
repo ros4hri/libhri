@@ -24,6 +24,7 @@
 #include "hri_msgs/msg/facial_landmarks.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
 #include "hri_msgs/msg/soft_biometrics.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "magic_enum.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
@@ -84,6 +85,14 @@ Face::Face(
     kNs_ + "/expression",
     default_qos,
     bind(&Face::onExpression, this, std::placeholders::_1),
+    options);
+
+  is_speaking_subscriber_ = rclcpp::create_subscription<std_msgs::msg::Bool>(
+    node_interfaces_.get_node_parameters_interface(),
+    node_interfaces_.get_node_topics_interface(),
+    kNs_ + "/is_speaking",
+    default_qos,
+    bind(&Face::onIsSpeaking, this, std::placeholders::_1),
     options);
 }
 
@@ -160,6 +169,11 @@ void Face::onExpression(const hri_msgs::msg::Expression::ConstSharedPtr msg)
   expression_confidence_ = msg->confidence;
 }
 
+void Face::onIsSpeaking(const std_msgs::msg::Bool::ConstSharedPtr msg)
+{
+  is_speaking_ = msg->data;
+}
+
 std::optional<geometry_msgs::msg::TransformStamped> Face::gazeTransform() const
 {
   return transformFromReference(gazeFrame());
@@ -174,6 +188,7 @@ void Face::invalidate()
   softbiometrics_subscriber_.reset();
   facial_action_units_subscriber_.reset();
   expression_subscriber_.reset();
+  is_speaking_subscriber_.reset();
   roi_.reset();
   cropped_.reset();
   aligned_.reset();
@@ -184,6 +199,7 @@ void Face::invalidate()
   expression_.reset();
   expression_va_.reset();
   expression_confidence_.reset();
+  is_speaking_.reset();
   FeatureTracker::invalidate();
 }
 

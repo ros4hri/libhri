@@ -658,6 +658,37 @@ TEST_F(HRITest, GetFacesExpression)
   EXPECT_FLOAT_EQ(face_->expressionVA().value().arousal, 0.4f);
 }
 
+TEST_F(HRITest, GetFaceIsSpeaking)
+{
+  auto faces_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(
+    "/humans/faces/tracked", 1);
+  auto is_speaking_pub = tester_node_->create_publisher<std_msgs::msg::Bool>(
+    "/humans/faces/A/is_speaking", 1);
+  auto ids_msg = hri_msgs::msg::IdsList();
+  auto is_speaking_msg = std_msgs::msg::Bool();
+
+  // Publish a face ID
+  ids_msg.ids = {"A"};
+  faces_pub->publish(ids_msg);
+  spin();
+  ASSERT_EQ(is_speaking_pub->get_subscription_count(), 1U);
+  auto face_ = hri_listener_->getFaces()["A"];
+
+  // Test reception of an is_speaking msg
+  is_speaking_msg.data = true;
+  is_speaking_pub->publish(is_speaking_msg);
+  spin();
+  ASSERT_TRUE(face_->is_speaking().has_value());
+  EXPECT_EQ(face_->is_speaking().value(), true);
+
+  // Test reception of an is_speaking change
+  is_speaking_msg.data = false;
+  is_speaking_pub->publish(is_speaking_msg);
+  spin();
+  ASSERT_TRUE(face_->is_speaking().has_value());
+  EXPECT_EQ(face_->is_speaking().value(), true);
+}
+
 TEST_F(HRITest, EngagementLevel)
 {
   auto tracked_persons_pub = tester_node_->create_publisher<hri_msgs::msg::IdsList>(

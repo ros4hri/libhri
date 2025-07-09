@@ -25,6 +25,7 @@
 #include "hri_msgs/msg/facial_landmarks.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
 #include "hri_msgs/msg/soft_biometrics.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "opencv2/core.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
@@ -111,6 +112,8 @@ public:
    */
   std::optional<float> expressionConfidence() const {return expression_confidence_;}
 
+  std::optional<bool> is_speaking() const {return is_speaking_;}
+
   /** \brief Returns the (stamped) 3D transform of the gaze (if available).
    */
   std::optional<geometry_msgs::msg::TransformStamped> gazeTransform() const;
@@ -123,6 +126,7 @@ private:
   void onSoftBiometrics(hri_msgs::msg::SoftBiometrics::ConstSharedPtr msg);
   void onFacs(hri_msgs::msg::FacialActionUnits::ConstSharedPtr msg);
   void onExpression(hri_msgs::msg::Expression::ConstSharedPtr msg);
+  void onIsSpeaking(std_msgs::msg::Bool::ConstSharedPtr msg);
 
   void invalidate();
 
@@ -136,6 +140,7 @@ private:
   std::optional<Expression> expression_;
   std::optional<ExpressionVA> expression_va_;
   std::optional<float> expression_confidence_;
+  std::optional<bool> is_speaking_;
 
   rclcpp::Subscription<hri_msgs::msg::NormalizedRegionOfInterest2D>::SharedPtr roi_subscriber_;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr cropped_subscriber_;
@@ -144,6 +149,7 @@ private:
   rclcpp::Subscription<hri_msgs::msg::SoftBiometrics>::SharedPtr softbiometrics_subscriber_;
   rclcpp::Subscription<hri_msgs::msg::FacialActionUnits>::SharedPtr facial_action_units_subscriber_;
   rclcpp::Subscription<hri_msgs::msg::Expression>::SharedPtr expression_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr is_speaking_subscriber_;
 
   const std::string kGazeFrame_;
 };
