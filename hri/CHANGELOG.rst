@@ -2,6 +2,11 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* ament_auto_package now requires USE_SCOPED_HEADER_INSTALL_DIR
+* Contributors: Séverin Lemaignan
+
 2.7.0 (2025-06-26)
 ------------------
 * in pyhri, spin manually with spin_all instead of spin_some
