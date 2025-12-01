@@ -35,13 +35,13 @@ namespace hri
 
 enum class EngagementLevel
 {
-  // disengaged: the human has not looked in the direction of the robot
+  /** the human has not looked in the direction of the robot */
   kDisengaged = hri_msgs::msg::EngagementLevel::DISENGAGED,
-  // engaging: the human has started to look in the direction of the robot
+  /** the human has started to look in the direction of the robot */
   kEngaging = hri_msgs::msg::EngagementLevel::ENGAGING,
-  // engaged: the human is fully engaged with the robot
+  /** the human is fully engaged with the robot */
   kEngaged = hri_msgs::msg::EngagementLevel::ENGAGED,
-  // disengaging: the human has started to look away from the robot
+  /** the human has started to look away from the robot */
   kDisengaging = hri_msgs::msg::EngagementLevel::DISENGAGING
 };
 
@@ -76,7 +76,9 @@ enum class Expression
 
 struct ExpressionVA
 {
+  /** Valence dimension of the circumplex model of affect, from -1.0 to 1.0 */
   float valence;
+  /** Arousal dimension of the circumplex model of affect, from -1.0 to 1.0 */
   float arousal;
 };
 
@@ -357,8 +359,11 @@ struct NodeInterfaces
 
 struct PointOfInterest
 {
+  /** Normalized x coordinate */
   float x;
+  /** Normalized y coordinate */
   float y;
+  /** Confidence value */
   float c;
 };
 

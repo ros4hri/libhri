@@ -38,8 +38,6 @@ namespace hri
 {
 
 /** \brief Main entry point to libhri. This is most likely what you want to use.
- *
- * See examples/node_show_faces.cpp for a minimal usage example
  */
 class HRIListener : public std::enable_shared_from_this<HRIListener>
 {
