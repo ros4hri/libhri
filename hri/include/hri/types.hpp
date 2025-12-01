@@ -268,7 +268,9 @@ enum class Gender
 
 struct IntensityConfidence
 {
+  /** Intensity value (0.0 to 1.0) */
   float intensity;
+  /** Confidence value (0.0 to 1.0) */
   float confidence;
 };
 
