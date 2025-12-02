@@ -6,6 +6,11 @@
   <description>A python wrapper around hri package</description>
   <maintainer email="luka.juricic@pal-robotics.com">Luka Juricic</maintainer>
   <license>Apache License 2.0</license>
+  <url type="website">https://ros4hri.github.io/pyhri</url>
+  <url type="bugtracker">https://github.com/ros4hri/libhri/issues</url>
+  <url type="repository">https://github.com/ros4hri/libhri</url>
+  <author email="severin.lemaignan@pal-robotics.com">Séverin Lemaignan</author>
+  <author email="luka.juricic@pal-robotics.com">Luka Juricic</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>

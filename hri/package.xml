@@ -6,7 +6,9 @@
   <description>A wrapper library around the ROS4HRI ROS topics</description>
   <maintainer email="severin.lemaignan@pal-robotics.com">Séverin Lemaignan</maintainer>
   <license>Apache License 2.0</license>
-  <url type="website">http://wiki.ros.org/hri</url>
+  <url type="website">https://ros4hri.github.io/libhri</url>
+  <url type="bugtracker">https://github.com/ros4hri/libhri/issues</url>
+  <url type="repository">https://github.com/ros4hri/libhri</url>
   <author email="severin.lemaignan@pal-robotics.com">Séverin Lemaignan</author>
   <author email="luka.juricic@pal-robotics.com">Luka Juricic</author>
 
