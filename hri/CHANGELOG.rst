@@ -2,6 +2,14 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* jazzy compat
+* update URLs and authors in package.xml
+* [doc] minor doc
+* [doc] minor doc
+* Contributors: Séverin Lemaignan
+
 2.8.0 (2025-09-10)
 ------------------
 * ament_auto_package now requires USE_SCOPED_HEADER_INSTALL_DIR

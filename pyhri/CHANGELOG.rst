@@ -2,6 +2,12 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* ensure numpy headers are found
+* update URLs and authors in package.xml
+* Contributors: Séverin Lemaignan
+
 2.8.0 (2025-09-10)
 ------------------
 * ament_auto_package now requires USE_SCOPED_HEADER_INSTALL_DIR
