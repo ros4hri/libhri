@@ -2,8 +2,8 @@
 Changelog for package pyhri
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.9.0 (2026-02-03)
+------------------
 * ensure numpy headers are found
 * update URLs and authors in package.xml
 * Contributors: Séverin Lemaignan

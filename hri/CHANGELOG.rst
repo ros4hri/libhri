@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.9.0 (2026-02-03)
+------------------
 * jazzy compat
 * update URLs and authors in package.xml
 * [doc] minor doc
