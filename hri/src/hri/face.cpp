@@ -29,7 +29,7 @@
 #include "hri_msgs/msg/facial_landmarks.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
 #include "hri_msgs/msg/soft_biometrics.hpp"
-#include "magic_enum.hpp"
+#include "magic_enum/magic_enum.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
 
