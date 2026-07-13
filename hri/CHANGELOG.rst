@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.10.0 (2026-07-13)
+-------------------
 * compat ROS2 lyrical
 * Contributors: Séverin Lemaignan
 
