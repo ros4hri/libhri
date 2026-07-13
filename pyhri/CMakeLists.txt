@@ -45,10 +45,15 @@ target_include_directories(${HRI_MODULE_NAME} PRIVATE
   src/
   ${Python3_INCLUDE_DIRS}
   ${Python3_NumPy_INCLUDE_DIRS}
-  ${PROJECT_NAME}_FOUND_INCLUDE_DIRS
+  ${hri_INCLUDE_DIRS}
 )
-ament_target_dependencies(${HRI_MODULE_NAME} PUBLIC ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
-target_link_libraries(${HRI_MODULE_NAME} PRIVATE ${OpenCV_LIBRARIES} Python3::Python)
+target_link_libraries(${HRI_MODULE_NAME} PRIVATE
+  ${hri_LIBRARIES}
+  rclcpp::rclcpp
+  ${builtin_interfaces_TARGETS}
+  ${geometry_msgs_TARGETS}
+  ${OpenCV_LIBRARIES}
+  Python3::Python)
 install(TARGETS ${HRI_MODULE_NAME}
   LIBRARY DESTINATION "${PYTHON_INSTALL_DIR}/${HRI_MODULE_NAME}"
 )

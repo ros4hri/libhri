@@ -29,7 +29,12 @@
 #include "hri_msgs/msg/facial_landmarks.hpp"
 #include "hri_msgs/msg/normalized_region_of_interest2_d.hpp"
 #include "hri_msgs/msg/soft_biometrics.hpp"
+// magic_enum >= 0.9 installs its headers in a 'magic_enum' subdirectory
+#if __has_include("magic_enum/magic_enum.hpp")
+#include "magic_enum/magic_enum.hpp"
+#else
 #include "magic_enum.hpp"
+#endif
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
 
