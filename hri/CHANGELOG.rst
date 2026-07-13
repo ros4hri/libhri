@@ -2,6 +2,11 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* compat ROS2 lyrical
+* Contributors: Séverin Lemaignan
+
 2.9.0 (2026-02-03)
 ------------------
 * jazzy compat
