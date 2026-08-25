@@ -2,6 +2,11 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix tf2_ros header deprecation warnings
+* Contributors: Séverin Lemaignan
+
 2.10.0 (2026-07-13)
 -------------------
 * compat ROS2 lyrical
