@@ -24,8 +24,8 @@
 
 #include "hri_msgs/msg/ids_list.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
+#include "tf2_ros/buffer.hpp"
+#include "tf2_ros/transform_listener.hpp"
 
 #include "hri/body.hpp"
 #include "hri/face.hpp"
