@@ -2,8 +2,8 @@
 Changelog for package hri
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.10.1 (2026-08-25)
+-------------------
 * fix tf2_ros header deprecation warnings
 * Contributors: Séverin Lemaignan
 
